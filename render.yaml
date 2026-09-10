@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: novita-super-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: LLM_BASE_URL
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: NANOBOT_API_PUBLIC_URL
+        value: https://minis-yzdb.onrender.com
+      - key: NOVITA_API_KEY
+        sync: false
+      - key: VERCEL_TOKEN
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SUPABASE_URL
+        value: https://nisqfdwvwjbejgeurbol.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: SUPABASE_AUTH_ENABLED
+        value: "true"
+      - key: SUPABASE_WEBUI_AUTH
+        value: "true"
+      - key: SUPABASE_GATEWAY_KEY
+        sync: false
+      - key: NANOBOT_WEB_TOKEN
+        generateValue: true
+      - key: RENDER
+        value: "true"
+      - key: PORT
+        value: "8765"
+      - key: NANOBOT_DATA_DIR
+        value: /home/nanobot/.nanobot
+      - key: NANOBOT_SANDBOX_TIMEOUT
+        value: "3600"
