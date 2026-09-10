@@ -91,6 +91,14 @@ documents = [
     "openpyxl>=3.1.0,<4.0.0",
     "python-pptx>=1.0.0,<2.0.0",
 ]
+atlas = [
+    # Atlas vertical slice: AWS Strands Agents SDK orchestration with an
+    # OpenAI-compatible free-tier model provider (Groq) or native Gemini.
+    # Optional extra: core installs stay lean; the demo runs with
+    # `uv sync --extra atlas` or `pip install -e ".[atlas]"`.
+    "strands-agents[openai]>=1.55,<2.0.0",
+    "openai>=1.68.0,<3.0.0",
+]
 langfuse = [
     "langfuse>=3.0.0,<4.0.0",
 ]
@@ -188,6 +196,9 @@ pythonVersion = "3.11"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests", "nanobot/channels"]
+markers = [
+    "atlas_smoke: live, credential-gated smoke tests that call real providers (deselect with -m 'not atlas_smoke')",
+]
 
 [tool.coverage.run]
 source = ["nanobot"]
