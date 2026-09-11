@@ -54,8 +54,11 @@ completed step; create a checkpoint commit when a step is stable.
 - [x] §2.1 Money Guard — Plaid Sandbox read-only connector
       (`connectors/plaid.py`), deterministic recurring/price-change rules
       (`money.py`), `money_guard` chain path, sandbox labeling everywhere.
-- [ ] §2.3 Wardrobe Help — user-provided garment records + outfit/care/packing
-      drafts (local fixtures allowed; no paid fashion API).
+- [x] §2.3 Wardrobe Help — deterministic outfit/care/packing rules over
+      user-entered `GarmentRecord`s (`wardrobe.py`), store persistence via a
+      new `garments` record kind, `wardrobe_research` chain path, and a
+      `WardrobeStoreConnector` adapter. No paid fashion API; keyword-based
+      constraint parsing is deterministic; no purchases (rule 10).
 - [ ] §2.5 Communication (remainder) — explicit send-flag gating; Gmail
       read-only evidence summary.
 - [ ] §2.6 Drip Advice — one-suggestion-at-a-time loop with cooldown, quiet
@@ -96,7 +99,11 @@ uv run --no-sync python scripts/atlas_diagnose.py
 - `3b0db71` — Atlas runtime diagnostics + connector hardening (baseline).
 - `4e1e665` — placeholder-safe credential reads (rule 6), tri-state
   diagnostics, deterministic MCP reconnect test.
-- (this commit) — Money Guard: Plaid Sandbox read-only connector +
+- `5e1afca` — Money Guard: Plaid Sandbox read-only connector +
   deterministic recurring/price-change detection + `money_guard` chain path.
   Verification: 59 passed / 8 skipped (tests/atlas), ruff clean, basedpyright
   strict clean on nanobot/atlas.
+- (this commit) — Wardrobe Help: deterministic outfit/care/packing rules,
+  `garments` store kind, `wardrobe_research` chain path. Verification:
+  70 passed / 8 skipped (tests/atlas), ruff clean, basedpyright strict clean
+  on nanobot/atlas.

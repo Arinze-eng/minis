@@ -32,6 +32,48 @@ from nanobot.atlas.contracts import (
 from nanobot.atlas.policy import ConsentState, redact_audit_metadata
 
 
+def _wardrobe_evidence(chain: "AtlasChain", connector: Any) -> ConnectorResult:
+    """Build wardrobe evidence deterministically from user-entered garments.
+
+    No external API and no model involvement here: the constraint parse and
+    the outfit pick are pure functions (see ``nanobot.atlas.wardrobe``), and
+    the result is one evidence item carrying the typed outfit plan.
+    """
+    from nanobot.atlas.wardrobe import parse_constraints, recommend_outfit
+
+    user_id = chain.current_user_id or ""
+    garments = connector.list_garments(user_id)
+    constraint = parse_constraints(chain.input_query)
+    plan = recommend_outfit(garments, user_id, constraint)
+    by_id = {g.garment_id: g for g in garments}
+    parts = [
+        f"{category}: {by_id[garment_id].name}"
+        for category, garment_id in plan.slots.items()
+        if garment_id in by_id
+    ]
+    if parts:
+        content = "Outfit plan (from your garments) — " + "; ".join(parts)
+    else:
+        content = "No suitable outfit found from your garment records."
+    for note in plan.notes:
+        content += f" ({note})"
+    content += ". Nothing was purchased; research needs your explicit authorization."
+    return ConnectorResult(
+        connector="wardrobe_store",
+        status=ConnectorStatus.OK,
+        items=[
+            EvidenceItem(
+                source="wardrobe_store",
+                kind="text",
+                payload=plan.model_dump(mode="json"),
+                content=content[:4000],
+                freshness_seconds=3600,
+                uncertainty=0.0,
+            )
+        ],
+    )
+
+
 class AtlasChainError(RuntimeError):
     """Bounded chain failure with a machine-readable reason code."""
 
@@ -153,6 +195,8 @@ def _build_connector_tool(chain: "AtlasChain", connector: Any, scenario: str) ->
             result: ConnectorResult = await connector.list_tasks(chain.connector_ctx)
         elif scenario == "money_guard":
             result = await connector.list_transactions(chain.connector_ctx)
+        elif scenario == "wardrobe_research":
+            result = _wardrobe_evidence(chain, connector)
         else:
             result = await connector.search_products(
                 chain.connector_ctx, (query or chain.input_query)[:400], limit=5
@@ -200,7 +244,7 @@ class AtlasChain:
 
         capability = (
             ConnectorCapability.READ_USER_DATA
-            if ctx_input.scenario in ("task_start", "money_guard")
+            if ctx_input.scenario in ("task_start", "money_guard", "wardrobe_research")
             else ConnectorCapability.READ_PUBLIC_DATA
         )
         if self._consent is None or self._model_handle is None:

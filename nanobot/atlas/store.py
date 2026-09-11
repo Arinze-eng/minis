@@ -26,7 +26,7 @@ import threading
 import uuid
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 from nanobot.atlas.contracts import (
     ApprovalRequest,
@@ -36,9 +36,11 @@ from nanobot.atlas.contracts import (
     Recommendation,
     VerifiedOutcome,
 )
+from nanobot.atlas.wardrobe import GarmentRecord
 
 RecordKind = Literal[
-    "problems", "evidence", "recommendations", "drafts", "approvals", "outcomes"
+    "problems", "evidence", "recommendations", "drafts", "approvals", "outcomes",
+    "garments",
 ]
 
 # Records persisted for the four proposed demo scenarios (money guard, task
@@ -50,6 +52,7 @@ _RECORD_KINDS: tuple[RecordKind, ...] = (
     "drafts",
     "approvals",
     "outcomes",
+    "garments",
 )
 
 
@@ -170,7 +173,9 @@ class LocalAtlasStore:
             # Corrupt or unreadable state degrades to empty, never crashes
             # the agent; the file itself is left untouched for diagnosis.
             return []
-        return raw if isinstance(raw, list) else []
+        if isinstance(raw, list):
+            return cast("list[dict[str, Any]]", raw)
+        return []
 
     def _write(self, user_id: str, kind: RecordKind, rows: list[dict[str, Any]]) -> None:
         with _RECORDS_LOCK:
@@ -257,3 +262,12 @@ class LocalAtlasStore:
             if row.get("status") == "succeeded":
                 keys.extend(row.get("consumed_idempotency_keys") or [])
         return keys
+
+    # -- garments (Wardrobe Help; user-entered data) -----------------------------
+
+    def save_garment(self, user_id: str, garment: GarmentRecord) -> None:
+        """Store one user-entered garment (overwrites by garment_id)."""
+        self._save(user_id, "garments", "garment_id", garment)
+
+    def list_garments(self, user_id: str) -> list[GarmentRecord]:
+        return [GarmentRecord.model_validate(r) for r in self._read(user_id, "garments")]
