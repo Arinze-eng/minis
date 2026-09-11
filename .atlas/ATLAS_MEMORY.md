@@ -89,7 +89,10 @@ completed step; create a checkpoint commit when a step is stable.
 - [x] Capability declared before registration; consent re-checked per call.
 - [x] Write/execute blocked in MVP (Money Guard: no transfer/pay/dispute/
       cancel; Google Tasks writes rejected until approval-gate stage).
-- [ ] Explicit rule-by-rule table tests for every §7 rule in one place.
+- [x] Explicit rule-by-rule table tests for §7 in one place
+      (`test_policy_rules.py`: rules 1-8, 10-13 pinned against the real
+      policy layer; rule 9 structural — approvals only via server-side
+      `ApprovalRequest.from_draft`).
 
 ### Integration & delivery
 
@@ -138,6 +141,9 @@ uv run --no-sync python scripts/atlas_diagnose.py
 - `7558243` — Edge service adapter (`service.py`) + store consent
   records + `ConnectorContext.chat_id` field. Verification: 105 passed /
   8 skipped (tests/atlas), ruff clean, basedpyright strict clean.
-- (this commit) — Capability bundles (`bundles.py`) with deterministic
+- `a013e74` — Capability bundles (`bundles.py`) with deterministic
   blocked/gated invariants. Verification: 113 passed / 8 skipped
   (tests/atlas), ruff clean, basedpyright strict clean.
+- (this commit) — Consolidated §7 policy rule tests. Verification:
+  141 passed / 8 skipped (tests/atlas + resolver), ruff clean, basedpyright
+  strict clean.
