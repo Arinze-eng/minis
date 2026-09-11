@@ -25,22 +25,26 @@ import os
 import threading
 import uuid
 from contextlib import suppress
+from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 from nanobot.atlas.contracts import (
     ApprovalRequest,
+    ConsentScope,
     DraftAction,
     EvidenceItem,
     NormalizedProblem,
     Recommendation,
     VerifiedOutcome,
 )
+from nanobot.atlas.policy import ConsentState
 from nanobot.atlas.wardrobe import GarmentRecord
 
 RecordKind = Literal[
     "problems", "evidence", "recommendations", "drafts", "approvals", "outcomes",
-    "garments",
+    "garments", "consents",
 ]
 
 # Records persisted for the four proposed demo scenarios (money guard, task
@@ -53,6 +57,7 @@ _RECORD_KINDS: tuple[RecordKind, ...] = (
     "approvals",
     "outcomes",
     "garments",
+    "consents",
 )
 
 
@@ -76,6 +81,10 @@ class AtlasStore(Protocol):
     def get_approval(self, user_id: str, action_id: str) -> ApprovalRequest | None: ...
     def save_outcome(self, user_id: str, outcome: VerifiedOutcome) -> None: ...
     def consumed_idempotency_keys(self, user_id: str) -> list[str]: ...
+    def save_garment(self, user_id: str, garment: GarmentRecord) -> None: ...
+    def list_garments(self, user_id: str) -> list[GarmentRecord]: ...
+    def save_consent(self, user_id: str, consent: ConsentState) -> None: ...
+    def get_consent(self, user_id: str, connector: str) -> ConsentState | None: ...
 
 
 # Serializes all local record reads/writes. Concurrent atomic renames of the
@@ -271,3 +280,45 @@ class LocalAtlasStore:
 
     def list_garments(self, user_id: str) -> list[GarmentRecord]:
         return [GarmentRecord.model_validate(r) for r in self._read(user_id, "garments")]
+
+    # -- consents (server-stored grant records, keyed user+connector) ------------
+
+    def save_consent(self, user_id: str, consent: ConsentState) -> None:
+        """Store one consent grant keyed by user+connector (latest wins).
+
+        ``ConsentState`` is a frozen dataclass (policy-owned), so it is
+        serialized with ``dataclasses.asdict``; datetimes become ISO strings.
+        """
+        row = asdict(consent)
+        for field_name in ("granted_at", "expires_at"):
+            value = row.get(field_name)
+            if isinstance(value, datetime):
+                row[field_name] = value.isoformat()
+        with _RECORDS_LOCK:
+            rows = self._read_unlocked(user_id, "consents")
+            rows = [r for r in rows if r.get("connector") != consent.connector]
+            rows.append(row)
+            self._write_unlocked(user_id, "consents", rows)
+
+    def get_consent(self, user_id: str, connector: str) -> ConsentState | None:
+        for row in self._read(user_id, "consents"):
+            if row.get("connector") == connector:
+                try:
+                    granted = row.get("granted_at")
+                    if not isinstance(granted, str):
+                        return None
+                    expires_raw = row.get("expires_at")
+                    return ConsentState(
+                        user_id=str(row.get("user_id") or ""),
+                        scope=ConsentScope(str(row.get("scope") or "")),
+                        connector=str(row.get("connector") or ""),
+                        granted_at=datetime.fromisoformat(granted),
+                        expires_at=(
+                            datetime.fromisoformat(expires_raw)
+                            if isinstance(expires_raw, str) else None
+                        ),
+                        revoked=bool(row.get("revoked", False)),
+                    )
+                except (ValueError, KeyError):
+                    return None
+        return None

@@ -160,12 +160,16 @@ class ConnectorContext:
         consent: ConsentState | None,
         trace_id: str,
         timeout_seconds: float = 15.0,
+        chat_id: str | None = None,
     ) -> None:
         self.user_id = user_id
         self.atlas_context = atlas_context
         self.consent = consent
         self.trace_id = trace_id
         self.timeout_seconds = timeout_seconds
+        # Server-derived delivery target (e.g. Telegram chat). Never taken
+        # from model output or request payloads.
+        self.chat_id = chat_id
 
     def __repr__(self) -> str:  # pragma: no cover - trivial
         return (

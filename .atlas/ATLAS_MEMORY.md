@@ -90,8 +90,10 @@ completed step; create a checkpoint commit when a step is stable.
 
 ### Integration & delivery
 
-- [ ] Edge adapter: channel/trigger → AuthenticatedAtlasContext → chain
-      (WebUI + Telegram entry), preserving nanobot AgentLoop/AgentRunner.
+- [x] Edge adapter: `service.py` — AtlasRequest (server-verified id, explicit
+      send flag) → server-stored consent lookup → chain selector → delivery.
+      Preserves nanobot AgentLoop/AgentRunner; delivery requires explicit
+      send flag AND telegram consent AND flag-gated connector.
 - [ ] Live demo path: real connector (Google Tasks) + Groq, provider-
       unavailable fallback shown explicitly.
 - [ ] WebUI Atlas surface (cards: evidence, recommendation, approval).
@@ -127,6 +129,9 @@ uv run --no-sync python scripts/atlas_diagnose.py
   `nanobot/atlas` package now basedpyright-strict clean (fixed pre-existing
   errors in model_factory.py/stage1.py). Verification: 108 passed /
   8 skipped (tests/atlas + resolver), ruff clean.
-- (this commit) — Cross-Domain Resolution: deterministic pair allowlist
+- `e9f117c` — Cross-Domain Resolution: deterministic pair allowlist
   with two-domain cap. Verification: 100 passed / 8 skipped (tests/atlas),
   ruff clean, basedpyright strict clean on nanobot/atlas.
+- (this commit) — Edge service adapter (`service.py`) + store consent
+  records + `ConnectorContext.chat_id` field. Verification: 105 passed /
+  8 skipped (tests/atlas), ruff clean, basedpyright strict clean.
