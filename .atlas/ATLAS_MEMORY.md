@@ -61,8 +61,12 @@ completed step; create a checkpoint commit when a step is stable.
       constraint parsing is deterministic; no purchases (rule 10).
 - [ ] §2.5 Communication (remainder) — explicit send-flag gating; Gmail
       read-only evidence summary.
-- [ ] §2.6 Drip Advice — one-suggestion-at-a-time loop with cooldown, quiet
-      hours, snooze/dismiss/correction, dedup (DripAdviceItem contract exists).
+- [x] §2.6 Drip Advice — deterministic engine (`drip.py`): one-at-a-time
+      selection, quiet hours (incl. overnight windows), per-domain cooldown,
+      snooze/dismiss/correction suppression, content-bound delivery
+      idempotency keys. `DripAdviceItem` extended with cooldown + delivery
+      idempotency fields; feedback lives in user-scoped `DripFeedback`
+      records.
 - [ ] §2.7 Cross-Domain Resolution — ≤2 domains per case.
 - [ ] §2.8 Outcome Verification — verify recommendation vs approval vs
       execution vs verified result using refreshed evidence (VerifiedOutcome
@@ -103,7 +107,11 @@ uv run --no-sync python scripts/atlas_diagnose.py
   deterministic recurring/price-change detection + `money_guard` chain path.
   Verification: 59 passed / 8 skipped (tests/atlas), ruff clean, basedpyright
   strict clean on nanobot/atlas.
-- (this commit) — Wardrobe Help: deterministic outfit/care/packing rules,
+- `257c360` — Wardrobe Help: deterministic outfit/care/packing rules,
   `garments` store kind, `wardrobe_research` chain path. Verification:
   70 passed / 8 skipped (tests/atlas), ruff clean, basedpyright strict clean
+  on nanobot/atlas.
+- (this commit) — Drip Advice: deterministic delivery engine (one-at-a-time,
+  quiet hours, cooldown, snooze/dismiss/correction, dedup keys). Verification:
+  81 passed / 8 skipped (tests/atlas), ruff clean, basedpyright strict clean
   on nanobot/atlas.

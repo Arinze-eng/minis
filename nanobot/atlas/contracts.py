@@ -323,7 +323,11 @@ class VerifiedOutcome(Base):
 
 
 class DripAdviceItem(Base):
-    """Cross-domain advice item (drip scenario): resolves across domains."""
+    """Cross-domain advice item (drip scenario): resolves across domains.
+
+    Feedback state (snooze/dismiss/correction) lives in separate user-scoped
+    feedback records; this item stays a stable, reserializable suggestion.
+    """
 
     item_id: str = Field(default_factory=new_id)
     user_id: str = Field(min_length=1)
@@ -334,6 +338,10 @@ class DripAdviceItem(Base):
     )
     evidence_ids: list[str] = Field(default_factory=list)
     uncertainty: float = Field(default=0.5, ge=0.0, le=1.0)
+    # Minimum seconds between deliveries of advice in the same category.
+    cooldown_seconds: int = Field(default=86400, ge=0)
+    # Stable key binding one delivery attempt (set by the drip engine).
+    delivery_idempotency_key: str | None = Field(default=None, max_length=256)
     created_at: datetime = Field(default_factory=utc_now)
     trace: TraceMetadata = Field(default_factory=TraceMetadata)
 
