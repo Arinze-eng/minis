@@ -93,12 +93,15 @@ SPECS: dict[str, ConnectorSpec] = {
         name="gmail",
         env_vars=("ATLAS_GOOGLE_CLIENT_ID", "ATLAS_GOOGLE_CLIENT_SECRET", "ATLAS_GOOGLE_REFRESH_TOKEN"),
         flag_var="ATLAS_ENABLE_GMAIL",
-        required_scopes=("https://www.googleapis.com/auth/gmail.compose",),
-        capabilities=frozenset({ConnectorCapability.WRITE_USER_DATA}),
-        read_only=False,
+        # Directive §2.5: Gmail is READ-ONLY in the first implementation — no
+        # send, draft, delete, archive, label, or attachment download. The
+        # tasks scope is not requested for gmail; only gmail.readonly is.
+        required_scopes=("https://www.googleapis.com/auth/gmail.readonly",),
+        capabilities=frozenset({ConnectorCapability.READ_USER_DATA}),
+        read_only=True,
         mcp_mode=False,
         docs_url="https://developers.google.com/gmail/api/reference/rest",
-        smoke_hint="gmail.users.drafts.create returns a draft resource with an 'id' (never sends)",
+        smoke_hint="gmail.users.messages.list returns a message id list (read-only)",
     ),
     "plaid": ConnectorSpec(
         name="plaid",
@@ -207,8 +210,9 @@ OAUTH_NOTES: dict[str, str] = {
     ),
     "gmail": (
         "Same Google client as google_tasks; refresh token must include scope "
-        "https://www.googleapis.com/auth/gmail.compose (draft creation only — gmail.send "
-        "is intentionally NOT requested at this stage)."
+        "https://www.googleapis.com/auth/gmail.readonly (metadata + snippet "
+        "reads only — gmail.send and gmail.compose are intentionally NOT "
+        "requested; no attachment download)."
     ),
 }
 

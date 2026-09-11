@@ -445,6 +445,28 @@ class TaskItem(Base):
     trace: TraceMetadata = Field(default_factory=TraceMetadata)
 
 
+class EmailItem(Base):
+    """Normalized real email metadata (Gmail read-only evidence summary).
+
+    Metadata only, by design: no attachment download, no body fetch, and no
+    send/draft/delete/archive/label operations (directive §2.5 MVP). The
+    snippet is the provider-truncated preview string returned by the list
+    endpoint — it is never used to reconstruct a full message body.
+    """
+
+    email_id: str = Field(default_factory=new_id)  # Atlas-side id
+    user_id: str = Field(min_length=1)
+    subject: str = Field(default="(no subject)", max_length=512)
+    sender: str = Field(min_length=1, max_length=320)
+    snippet: str | None = Field(default=None, max_length=600)
+    received_at: datetime | None = None
+    labels: tuple[str, ...] = Field(default_factory=tuple, max_length=20)
+    provider_ref: ProviderRef
+    retrieved_at: datetime = Field(default_factory=utc_now)
+    freshness_seconds: int = Field(default=900, ge=1)
+    trace: TraceMetadata = Field(default_factory=TraceMetadata)
+
+
 class TransactionItem(Base):
     """Normalized read-only financial transaction (Plaid Sandbox or approved
     read-only provider). Atlas never mutates financial accounts."""

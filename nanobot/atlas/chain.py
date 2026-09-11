@@ -195,6 +195,8 @@ def _build_connector_tool(chain: "AtlasChain", connector: Any, scenario: str) ->
             result: ConnectorResult = await connector.list_tasks(chain.connector_ctx)
         elif scenario == "money_guard":
             result = await connector.list_transactions(chain.connector_ctx)
+        elif scenario == "email_summary":
+            result = await connector.list_recent_messages(chain.connector_ctx)
         elif scenario == "wardrobe_research":
             result = _wardrobe_evidence(chain, connector)
         else:
@@ -244,7 +246,9 @@ class AtlasChain:
 
         capability = (
             ConnectorCapability.READ_USER_DATA
-            if ctx_input.scenario in ("task_start", "money_guard", "wardrobe_research")
+            if ctx_input.scenario in (
+                "task_start", "money_guard", "wardrobe_research", "email_summary"
+            )
             else ConnectorCapability.READ_PUBLIC_DATA
         )
         if self._consent is None or self._model_handle is None:

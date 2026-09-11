@@ -37,6 +37,7 @@ _SCENARIO_CONNECTORS: dict[str, str] = {
     "task_start": "google_tasks",
     "money_guard": "plaid",
     "shopping_research": "serpapi",
+    "email_summary": "gmail",
     # wardrobe_research uses the store-backed adapter (no external provider).
     "wardrobe_research": "wardrobe_store",
 }
@@ -108,6 +109,10 @@ class AtlasService:
             from nanobot.atlas.connectors.google_tasks import GoogleTasksConnector
 
             return GoogleTasksConnector()
+        if name == "gmail":
+            from nanobot.atlas.connectors.gmail import GmailConnector
+
+            return GmailConnector()
         if name == "plaid":
             from nanobot.atlas.connectors.plaid import PlaidConnector
 
@@ -213,7 +218,7 @@ class AtlasService:
         scope = (
             ConsentScope.READ_PUBLIC if connector_name == "serpapi"
             else ConsentScope.READ_PROFILE
-        )
+        )  # gmail joins google_tasks/plaid/wardrobe on READ_PROFILE
         return AuthenticatedAtlasContext(
             user_id=user_id, auth_source="channel_identity", scopes=frozenset({scope})
         )

@@ -134,6 +134,28 @@ _COMMUNICATION = CapabilityBundle(
     ),
 )
 
+_EMAIL_SUMMARY = CapabilityBundle(
+    name="email_summary",
+    scenario="email_summary",
+    connector="gmail",
+    read=(
+        BundleOp("list_recent_messages", ConnectorCapability.READ_USER_DATA),
+        BundleOp("read_message_metadata", ConnectorCapability.READ_USER_DATA),
+    ),
+    draft=(
+        BundleOp("draft_evidence_summary", ConnectorCapability.READ_USER_DATA),
+        BundleOp("draft_reminder", ConnectorCapability.READ_USER_DATA),
+    ),
+    write=(  # §2.5 MVP: no send, draft, delete, archive, label, attachment download
+        BundleOp("send_email", ConnectorCapability.WRITE_USER_DATA,
+                 blocked_reason="gmail send/draft is blocked in the MVP (read-only)"),
+        BundleOp("mutate_message", ConnectorCapability.WRITE_USER_DATA,
+                 blocked_reason="delete/archive/label mutations are blocked (read-only)"),
+        BundleOp("download_attachment", ConnectorCapability.WRITE_USER_DATA,
+                 blocked_reason="attachment download is blocked (metadata only)"),
+    ),
+)
+
 _VERIFICATION = CapabilityBundle(
     name="verification",
     scenario="task_start",
@@ -156,7 +178,7 @@ _VERIFICATION = CapabilityBundle(
 BUNDLES: dict[str, CapabilityBundle] = {
     b.name: b
     for b in (_TASK_START, _MONEY_GUARD, _WARDROBE, _RESEARCH,
-              _COMMUNICATION, _VERIFICATION)
+              _EMAIL_SUMMARY, _COMMUNICATION, _VERIFICATION)
 }
 
 

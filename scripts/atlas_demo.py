@@ -141,7 +141,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Atlas live demo (read-only)")
     parser.add_argument("--scenario", default="task_start",
                         choices=("task_start", "shopping_research", "money_guard",
-                                 "wardrobe_research"))
+                                 "email_summary", "wardrobe_research"))
     parser.add_argument("--query", default="what should I do next?")
     parser.add_argument("--user", default=os.getenv("ATLAS_DEMO_USER", "local-demo-user"),
                         help="server-verified local principal (never model output)")
