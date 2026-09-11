@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from nanobot.atlas.chain import AtlasChain, AtlasChainError, ChainInput
-from nanobot.atlas.contracts import ConnectorResult, ConnectorStatus
+from nanobot.atlas.contracts import AuthenticatedAtlasContext, ConnectorResult, ConnectorStatus
 from nanobot.atlas.model_factory import create_atlas_model
 from nanobot.atlas.store import AtlasStore, LocalAtlasStore
 
@@ -40,6 +40,9 @@ _SCENARIO_CONNECTORS: dict[str, str] = {
     # wardrobe_research uses the store-backed adapter (no external provider).
     "wardrobe_research": "wardrobe_store",
 }
+
+# Public read-only view for CLIs/diagnostics.
+SCENARIO_CONNECTORS: dict[str, str] = dict(_SCENARIO_CONNECTORS)
 
 
 @dataclass(frozen=True)
@@ -139,7 +142,6 @@ class AtlasService:
                 connector=connector.name,
             )
 
-        from nanobot.atlas.contracts import AuthenticatedAtlasContext
 
         try:
             handle = create_atlas_model(env=self._env)
@@ -156,10 +158,7 @@ class AtlasService:
         # ModelHandle is frozen, so the context is attached via replace().
         handle = dataclasses.replace(
             handle,
-            atlas_context=AuthenticatedAtlasContext(
-                user_id=request.user_id,
-                auth_source="channel_identity",
-            ),
+            atlas_context=self._verified_context(request.user_id, connector.name),
         )
 
         chain = AtlasChain(connector=connector, model_handle=handle, consent=consent)
@@ -197,6 +196,27 @@ class AtlasService:
         if request.send_flag and request.chat_id and response.recommendation_text:
             response = await self._deliver(request, response)
         return response
+
+    # -- verified identity -----------------------------------------------------
+
+    @staticmethod
+    def _verified_context(user_id: str, connector_name: str) -> Any:
+        """Verified context carrying the READ scope family the connector needs.
+
+        Scopes derive ONLY from the server-side scenario→connector map — never
+        from the request payload (client-supplied authorization is ignored).
+        ``SEND_COMMUNICATION`` is intentionally excluded here: delivery consent
+        is validated separately in ``_deliver``.
+        """
+        from nanobot.atlas.contracts import ConsentScope
+
+        scope = (
+            ConsentScope.READ_PUBLIC if connector_name == "serpapi"
+            else ConsentScope.READ_PROFILE
+        )
+        return AuthenticatedAtlasContext(
+            user_id=user_id, auth_source="channel_identity", scopes=frozenset({scope})
+        )
 
     # -- delivery (§2.5: explicit flag + trusted destination) --------------------
 
@@ -240,4 +260,4 @@ class AtlasService:
         return response
 
 
-__all__ = ["AtlasRequest", "AtlasResponse", "AtlasService"]
+__all__ = ["AtlasRequest", "AtlasResponse", "AtlasService", "SCENARIO_CONNECTORS"]

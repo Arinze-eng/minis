@@ -100,12 +100,19 @@ completed step; create a checkpoint commit when a step is stable.
       send flag) → server-stored consent lookup → chain selector → delivery.
       Preserves nanobot AgentLoop/AgentRunner; delivery requires explicit
       send flag AND telegram consent AND flag-gated connector.
-- [ ] Live demo path: real connector (Google Tasks) + Groq, provider-
+- [x] Live demo path: real connector (Google Tasks) + Groq, provider-
       unavailable fallback shown explicitly.
   - [x] Credential gating prerequisites — registry accepts plain-name
         aliases and rejects placeholders; google_tasks/serpapi return
         `NOT_CONFIGURED` before any provider access when credentials are
         absent or placeholders (rule 6 enforced end-to-end).
+  - [x] Demo entry point — `scripts/atlas_demo.py` drives AtlasService
+        end-to-end (read-only, send_flag always False): consent grant helper,
+        explicit FALLBACK hints for connector_disabled/consent_missing/
+        model_unconfigured, `--json` mode, env-gated live test. Also fixed
+        the service policy gate: verified context scopes now derive
+        server-side from the scenario→connector map (READ_PUBLIC for
+        serpapi, READ_PROFILE otherwise) instead of being empty.
 - [ ] WebUI Atlas surface (cards: evidence, recommendation, approval).
 
 ## Verification commands
@@ -151,7 +158,11 @@ uv run --no-sync python scripts/atlas_diagnose.py
 - `83071e0` — Consolidated §7 policy rule tests. Verification:
   141 passed / 8 skipped (tests/atlas + resolver), ruff clean, basedpyright
   strict clean.
-- (this commit) — Demo-path credential gating: registry plain-alias
+- `1d217e7` — Demo-path credential gating: registry plain-alias
   fallback + placeholder rejection; NOT_CONFIGURED short-circuits before
   provider access in google_tasks/serpapi. Verification: 135 passed /
   8 skipped (tests/atlas), ruff clean, basedpyright strict clean.
+- (this commit) — Live demo path: `scripts/atlas_demo.py` + service
+  scope fix (server-derived verified-context scopes). Verification:
+  141 passed / 9 skipped (tests/atlas), ruff clean, basedpyright strict
+  clean on nanobot/atlas + scripts/atlas_demo.py.
