@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from nanobot.atlas.contracts import (
     ConnectorCapability,
@@ -120,10 +120,12 @@ def _wrap_tool(fn: Any) -> Any:
     here is reachable only in stubbed test runs where Agent is patched.
     """
     try:
-        from strands import tool
+        from strands import (
+            tool as strands_tool,  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        )
     except ImportError:
         return fn
-    return tool(fn)
+    return cast("Any", strands_tool(fn))
 
 
 def _build_connector_tool(chain: "AtlasChain", connector: Any, scenario: str) -> Any:
@@ -149,6 +151,8 @@ def _build_connector_tool(chain: "AtlasChain", connector: Any, scenario: str) ->
         )
         if scenario == "task_start":
             result: ConnectorResult = await connector.list_tasks(chain.connector_ctx)
+        elif scenario == "money_guard":
+            result = await connector.list_transactions(chain.connector_ctx)
         else:
             result = await connector.search_products(
                 chain.connector_ctx, (query or chain.input_query)[:400], limit=5
@@ -196,7 +200,7 @@ class AtlasChain:
 
         capability = (
             ConnectorCapability.READ_USER_DATA
-            if ctx_input.scenario == "task_start"
+            if ctx_input.scenario in ("task_start", "money_guard")
             else ConnectorCapability.READ_PUBLIC_DATA
         )
         if self._consent is None or self._model_handle is None:
@@ -259,7 +263,10 @@ class AtlasChain:
                 "You are the Atlas reasoning step. You receive normalized evidence "
                 "JSON fetched by your single tool and produce one short, concrete "
                 "recommendation. Never invent data that is not in the evidence. "
-                "Never claim an action was executed. Keep titles under 200 chars."
+                "Never claim an action was executed. For money evidence, report "
+                "merchant, amount, dates, and confidence exactly as provided and "
+                "never suggest paying, cancelling, or disputing anything. "
+                "Keep titles under 200 chars."
             ),
             structured_output_model=_recommendation_model(),
         )
@@ -291,7 +298,9 @@ class AtlasChain:
                 rationale=str(getattr(structured, "rationale", ""))[:2000],
             )
 
-        connector_result = self.last_connector_result
+        # Opaque cast (not a bare read) so the type checker cannot narrow this
+        # to None: the tool closure above assigns it at runtime.
+        connector_result = cast("ConnectorResult | None", self.last_connector_result)
         status = connector_result.status if connector_result else ConnectorStatus.UNAVAILABLE
         evidence = list(connector_result.items) if connector_result else []
         final_trace = redact_audit_metadata(
