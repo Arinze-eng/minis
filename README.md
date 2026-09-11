@@ -230,6 +230,47 @@ If nanobot worked for you, a star on GitHub is the simplest way to support the p
 - Want to run nanobot in chat apps like Telegram, Discord, WeChat or Feishu? See [Chat Apps](./docs/chat-apps.md)
 - Want Docker or Linux service deployment? See [Deployment](./docs/deployment.md)
 
+<a id="run-atlas"></a>
+
+## 🧭 Run Atlas
+
+Atlas is the consent-based everyday-agent layer built on this repository (`nanobot/atlas/`). It uses only free-tier providers (Groq `openai/gpt-oss-120b` by default) and read-only connectors. Nothing is sent externally by the demo path.
+
+**Install the Atlas dependencies**
+
+```bash
+uv sync --extra atlas --extra dev
+```
+
+**Check credentials and connector health**
+
+```bash
+uv run --no-sync python scripts/atlas_diagnose.py
+```
+
+Atlas reads credentials only from the process environment or an ignored `.env.local` file at the repository root — never paste secrets into chat, logs, or config files. Diagnostics report presence only, as `set` / `missing` / `placeholder`. The Groq key is `GROQ_API_KEY`; Google Tasks uses `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` (the `ATLAS_`-prefixed variants work too); SerpApi uses `SERPAPI_API_KEY`.
+
+**Run the live demo (read-only)**
+
+```bash
+uv run --no-sync python scripts/atlas_demo.py --grant-consent
+uv run --no-sync python scripts/atlas_demo.py --scenario task_start
+uv run --no-sync python scripts/atlas_demo.py --scenario shopping_research --json
+```
+
+The demo drives the full edge-service flow: server-verified identity → stored consent → policy gate → Strands chain (Groq) → real connector read → evidence-backed recommendation. `--grant-consent` records your local read consent for the demo user (you are the consenting user). It never sends messages anywhere; delivery requires an explicit send flag plus Telegram consent and is not part of the demo path.
+
+When a prerequisite is missing, the demo prints an explicit `FALLBACK` hint and exits non-zero instead of failing silently: `connector_disabled` (enable the `ATLAS_ENABLE_*` flag and set non-placeholder credentials), `consent_missing` (rerun with `--grant-consent`), or `model_unconfigured` (set `GROQ_API_KEY`). Atlas never falls back to a paid provider.
+
+**Run the Atlas test suite**
+
+```bash
+uv run --no-sync pytest tests/atlas -q
+uv run --no-sync ruff check nanobot/atlas tests/atlas
+```
+
+A live Strands smoke test (real agent + real tool call through Groq) is env-gated: set `ATLAS_ENABLE_GROQ_SMOKE=true` alongside `GROQ_API_KEY` to enable it.
+
 <a id="deploy-to-render"></a>
 
 ## ☁️ Deploy

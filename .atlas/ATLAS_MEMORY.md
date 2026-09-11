@@ -115,6 +115,22 @@ completed step; create a checkpoint commit when a step is stable.
         serpapi, READ_PROFILE otherwise) instead of being empty.
 - [ ] WebUI Atlas surface (cards: evidence, recommendation, approval).
 
+## Protocol step record — demo-path gating (complete)
+
+- Registry alias gating + NOT_CONFIGURED demo-path step: **complete**
+  (code in commit `1d217e7`; this record plus the README Atlas run guide
+  land in the follow-up commit).
+- Verification at step completion: **135 passed / 8 skipped** (tests/atlas),
+  **Ruff clean**, **basedpyright strict: 0 errors**.
+- Commits in this protocol window: `4e1e665`, `5e1afca`, `257c360`,
+  `c87df8e`, `3e3bd46`, `e9f117c`, `7558243`, `a013e74`, `83071e0`
+  (demo-path code fixes: `1d217e7`; live demo entry point: `9f8f040`).
+- Changed files at record time: `README.md` (Atlas run guide added),
+  `.atlas/ATLAS_MEMORY.md` (this record). No source changes pending.
+- **Next unchecked checklist item:** §2.5 Communication (remainder) —
+  Gmail read-only evidence summary (send-flag gating for Telegram
+  delivery is already implemented in `service.py`).
+
 ## Verification commands
 
 ```bash
