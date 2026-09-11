@@ -67,7 +67,11 @@ completed step; create a checkpoint commit when a step is stable.
       idempotency keys. `DripAdviceItem` extended with cooldown + delivery
       idempotency fields; feedback lives in user-scoped `DripFeedback`
       records.
-- [ ] §2.7 Cross-Domain Resolution — ≤2 domains per case.
+- [x] §2.7 Cross-Domain Resolution — deterministic pair allowlist
+      (`cross_domain.py`): exactly two distinct domains, three allowed pairs
+      (tasks+shopping, money+tasks, wardrobe+research), no-execution drafts,
+      bounded delivery card. Cap enforced at both the contract (field bound)
+      and resolver layer.
 - [x] §2.8 Outcome Verification — deterministic state machine (`outcome.py`)
       with all 15 directive states and a legal-transition table;
       verification requires refreshed post-attempt provider evidence
@@ -123,3 +127,6 @@ uv run --no-sync python scripts/atlas_diagnose.py
   `nanobot/atlas` package now basedpyright-strict clean (fixed pre-existing
   errors in model_factory.py/stage1.py). Verification: 108 passed /
   8 skipped (tests/atlas + resolver), ruff clean.
+- (this commit) — Cross-Domain Resolution: deterministic pair allowlist
+  with two-domain cap. Verification: 100 passed / 8 skipped (tests/atlas),
+  ruff clean, basedpyright strict clean on nanobot/atlas.
