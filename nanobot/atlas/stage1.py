@@ -32,7 +32,7 @@ import json
 import re
 import string
 from dataclasses import dataclass
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, cast
 
 from nanobot.atlas.contracts import (
     EvidenceItem,
@@ -60,7 +60,7 @@ _RECORDS: Final[dict[str, dict[str, str]]] = {
 }
 
 
-def atlas_stage1_lookup(key: str) -> str:
+def atlas_stage1_lookup(key: object) -> str:
     """Return the deterministic local record for ``key`` as an EvidenceItem JSON dump.
 
     Deterministic: the same key always yields the same record, no I/O, no
@@ -201,7 +201,7 @@ def _tool_metrics_summary(metrics: Any) -> dict[str, int]:
     tool_metrics = getattr(metrics, "tool_metrics", None)
     if not isinstance(tool_metrics, dict):
         return summary
-    for tm in tool_metrics.values():
+    for tm in cast("dict[str, Any]", tool_metrics).values():
         summary["tool_call_count"] += int(getattr(tm, "call_count", 0) or 0)
         summary["tool_error_count"] += int(getattr(tm, "error_count", 0) or 0)
         total = getattr(tm, "total_time", 0.0) or 0.0

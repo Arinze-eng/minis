@@ -68,9 +68,12 @@ completed step; create a checkpoint commit when a step is stable.
       idempotency fields; feedback lives in user-scoped `DripFeedback`
       records.
 - [ ] §2.7 Cross-Domain Resolution — ≤2 domains per case.
-- [ ] §2.8 Outcome Verification — verify recommendation vs approval vs
-      execution vs verified result using refreshed evidence (VerifiedOutcome
-      contract exists; flow not wired).
+- [x] §2.8 Outcome Verification — deterministic state machine (`outcome.py`)
+      with all 15 directive states and a legal-transition table;
+      verification requires refreshed post-attempt provider evidence
+      (pre-attempt evidence ⇒ `outcome_unverified`, none ⇒
+      `provider_unavailable`); attempted actions can never self-report as
+      verified.
 - [ ] Capability bundles (§5) — expose as explicit per-bundle tool sets.
 
 ### Policy tests (§7)
@@ -111,7 +114,12 @@ uv run --no-sync python scripts/atlas_diagnose.py
   `garments` store kind, `wardrobe_research` chain path. Verification:
   70 passed / 8 skipped (tests/atlas), ruff clean, basedpyright strict clean
   on nanobot/atlas.
-- (this commit) — Drip Advice: deterministic delivery engine (one-at-a-time,
+- `c87df8e` — Drip Advice: deterministic delivery engine (one-at-a-time,
   quiet hours, cooldown, snooze/dismiss/correction, dedup keys). Verification:
   81 passed / 8 skipped (tests/atlas), ruff clean, basedpyright strict clean
   on nanobot/atlas.
+- (this commit) — Outcome Verification state machine (15 states, legal-
+  transition table, refreshed-evidence-only verification). Also: whole
+  `nanobot/atlas` package now basedpyright-strict clean (fixed pre-existing
+  errors in model_factory.py/stage1.py). Verification: 108 passed /
+  8 skipped (tests/atlas + resolver), ruff clean.

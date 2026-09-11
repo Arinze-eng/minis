@@ -79,14 +79,6 @@ class ModelHandle:
         return {"provider": self.provider, "model": self.model_id}
 
 
-def _env(*names: str) -> str:
-    for name in names:
-        value = os.getenv(name, "").strip()
-        if value:
-            return value
-    return ""
-
-
 def _build_groq(api_key: str, model_id: str, timeout: float) -> Any:
     from strands.models.openai import OpenAIModel
 
@@ -115,7 +107,11 @@ def _env_lookup(env: dict[str, str] | None) -> Any:
     """Return an getenv-like lookup honoring an explicit env dict (tests)."""
     if env is None:
         return os.getenv
-    return lambda key, default="": env.get(key, default)
+
+    def lookup(key: str, default: str = "") -> str:
+        return env.get(key, default)
+
+    return lookup
 
 
 def create_atlas_model(
