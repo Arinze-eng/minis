@@ -102,6 +102,10 @@ completed step; create a checkpoint commit when a step is stable.
       send flag AND telegram consent AND flag-gated connector.
 - [ ] Live demo path: real connector (Google Tasks) + Groq, provider-
       unavailable fallback shown explicitly.
+  - [x] Credential gating prerequisites — registry accepts plain-name
+        aliases and rejects placeholders; google_tasks/serpapi return
+        `NOT_CONFIGURED` before any provider access when credentials are
+        absent or placeholders (rule 6 enforced end-to-end).
 - [ ] WebUI Atlas surface (cards: evidence, recommendation, approval).
 
 ## Verification commands
@@ -130,7 +134,7 @@ uv run --no-sync python scripts/atlas_diagnose.py
   quiet hours, cooldown, snooze/dismiss/correction, dedup keys). Verification:
   81 passed / 8 skipped (tests/atlas), ruff clean, basedpyright strict clean
   on nanobot/atlas.
-- (this commit) — Outcome Verification state machine (15 states, legal-
+- `3e3bd46` — Outcome Verification state machine (15 states, legal-
   transition table, refreshed-evidence-only verification). Also: whole
   `nanobot/atlas` package now basedpyright-strict clean (fixed pre-existing
   errors in model_factory.py/stage1.py). Verification: 108 passed /
@@ -144,6 +148,10 @@ uv run --no-sync python scripts/atlas_diagnose.py
 - `a013e74` — Capability bundles (`bundles.py`) with deterministic
   blocked/gated invariants. Verification: 113 passed / 8 skipped
   (tests/atlas), ruff clean, basedpyright strict clean.
-- (this commit) — Consolidated §7 policy rule tests. Verification:
+- `83071e0` — Consolidated §7 policy rule tests. Verification:
   141 passed / 8 skipped (tests/atlas + resolver), ruff clean, basedpyright
   strict clean.
+- (this commit) — Demo-path credential gating: registry plain-alias
+  fallback + placeholder rejection; NOT_CONFIGURED short-circuits before
+  provider access in google_tasks/serpapi. Verification: 135 passed /
+  8 skipped (tests/atlas), ruff clean, basedpyright strict clean.

@@ -28,9 +28,21 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
+from nanobot.atlas.connectors.credentials import PLACEHOLDER_VALUES
 from nanobot.atlas.contracts import ConnectorCapability
 
 ConnectorName = Literal["serpapi", "google_tasks", "gmail", "plaid", "telegram"]
+
+# Positional plain-name fallbacks for ``spec.env_vars`` — the connectors read
+# credentials through ``credentials.read_secret`` with these same aliases, so
+# gating must accept them too or a working credential set looks unconfigured.
+_CREDENTIAL_ALIASES: dict[str, tuple[str, ...]] = {
+    "serpapi": ("SERPAPI_API_KEY",),
+    "google_tasks": ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"),
+    "gmail": ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"),
+    "plaid": ("PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ACCESS_TOKEN"),
+    "telegram": (),
+}
 
 
 @dataclass(frozen=True)
@@ -117,15 +129,41 @@ def _flag_enabled(value: str | None) -> bool:
     return (value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _usable(value: str) -> bool:
+    """A credential counts as present only when non-placeholder (rule 6)."""
+    return bool(value) and value not in PLACEHOLDER_VALUES
+
+
+def _credential_candidates(name: str, var: str) -> tuple[str, ...]:
+    """Canonical env var plus its positional plain-name alias (if any)."""
+    aliases = _CREDENTIAL_ALIASES.get(name, ())
+    try:
+        index = SPECS[name].env_vars.index(var)
+    except (KeyError, ValueError):
+        return (var,)
+    alias = aliases[index] if index < len(aliases) else None
+    return (var, alias) if alias else (var,)
+
+
 def is_connector_enabled(name: str, *, env: dict[str, str] | None = None) -> bool:
-    """Feature-flag check: flag on AND all required env vars non-empty."""
+    """Feature-flag check: flag on AND all required credentials usable.
+
+    Credentials are usable when the canonical var (or its plain alias) is
+    non-empty and not a known placeholder, matching ``read_secret`` semantics.
+    """
     spec = SPECS.get(name)
     if spec is None:
         return False
     source = env if env is not None else dict(os.environ)
     if not _flag_enabled(source.get(spec.flag_var)):
         return False
-    return all(source.get(var, "").strip() for var in spec.env_vars)
+    return all(
+        any(
+            _usable(source.get(candidate, "").strip())
+            for candidate in _credential_candidates(name, var)
+        )
+        for var in spec.env_vars
+    )
 
 
 def connector_config_from_env(name: str, *, env: dict[str, str] | None = None) -> dict[str, str]:
@@ -138,7 +176,15 @@ def connector_config_from_env(name: str, *, env: dict[str, str] | None = None) -
     if spec is None:
         return {}
     source = env if env is not None else dict(os.environ)
-    return {var: source.get(var, "").strip() for var in spec.env_vars}
+    config: dict[str, str] = {}
+    for var in spec.env_vars:
+        config[var] = ""
+        for candidate in _credential_candidates(name, var):
+            value = source.get(candidate, "").strip()
+            if _usable(value):
+                config[var] = value
+                break
+    return config
 
 
 def configured_connectors(

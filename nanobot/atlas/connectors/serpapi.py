@@ -108,6 +108,12 @@ class SerpApiConnector:
             return ConnectorResult(connector=self.name, status=rate_err.status, error=rate_err)
 
         api_key = read_secret("ATLAS_SERPAPI_API_KEY", "SERPAPI_API_KEY")
+        if not api_key:
+            return ConnectorResult(
+                connector=self.name, status=ConnectorStatus.NOT_CONFIGURED,
+                error=ConnectorErrorInfo(status=ConnectorStatus.NOT_CONFIGURED,
+                                         message="ATLAS_SERPAPI_API_KEY not set"),
+            )
         params = {
             "engine": "google",
             "q": query[:400],

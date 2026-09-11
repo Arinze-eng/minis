@@ -84,7 +84,8 @@ class GoogleTasksConnector:
 
     @classmethod
     def is_configured(cls) -> bool:
-        return all(cls._credentials().values())
+        creds = cls._credentials()
+        return bool(creds) and all(creds.values())
 
     # -- quota guard ------------------------------------------------------------
 
@@ -120,7 +121,7 @@ class GoogleTasksConnector:
         if self._access_token and time.monotonic() < self._token_expires_at - 30:
             return self._access_token
         creds = self._credentials()
-        if not all(creds.values()):
+        if not creds or not all(creds.values()):
             return None
         client = self._client or httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT)
         try:
@@ -209,6 +210,13 @@ class GoogleTasksConnector:
         rate_err = self._check_local_rate_window()
         if rate_err is not None:
             return ConnectorResult(connector=self.name, status=rate_err.status, error=rate_err)
+        creds = self._credentials()
+        if not creds or not all(creds.values()):
+            return ConnectorResult(
+                connector=self.name, status=ConnectorStatus.NOT_CONFIGURED,
+                error=ConnectorErrorInfo(status=ConnectorStatus.NOT_CONFIGURED,
+                                         message="Google Tasks credentials not set"),
+            )
         token = await self._get_access_token()
         if token is None:
             return ConnectorResult(
