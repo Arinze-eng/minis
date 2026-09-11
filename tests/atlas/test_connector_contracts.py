@@ -178,9 +178,9 @@ def test_google_connectors_share_client_vars() -> None:
     assert is_connector_enabled("gmail", env=env) is True
     cfg = connector_config_from_env("gmail", env=env)
     assert cfg["ATLAS_GOOGLE_CLIENT_ID"] == "cid"
-    # Scopes declared in spec, no gmail.send requested.
+    # Scopes declared in spec: gmail.readonly only (no gmail.send requested).
     spec = SPECS["gmail"]
-    assert spec.required_scopes == ("https://www.googleapis.com/auth/gmail.compose",)
+    assert spec.required_scopes == ("https://www.googleapis.com/auth/gmail.readonly",)
 
 
 def test_telegram_reuses_existing_channel_credential() -> None:

@@ -179,7 +179,7 @@ class EvidenceItem(Base):
     source: str = Field(min_length=1, max_length=256)  # connector/provider name
     source_url: str | None = None
     # What kind of normalized payload this evidence carries.
-    kind: Literal["text", "product", "task", "transaction", "weather", "file"] = "text"
+    kind: Literal["text", "product", "task", "transaction", "weather", "file", "email"] = "text"
     # Structured normalized payload for typed kinds (e.g. a ProductOffering or
     # TaskItem dump). Kept as a dict so EvidenceItem stays one stable wire shape.
     payload: dict[str, Any] | None = None
