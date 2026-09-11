@@ -78,7 +78,10 @@ completed step; create a checkpoint commit when a step is stable.
       (pre-attempt evidence ⇒ `outcome_unverified`, none ⇒
       `provider_unavailable`); attempted actions can never self-report as
       verified.
-- [ ] Capability bundles (§5) — expose as explicit per-bundle tool sets.
+- [x] Capability bundles (§5) — explicit `bundles.py` declarations with
+      per-op capability levels; deterministic invariants (blocked ops can
+      never be approval-gated; execute ops must be blocked or gated),
+      validated at import time; deny-by-default scenario lookup.
 
 ### Policy tests (§7)
 
@@ -132,6 +135,9 @@ uv run --no-sync python scripts/atlas_diagnose.py
 - `e9f117c` — Cross-Domain Resolution: deterministic pair allowlist
   with two-domain cap. Verification: 100 passed / 8 skipped (tests/atlas),
   ruff clean, basedpyright strict clean on nanobot/atlas.
-- (this commit) — Edge service adapter (`service.py`) + store consent
+- `7558243` — Edge service adapter (`service.py`) + store consent
   records + `ConnectorContext.chat_id` field. Verification: 105 passed /
   8 skipped (tests/atlas), ruff clean, basedpyright strict clean.
+- (this commit) — Capability bundles (`bundles.py`) with deterministic
+  blocked/gated invariants. Verification: 113 passed / 8 skipped
+  (tests/atlas), ruff clean, basedpyright strict clean.
