@@ -70,12 +70,18 @@ class GoogleTasksConnector:
         import os
 
         return {
-            var: os.getenv(var, "").strip()
-            for var in (
-                "ATLAS_GOOGLE_CLIENT_ID",
-                "ATLAS_GOOGLE_CLIENT_SECRET",
-                "ATLAS_GOOGLE_REFRESH_TOKEN",
-            )
+            "ATLAS_GOOGLE_CLIENT_ID": (
+                os.getenv("ATLAS_GOOGLE_CLIENT_ID", "").strip()
+                or os.getenv("GOOGLE_CLIENT_ID", "").strip()
+            ),
+            "ATLAS_GOOGLE_CLIENT_SECRET": (
+                os.getenv("ATLAS_GOOGLE_CLIENT_SECRET", "").strip()
+                or os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+            ),
+            "ATLAS_GOOGLE_REFRESH_TOKEN": (
+                os.getenv("ATLAS_GOOGLE_REFRESH_TOKEN", "").strip()
+                or os.getenv("GOOGLE_REFRESH_TOKEN", "").strip()
+            ),
         }
 
     @classmethod

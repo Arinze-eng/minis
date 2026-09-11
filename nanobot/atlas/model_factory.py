@@ -138,7 +138,10 @@ def create_atlas_model(
                 ConnectorStatus.NOT_CONFIGURED,
                 "groq selected but GROQ_API_KEY/ATLAS_GROQ_API_KEY is not set",
             )
-        model_id = lookup("ATLAS_MODEL_ID", "") or "llama-3.3-70b-versatile"
+        # Groq removed llama-3.3-70b-versatile from its live catalog. Keep the
+        # default on the model verified by the Stage 1 smoke test; deployments
+        # can override it with ATLAS_MODEL_ID after checking the live catalog.
+        model_id = lookup("ATLAS_MODEL_ID", "") or "openai/gpt-oss-120b"
         return ModelHandle(
             provider="groq", model_id=model_id,
             model=_build_groq(api_key, model_id, timeout), budget=budget,

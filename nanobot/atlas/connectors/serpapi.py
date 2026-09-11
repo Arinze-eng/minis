@@ -59,7 +59,10 @@ class SerpApiConnector:
 
     @staticmethod
     def is_configured() -> bool:
-        return bool(os.getenv("ATLAS_SERPAPI_API_KEY", "").strip())
+        return bool(
+            os.getenv("ATLAS_SERPAPI_API_KEY", "").strip()
+            or os.getenv("SERPAPI_API_KEY", "").strip()
+        )
 
     # -- quota + consent guards -----------------------------------------------
 
@@ -107,7 +110,10 @@ class SerpApiConnector:
         if rate_err is not None:
             return ConnectorResult(connector=self.name, status=rate_err.status, error=rate_err)
 
-        api_key = os.getenv("ATLAS_SERPAPI_API_KEY", "").strip()
+        api_key = (
+            os.getenv("ATLAS_SERPAPI_API_KEY", "").strip()
+            or os.getenv("SERPAPI_API_KEY", "").strip()
+        )
         params = {
             "engine": "google",
             "q": query[:400],

@@ -81,10 +81,10 @@ def test_model_handle_describe_has_no_secrets() -> None:
     class _FakeModel:
         pass
 
-    handle = ModelHandle(provider="groq", model_id="llama-3.3-70b-versatile",
+    handle = ModelHandle(provider="groq", model_id="openai/gpt-oss-120b",
                          model=_FakeModel(), budget=ModelBudget())
     described = handle.describe()
-    assert described == {"provider": "groq", "model": "llama-3.3-70b-versatile"}
+    assert described == {"provider": "groq", "model": "openai/gpt-oss-120b"}
     assert "key" not in json.dumps(described).lower()
 
 
