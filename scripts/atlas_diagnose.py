@@ -9,8 +9,10 @@ import argparse
 import asyncio
 import importlib.metadata
 import os
+import sys
 from collections.abc import Iterable
 
+from nanobot.atlas.connectors.credentials import secret_state
 from nanobot.atlas.connectors.google_tasks import GoogleTasksConnector
 from nanobot.atlas.connectors.serpapi import SerpApiConnector
 from nanobot.atlas.connectors.telegram_delivery import TelegramDeliveryConnector
@@ -25,17 +27,6 @@ SECRET_NAMES = (
 )
 
 
-def _present(name: str) -> str:
-    value = os.getenv(name, "").strip()
-    if not value or value in {"replace_me", "your_refresh_token"}:
-        return "missing_or_placeholder"
-    return "set"
-
-
-def _first_present(*names: str) -> str:
-    return next((name for name in names if _present(name) == "set"), names[0])
-
-
 def _print_presence() -> None:
     aliases: dict[str, tuple[str, ...]] = {
         "GROQ_API_KEY": ("GROQ_API_KEY", "ATLAS_GROQ_API_KEY"),
@@ -46,7 +37,7 @@ def _print_presence() -> None:
         "TELEGRAM_BOT_TOKEN": ("TELEGRAM_BOT_TOKEN",),
     }
     for label, names in aliases.items():
-        print(f"credential.{label}={_present(_first_present(*names))}")
+        print(f"credential.{label}={secret_state(*names)}")
 
 
 def _print_versions() -> None:
@@ -56,7 +47,8 @@ def _print_versions() -> None:
         except importlib.metadata.PackageNotFoundError:
             version = "missing"
         print(f"package.{package}={version}")
-    print(f"python={os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}")
+    major, minor, micro = sys.version_info[:3]
+    print(f"python={major}.{minor}.{micro}")
 
 
 def _print_flags() -> None:

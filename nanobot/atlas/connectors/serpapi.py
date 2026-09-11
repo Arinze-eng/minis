@@ -17,13 +17,13 @@ Behavior contract:
 from __future__ import annotations
 
 import asyncio
-import os
 import time
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
 from nanobot.atlas.connectors.base import ConnectorContext
+from nanobot.atlas.connectors.credentials import read_secret
 from nanobot.atlas.contracts import (
     ConnectorCapability,
     ConnectorErrorInfo,
@@ -59,10 +59,7 @@ class SerpApiConnector:
 
     @staticmethod
     def is_configured() -> bool:
-        return bool(
-            os.getenv("ATLAS_SERPAPI_API_KEY", "").strip()
-            or os.getenv("SERPAPI_API_KEY", "").strip()
-        )
+        return bool(read_secret("ATLAS_SERPAPI_API_KEY", "SERPAPI_API_KEY"))
 
     # -- quota + consent guards -----------------------------------------------
 
@@ -110,10 +107,7 @@ class SerpApiConnector:
         if rate_err is not None:
             return ConnectorResult(connector=self.name, status=rate_err.status, error=rate_err)
 
-        api_key = (
-            os.getenv("ATLAS_SERPAPI_API_KEY", "").strip()
-            or os.getenv("SERPAPI_API_KEY", "").strip()
-        )
+        api_key = read_secret("ATLAS_SERPAPI_API_KEY", "SERPAPI_API_KEY")
         params = {
             "engine": "google",
             "q": query[:400],
@@ -180,13 +174,14 @@ class SerpApiConnector:
                     )
 
                 # Prefer shopping results (structured), fall back to organic.
-                rows: list[dict[str, Any]] = []
                 source_key = "shopping_results"
-                raw = body.get("shopping_results")
+                raw = cast("list[Any] | None", body.get("shopping_results"))
                 if not isinstance(raw, list) or not raw:
-                    raw = body.get("organic_results") or []
+                    raw = cast("list[Any]", body.get("organic_results") or [])
                     source_key = "organic_results"
-                rows = [r for r in raw if isinstance(r, dict)][: max(limit, 1) * 2]
+                rows = [
+                    cast("dict[str, Any]", r) for r in raw if isinstance(r, dict)
+                ][: max(limit, 1) * 2]
 
                 items: list[EvidenceItem] = []
                 for row in rows:

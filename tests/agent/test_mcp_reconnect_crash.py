@@ -116,6 +116,23 @@ def _make_provider(*, mcp_servers: dict) -> tuple[MCPProvider, ToolRegistry]:
     return MCPProvider(mcp_servers, registry), registry
 
 
+class _OnceDeadSession:
+    """Deterministic session-expiry trigger for the reconnect test.
+
+    The real server-side idle expiry (``session_idle_timeout``) does not fire
+    reliably for POST-only clients on every platform/SDK combination (observed
+    with mcp 1.30.0 on Windows), which made the gated reconnect test time out
+    waiting for its own event. Instead of racing a wall-clock timer, the
+    wrapper is installed after the first successful call and every subsequent
+    ``call_tool`` raises the same session-terminated error the SDK would
+    produce, driving the real reconnect code path
+    (``_refresh_session_after_termination`` -> ``connect_mcp_servers``).
+    """
+
+    async def call_tool(self, name: str, arguments: dict | None = None, **kw: object) -> object:
+        raise RuntimeError("session terminated: repro")
+
+
 @pytest.fixture(autouse=True)
 def allow_loopback_mcp_urls(monkeypatch: pytest.MonkeyPatch):
     """The repro server runs on 127.0.0.1; allow nanobot to talk to it."""
@@ -199,7 +216,11 @@ async def test_mcp_reconnect_during_shutdown_does_not_crash(
     assert isinstance(tool, MCPToolWrapper)
 
     await asyncio.create_task(tool.execute(name="first"))
-    await asyncio.sleep(_IDLE_TIMEOUT_SECONDS + _IDLE_EXPIRY_GRACE_SECONDS)
+
+    # Trigger the reconnect deterministically: every call from now on hits a
+    # session the SDK reports as terminated (see _OnceDeadSession for why this
+    # is not driven by the server-side idle timer).
+    tool._session = _OnceDeadSession()  # type: ignore[assignment]
 
     reconnect_started = asyncio.Event()
     finish_reconnect = asyncio.Event()

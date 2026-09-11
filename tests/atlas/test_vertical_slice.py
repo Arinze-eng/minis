@@ -191,11 +191,17 @@ async def test_google_tasks_429_rate_limited() -> None:
 
 
 @pytest.mark.asyncio
-async def test_google_tasks_not_configured() -> None:
+async def test_google_tasks_not_configured(monkeypatch: pytest.MonkeyPatch) -> None:
     connector = GoogleTasksConnector()
     connector._access_token = None
-    connector._credentials = staticmethod(lambda: {k: "" for k in (
-        "ATLAS_GOOGLE_CLIENT_ID", "ATLAS_GOOGLE_CLIENT_SECRET", "ATLAS_GOOGLE_REFRESH_TOKEN")})
+    # Patch at the class level: is_configured() is a classmethod, so an
+    # instance-attribute patch would be bypassed and real env vars (if any)
+    # would leak in, making the test environment-dependent.
+    monkeypatch.setattr(
+        type(connector), "_credentials",
+        staticmethod(lambda: {k: "" for k in (
+            "ATLAS_GOOGLE_CLIENT_ID", "ATLAS_GOOGLE_CLIENT_SECRET", "ATLAS_GOOGLE_REFRESH_TOKEN")}),
+    )
     result = await connector.health_check()
     assert result.status is ConnectorStatus.NOT_CONFIGURED
 

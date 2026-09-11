@@ -14,12 +14,12 @@ external side effect.
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import httpx
 
 from nanobot.atlas.connectors.base import ConnectorContext
+from nanobot.atlas.connectors.credentials import read_secret
 from nanobot.atlas.contracts import (
     ApprovalRequest,
     ConnectorCapability,
@@ -51,7 +51,9 @@ class TelegramDeliveryConnector:
 
     @staticmethod
     def _token() -> str:
-        return os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        # Placeholders are rejected here so they can never be embedded in a
+        # Telegram API URL or payload (security rule 6).
+        return read_secret("TELEGRAM_BOT_TOKEN")
 
     @classmethod
     def is_configured(cls) -> bool:

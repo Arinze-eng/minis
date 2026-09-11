@@ -19,11 +19,12 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
 from nanobot.atlas.connectors.base import ConnectorContext
+from nanobot.atlas.connectors.credentials import read_secret
 from nanobot.atlas.contracts import (
     ApprovalRequest,
     ConnectorCapability,
@@ -67,20 +68,17 @@ class GoogleTasksConnector:
 
     @staticmethod
     def _credentials() -> dict[str, str]:
-        import os
-
+        # Placeholder values are rejected at the source, so they can never
+        # reach an OAuth or API request (security rule 6).
         return {
-            "ATLAS_GOOGLE_CLIENT_ID": (
-                os.getenv("ATLAS_GOOGLE_CLIENT_ID", "").strip()
-                or os.getenv("GOOGLE_CLIENT_ID", "").strip()
+            "ATLAS_GOOGLE_CLIENT_ID": read_secret(
+                "ATLAS_GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_ID"
             ),
-            "ATLAS_GOOGLE_CLIENT_SECRET": (
-                os.getenv("ATLAS_GOOGLE_CLIENT_SECRET", "").strip()
-                or os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+            "ATLAS_GOOGLE_CLIENT_SECRET": read_secret(
+                "ATLAS_GOOGLE_CLIENT_SECRET", "GOOGLE_CLIENT_SECRET"
             ),
-            "ATLAS_GOOGLE_REFRESH_TOKEN": (
-                os.getenv("ATLAS_GOOGLE_REFRESH_TOKEN", "").strip()
-                or os.getenv("GOOGLE_REFRESH_TOKEN", "").strip()
+            "ATLAS_GOOGLE_REFRESH_TOKEN": read_secret(
+                "ATLAS_GOOGLE_REFRESH_TOKEN", "GOOGLE_REFRESH_TOKEN"
             ),
         }
 
@@ -289,7 +287,7 @@ class GoogleTasksConnector:
                         error=ConnectorErrorInfo(status=ConnectorStatus.MALFORMED,
                                                  message="non-JSON google tasks response"),
                     )
-                rows = body.get("items")
+                rows = cast("list[Any] | None", body.get("items"))
                 if not isinstance(rows, list):
                     return ConnectorResult(
                         connector=self.name, status=ConnectorStatus.MALFORMED,
@@ -303,7 +301,7 @@ class GoogleTasksConnector:
                     if not isinstance(row, dict):
                         skipped += 1
                         continue
-                    row = dict(row)
+                    row = cast("dict[str, Any]", dict(row))
                     row.setdefault("_list_id", list_id)
                     task = self._normalize_task(row, ctx.user_id)
                     if task is None:
