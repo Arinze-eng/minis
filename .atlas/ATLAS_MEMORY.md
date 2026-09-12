@@ -202,3 +202,18 @@ uv run --no-sync python scripts/atlas_diagnose.py
 3. Add Telegram inbound/callback projection using the same Atlas response contract.
 4. Add a user-scoped private image upload path only after the core WebUI/Telegram flow is working.
 5. Re-run Atlas regression and WebUI checks, then create a checkpoint commit.
+
+## Local run and demo handoff (2026-09-12)
+
+- Added `docs/atlas-run-local-demo.md` with the exact bundled WebUI/gateway mode,
+  separate Vite frontend mode, Atlas CLI proof commands, Telegram setup/pairing,
+  local testing sequence, demo-video flow, and troubleshooting.
+- Canonical first demo command: `uv run nanobot webui`, then configure the model
+  in Settings → Models and open `http://127.0.0.1:8765`.
+- Vite development mode: keep `uv run nanobot gateway` running in one terminal;
+  run `NANOBOT_API_URL=http://127.0.0.1:8765 bun run dev` from `webui/` in a
+  second terminal and open `http://127.0.0.1:5173`.
+- Telegram currently runs through the existing nanobot gateway/channel with
+  long polling and pairing-only access. The Atlas-specific service/cards are
+  not yet fully mounted into the Telegram inbound handler; do not claim that
+  direct Atlas Telegram callbacks are complete until that integration lands.
