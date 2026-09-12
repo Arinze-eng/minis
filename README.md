@@ -234,6 +234,8 @@ The submission requires a public repository, README, MIT or Apache license, arch
 - [`docs/nanobot-original-README.md`](docs/nanobot-original-README.md) — preserved original upstream README;
 - [`docs/atlas-local-quickstart.md`](docs/atlas-local-quickstart.md) — beginner-friendly local walkthrough;
 - [`docs/atlas-run-local-demo.md`](docs/atlas-run-local-demo.md) — frontend/backend, Vite, Telegram, testing, and presentation runbook;
+- [`docs/atlas-team-onboarding.md`](docs/atlas-team-onboarding.md) — zero-to-demo teammate setup, credentials, OAuth, providers, MCP, and Telegram;
+- [`docs/atlas-rebrand-handoff.md`](docs/atlas-rebrand-handoff.md) — Atlas visual identity, domain, WebUI/Telegram integration, and next-person task list;
 - [`docs/atlas-workflow.md`](docs/atlas-workflow.md) — user workflow, background behavior, image privacy, MCP, and demo plan;
 - [`docs/atlas-vercel.md`](docs/atlas-vercel.md) — Vercel tradeoffs and deployment topology;
 - [`.atlas/ATLAS_MEMORY.md`](.atlas/ATLAS_MEMORY.md) — persistent implementation checklist;

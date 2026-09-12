@@ -217,3 +217,19 @@ uv run --no-sync python scripts/atlas_diagnose.py
   long polling and pairing-only access. The Atlas-specific service/cards are
   not yet fully mounted into the Telegram inbound handler; do not claim that
   direct Atlas Telegram callbacks are complete until that integration lands.
+
+## Next-person rebrand and domain task (2026-09-12)
+
+- Added `docs/atlas-rebrand-handoff.md` as the authoritative next-stage task
+  for making the visible product feel original to Atlas: name, tagline, visual
+  system, browser copy, Atlas Inbox cards, public domain, deployment boundary,
+  Telegram Atlas callbacks, privacy, and demo polish.
+- The next teammate should not block on paid fashion APIs, production banking,
+  Gmail writes, mobile apps, public webhooks, or replacing nanobot. The priority
+  is an original Atlas surface over the verified read-only Strands vertical
+  slice.
+- Pairing approval is an administrative access action, not an LLM turn. A
+  successful `/pairing approve CODE` normally produces no “thinking” response;
+  the user must send a new ordinary message after approval. The code expires
+  after 10 minutes and must be approved from an already trusted local/WebUI
+  surface, not from the still-unapproved Telegram account itself.
