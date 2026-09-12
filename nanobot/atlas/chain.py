@@ -123,10 +123,12 @@ class ChainResult:
     evidence: list[EvidenceItem] = field(default_factory=list)
     recommendation: Recommendation | None = None
     approval_required: bool = False  # always False in this slice (no side effects)
-    provider_info: dict[str, str] = field(default_factory=dict)  # redacted model info
+    provider_info: dict[str, str] = field(default_factory=dict)  # redacted model + connector info
     connector: str = ""
     trace: TraceMetadata = field(default_factory=TraceMetadata)
     model_requests_used: int = 0
+    tool_calls: int = 0
+    provider_status: str = "ok"
 
 
 def _recommendation_model() -> type:
@@ -205,6 +207,7 @@ def _build_connector_tool(chain: "AtlasChain", connector: Any, scenario: str) ->
             )
         # Record the connector outcome for the chain result (provider truth).
         chain.last_connector_result = result
+        chain.tool_call_count += 1
         return json.dumps(
             {
                 "status": result.status.value,
@@ -217,6 +220,39 @@ def _build_connector_tool(chain: "AtlasChain", connector: Any, scenario: str) ->
         )
 
     return atlas_fetch_evidence
+
+
+def _evidence_uncertainty(evidence: list[EvidenceItem]) -> float:
+    """Mean evidence uncertainty bounded in [0, 1] (empty => 1)."""
+    if not evidence:
+        return 1.0
+    return sum(e.uncertainty for e in evidence) / len(evidence)
+
+
+def _make_recommendation(
+    *,
+    task: ChainInput,
+    structured: Any | None,
+    agent_text: str,
+    evidence_ids: list[str],
+    uncertainty: float,
+) -> Recommendation:
+    """Build a typed Recommendation from the chain step output."""
+    if structured is not None:
+        title = str(getattr(structured, "title", ""))[:200] or "Recommendation"
+        rationale = str(getattr(structured, "rationale", ""))[:2000]
+    else:
+        text = agent_text[:800]
+        title = (text.splitlines() or ["Recommendation"])[0][:200] or "Recommendation"
+        rationale = text[:2000] or "no structured output returned"
+    return Recommendation(
+        user_id=task.user_id,
+        problem_id=new_id(),
+        title=title,
+        rationale=rationale,
+        evidence_ids=evidence_ids,
+        uncertainty=uncertainty,
+    )
 
 
 class AtlasChain:
@@ -273,6 +309,7 @@ class AtlasChain:
         self.current_user_id = task.user_id
         self.input_query = task.query
         self.last_connector_result = None
+        self.tool_call_count = 0
         trace = TraceMetadata(span="chain.run", decision="allow", reason_code="start",
                               created_at=utc_now())
 
@@ -328,28 +365,22 @@ class AtlasChain:
         except Exception as exc:  # noqa: BLE001 - provider SDKs raise many types
             raise AtlasChainError("model_failed", str(exc)[:300]) from exc
 
-        structured = getattr(agent_result, "structured_output", None)
-        if structured is None:
-            # Fall back to the agent's text; still a typed Recommendation below.
-            text = str(getattr(agent_result, "message", "") or "")[:800]
-            recommendation = Recommendation(
-                user_id=task.user_id,
-                problem_id=new_id(),
-                title=(text.splitlines() or ["Recommendation"])[0][:200] or "Recommendation",
-                rationale=text[:2000] or "no structured output returned",
-            )
-        else:
-            recommendation = Recommendation(
-                user_id=task.user_id,
-                problem_id=new_id(),
-                title=str(getattr(structured, "title", ""))[:200] or "Recommendation",
-                rationale=str(getattr(structured, "rationale", ""))[:2000],
-            )
-
-        # Opaque cast (not a bare read) so the type checker cannot narrow this
-        # to None: the tool closure above assigns it at runtime.
+        # Pull the connector outcome and agent output for the recommendation.
         connector_result = cast("ConnectorResult | None", self.last_connector_result)
         status = connector_result.status if connector_result else ConnectorStatus.UNAVAILABLE
+        evidence = list(connector_result.items) if connector_result else []
+        structured: Any | None = getattr(agent_result, "structured_output", None)
+
+        evidence_ids = [e.evidence_id for e in evidence]
+        recommendation = (
+            _make_recommendation(
+                task=task,
+                structured=structured,
+                agent_text=str(getattr(agent_result, "message", "") or ""),
+                evidence_ids=evidence_ids,
+                uncertainty=_evidence_uncertainty(evidence),
+            )
+        )
         evidence = list(connector_result.items) if connector_result else []
         final_trace = redact_audit_metadata(
             span="chain.run", decision="allow", reason_code="chain_complete",
@@ -366,6 +397,8 @@ class AtlasChain:
             connector=self._connector.name,
             trace=final_trace,
             model_requests_used=budget.model_requests,
+            tool_calls=self.tool_call_count,
+            provider_status=status.value,
         )
 
 

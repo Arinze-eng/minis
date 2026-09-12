@@ -22,6 +22,8 @@ tui/node_modules/
 tui/dist/
 *.tsbuildinfo
 
+
+
 # Python bytecode & caches
 *.pyc
 *.pyo
@@ -94,6 +96,8 @@ nano.*.save
 # Environment & secrets (keep examples tracked if needed)
 .env.*
 !.env.example
+
+client_secret.json
 
 # Supabase CLI temp/link artifacts
 supabase/.temp/
