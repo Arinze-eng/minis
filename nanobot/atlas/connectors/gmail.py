@@ -143,7 +143,7 @@ class GmailConnector:
                 await client.aclose()
         if response.status_code != 200:
             return None
-        payload = response.json()
+        payload = cast("dict[str, Any]", response.json())
         token = payload.get("access_token")
         if not token:
             return None
@@ -158,8 +158,9 @@ class GmailConnector:
         for header in headers:
             if not isinstance(header, dict):
                 continue
-            if header.get("name") == name:
-                return str(header.get("value") or "").strip()
+            header_map = cast("dict[str, Any]", header)
+            if header_map.get("name") == name:
+                return str(header_map.get("value") or "").strip()
         return ""
 
     @staticmethod
@@ -177,17 +178,19 @@ class GmailConnector:
         message_id = row.get("id")
         if not message_id:
             return None
-        headers = row.get("payload", {}).get("headers") or []
-        if not isinstance(headers, list):
-            headers = []
+        payload = row.get("payload")
+        payload_map = cast("dict[str, Any]", payload) if isinstance(payload, dict) else {}
+        raw_headers = payload_map.get("headers")
+        headers = cast("list[Any]", raw_headers) if isinstance(raw_headers, list) else []
         sender = cls._header_value(headers, _FROM_HEADER) or "(unknown sender)"
         subject = cls._header_value(headers, _SUBJECT_HEADER) or "(no subject)"
         snippet = row.get("snippet")
         received = cls._parse_date(cls._header_value(headers, _DATE_HEADER))
         labels_raw = row.get("labelIds")
+        labels_list = cast("list[Any]", labels_raw) if isinstance(labels_raw, list) else []
         labels = tuple(
-            str(label) for label in labels_raw if isinstance(label, str)
-        ) if isinstance(labels_raw, list) else ()
+            str(label) for label in labels_list if isinstance(label, str)
+        )
         return EmailItem(
             user_id=user_id,
             subject=subject[:512],
@@ -271,7 +274,7 @@ class GmailConnector:
             if status_result is not None:
                 return status_result
             try:
-                body = response.json()
+                body = cast("dict[str, Any]", response.json())
             except ValueError:
                 return ConnectorResult(
                     connector=self.name, status=ConnectorStatus.MALFORMED,
@@ -289,10 +292,14 @@ class GmailConnector:
             items: list[EvidenceItem] = []
             skipped = 0
             for row in rows[:limit]:
-                if not isinstance(row, dict) or not row.get("id"):
+                if not isinstance(row, dict):
                     skipped += 1
                     continue
-                detail = await self._fetch_metadata(client, headers, str(row["id"]))
+                row_map = cast("dict[str, Any]", row)
+                if not row_map.get("id"):
+                    skipped += 1
+                    continue
+                detail = await self._fetch_metadata(client, headers, str(row_map["id"]))
                 if detail is None:
                     skipped += 1
                     continue
@@ -375,10 +382,10 @@ class GmailConnector:
         if detail_response.status_code != 200:
             return None
         try:
-            detail = detail_response.json()
+                detail = cast("dict[str, Any]", detail_response.json())
         except ValueError:
             return None
-        return detail if isinstance(detail, dict) else None
+        return detail
 
 
 __all__ = ["GmailConnector", "EmailItem"]

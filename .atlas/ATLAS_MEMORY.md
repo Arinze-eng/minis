@@ -182,3 +182,23 @@ uv run --no-sync python scripts/atlas_diagnose.py
   scope fix (server-derived verified-context scopes). Verification:
   141 passed / 9 skipped (tests/atlas), ruff clean, basedpyright strict
   clean on nanobot/atlas + scripts/atlas_demo.py.
+
+
+## Product documentation and deployment handoff (2026-09-12)
+
+- Repository synchronized to `15a4af0` from `origin/main`.
+- Preserved the previous nanobot README at `docs/nanobot-original-README.md`.
+- Replaced the root README with an Atlas-focused project README covering product scope, architecture, local setup, real-agent proof, safety, wardrobe-image boundaries, MCP, deployment, and hackathon disclosure.
+- Added `docs/atlas-workflow.md` covering the user workflow across WebUI, Telegram, background Drip Advice, MCP/skills, picture-based Wardrobe Help, and the five-minute demo.
+- Added `docs/atlas-local-quickstart.md` with beginner-friendly local commands for diagnostics, Strands proof, Atlas demo, connector smoke tests, WebUI startup, and memory updates.
+- Added `docs/atlas-vercel.md` documenting the recommended split: keep the Python nanobot/Atlas/Strands/Telegram backend on the existing container path; use Vercel only for a separate frontend or thin proxy if there is a concrete reason.
+- Added `.github/workflows/atlas-ci.yml` for credential-free Atlas tests, Ruff, BasedPyright, compilation, and tracked-secret checks.
+- Picture-based wardrobe advice is documented as a privacy-preserving next extension: private object storage, opaque user-scoped reference, explicit consent, deletion/revocation, and no sensitive attribute inference. Binary image upload is not yet wired into the WebUI.
+
+### Next product implementation priority
+
+1. Wire the existing WebUI chat/API to `AtlasService` through one shared request contract.
+2. Add Atlas Inbox/evidence/recommendation/approval cards using existing WebUI components.
+3. Add Telegram inbound/callback projection using the same Atlas response contract.
+4. Add a user-scoped private image upload path only after the core WebUI/Telegram flow is working.
+5. Re-run Atlas regression and WebUI checks, then create a checkpoint commit.
