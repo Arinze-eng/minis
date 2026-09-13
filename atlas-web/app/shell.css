@@ -1,0 +1,149 @@
+/* Atlas app shell: adaptive nav (dock / tab bar), skip link, offline banner. */
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: var(--space-4);
+  z-index: 100;
+  background: var(--atlas-graphite);
+  color: var(--atlas-paper);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  transition: top var(--dur-fast) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  top: var(--space-2);
+}
+
+/* ---------- Desktop dock ---------- */
+
+.dock {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .dock {
+    position: fixed;
+    inset-block: 0;
+    left: 0;
+    width: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-6) 0;
+    background: var(--atlas-graphite);
+    z-index: 40;
+  }
+
+  .dock-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .dock-item {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-control);
+    color: rgba(245, 242, 234, 0.66);
+    transition: background-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .dock-item:hover {
+    background: rgba(245, 242, 234, 0.1);
+    color: var(--atlas-paper);
+  }
+
+  .dock-item-active,
+  .dock-item-active:hover {
+    background: var(--atlas-lime);
+    color: var(--atlas-graphite);
+  }
+
+  .dock-brand {
+    display: grid;
+    place-items: center;
+  }
+
+  .app-content {
+    margin-left: 72px;
+  }
+}
+
+/* ---------- Mobile bottom tab bar ---------- */
+
+.tabbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  padding: var(--space-1) var(--space-2)
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-1));
+  background: var(--atlas-graphite);
+  border-top: 1px solid rgba(245, 242, 234, 0.12);
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 52px;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-control);
+  color: rgba(245, 242, 234, 0.66);
+  text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.tab-item:active {
+  transform: scale(0.96);
+}
+
+.tab-item-active {
+  color: var(--atlas-lime);
+}
+
+.tab-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+}
+
+@media (min-width: 768px) {
+  .tabbar {
+    display: none;
+  }
+}
+
+.app-content {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+}
+
+@media (min-width: 768px) {
+  .app-content {
+    padding-bottom: 0;
+  }
+}
+
+/* Offline banner */
+.network-banner {
+  margin: var(--space-4) var(--space-6) 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  background: color-mix(in srgb, var(--atlas-amber) 14%, transparent);
+  border-radius: var(--radius-control);
+  font-size: 0.88rem;
+}

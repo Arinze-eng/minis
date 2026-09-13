@@ -1,0 +1,217 @@
+/* Add garment / capture flow. */
+
+.add-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-12);
+}
+
+.crumb a {
+  color: var(--atlas-lilac-deep);
+  text-decoration: none;
+}
+
+.add-page h1 {
+  font-size: 1.7rem;
+  margin: var(--space-2) 0 var(--space-2);
+}
+
+.add-sub {
+  color: var(--atlas-ink-soft);
+  margin: 0 0 var(--space-4);
+}
+
+.demo-note {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.85rem;
+  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  border-radius: var(--radius-control);
+}
+
+.capture-status {
+  font-weight: 600;
+  min-height: 1.5em;
+}
+
+.capture-pick {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.capture-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-12) var(--space-6);
+  border: 1.5px dashed var(--atlas-line);
+  border-radius: var(--radius-feature);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.capture-drop:hover {
+  border-color: var(--atlas-lilac);
+  background: color-mix(in srgb, var(--atlas-lilac) 7%, transparent);
+}
+
+.capture-hint {
+  font-size: 0.82rem;
+  color: var(--atlas-ink-soft);
+  max-width: 42ch;
+}
+
+.visually-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.capture-error {
+  color: var(--atlas-red);
+  font-size: 0.92rem;
+}
+
+.link-button {
+  background: none;
+  border: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.capture-preview img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--atlas-line);
+  background: var(--atlas-paper-raised);
+}
+
+.capture-preview-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.btn-primary,
+.btn-secondary {
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.btn-primary {
+  background: var(--atlas-lime);
+  color: var(--atlas-graphite);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--atlas-ink);
+  border-color: var(--atlas-line);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Tag review */
+.tag-review {
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--radius-card);
+  background: var(--atlas-paper-raised);
+  padding: var(--space-6);
+}
+
+.tag-review h2 {
+  font-size: 1.1rem;
+}
+
+.tag-review-note {
+  color: var(--atlas-ink-soft);
+  font-size: 0.9rem;
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.tag-field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tag-field input,
+.tag-field select {
+  font: inherit;
+  font-weight: 400;
+  padding: 8px 10px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--radius-control);
+  background: var(--atlas-paper);
+  color: var(--atlas-ink);
+}
+
+.confidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.confidence-pill {
+  font-size: 0.75rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--atlas-lilac) 55%, transparent);
+  color: var(--atlas-lilac-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.tag-review-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.tag-review-footnote {
+  margin: var(--space-4) 0 0;
+  font-size: 0.82rem;
+  color: var(--atlas-ink-soft);
+}
+
+.capture-resolved {
+  border: 1px solid color-mix(in srgb, var(--atlas-lime) 55%, transparent);
+  background: color-mix(in srgb, var(--atlas-lime) 12%, transparent);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+}
+
+.capture-resolved p {
+  margin: 0 0 var(--space-3);
+}

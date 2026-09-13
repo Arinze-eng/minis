@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { demoInbox } from "./demoData";
+import { demoInbox } from "@/lib/demo/inbox";
 import type { SignalCard } from "@/lib/atlas";
+import { CommandStrip } from "./CommandStrip";
 import "./inbox.css";
 
 export const metadata: Metadata = {
@@ -83,6 +84,7 @@ export default function InboxPage() {
         <p className="inbox-sub">
           The next moves Atlas can prepare — each one carries its evidence.
         </p>
+        <CommandStrip />
         <div className="signal-list">
           {payload.cards.map((card) => (
             <SignalCardView key={card.id} card={card} />

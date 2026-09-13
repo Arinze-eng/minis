@@ -131,6 +131,41 @@ completed step; create a checkpoint commit when a step is stable.
   Gmail read-only evidence summary (send-flag gating for Telegram
   delivery is already implemented in `service.py`).
 
+## Protocol step record — Phase 2 wardrobe + audit surfaces (complete)
+
+- Direction decision (user-approved): keep Atlas identity + warm-paper system
+  and Neon/Cloudinary direction; ADOPT the second prompt's screen concepts
+  (command center, closet studio, scan terminal, cancel guide, privacy hub)
+  as Atlas surfaces. Try-on/person-image simulation explicitly skipped (no
+  consent infra in this release; `/looks` states this). No Clerk/Convex.
+- Routes reorganized into `app/(app)/` group with adaptive shell: desktop
+  dock + mobile bottom tab bar (safe-area padded), skip link, offline banner
+  (`NetworkBanner`), aria-labelled icon-only nav (`AppNav`).
+- Domain libs (pure + Vitest-pinned): `lib/wardrobe.ts` (provenance types,
+  CPW that never fabricates, filters, upload state machine + validation
+  bounds), `lib/audit.ts` (findings, annualization with unknown-cadence guard,
+  scan state machine + percent), `lib/format.ts` (Intl money). Demo fixtures:
+  `lib/demo/{inbox,wardrobe,audit}.ts`.
+- New surfaces: `/wardrobe` (URL-stateful filter rail, garment cards with
+  CPW pills, needs-confirmation queue), `/wardrobe/add` (capture flow: file
+  picker w/ camera hint, local preview + retake, upload state machine,
+  tag-review with model-confidence pills; user edits recorded as
+  user-confirmed provenance), `/looks` (vibe composer, deterministic planner
+  over CONFIRMED garments only, no-try-on note), `/money` (annualized summary
+  w/ cadence assumption, evidence drawers w/ sanitized snippets, manual
+  cancel guide), `/sources` (gmail.readonly permissions banner, demo scan
+  terminal w/ radial gauge + counters + aria-live log), `/settings/privacy`
+  (disconnect/export/wipe with two-step confirms + aria-live status), inbox
+  command strip (annualized cost, avg CPW, owned value, urgent ribbon — all
+  carry assumptions, no vanity metrics).
+- Verification: 27 vitest tests green, tsc clean, next build clean
+  (14 routes), start smoke: all routes 200 incl. filters/query/review
+  params, 404 for unknown signal, content assertions passed. One corrupted
+  `.next` (rebuild-while-serving) caused transient 500s; resolved by clean
+  rebuild — no code issue.
+- Next: Postgres migration + server adapter (Phase 2 backend half), then
+  signals layer.
+
 ## Protocol step record — Phase 1 brand + shell (complete)
 
 - New `atlas-web/` Next.js 15 App Router app (bun; port 4300): landing page

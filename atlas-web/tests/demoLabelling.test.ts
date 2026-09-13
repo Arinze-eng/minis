@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { demoInbox } from "@/app/inbox/demoData";
+import { demoInbox } from "@/lib/demo/inbox";
 
 /**
  * Pins the demo-labelling contract (product contract §7):

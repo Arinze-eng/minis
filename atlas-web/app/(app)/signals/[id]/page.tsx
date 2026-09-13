@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { demoInbox } from "@/app/inbox/demoData";
+import { demoInbox } from "@/lib/demo/inbox";
 import type { SignalCard } from "@/lib/atlas";
 import "./signal.css";
 
