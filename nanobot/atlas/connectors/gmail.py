@@ -158,8 +158,9 @@ class GmailConnector:
         for header in headers:
             if not isinstance(header, dict):
                 continue
-            if header.get("name") == name:
-                return str(header.get("value") or "").strip()
+            entry = cast("dict[str, Any]", header)
+            if entry.get("name") == name:
+                return str(entry.get("value") or "").strip()
         return ""
 
     @staticmethod
@@ -177,17 +178,23 @@ class GmailConnector:
         message_id = row.get("id")
         if not message_id:
             return None
-        headers = row.get("payload", {}).get("headers") or []
-        if not isinstance(headers, list):
-            headers = []
+        payload_row = row.get("payload")
+        headers_raw: Any = (
+            cast("dict[str, Any]", payload_row).get("headers")
+            if isinstance(payload_row, dict) else None
+        ) or []
+        headers: list[Any] = (
+            cast("list[Any]", headers_raw) if isinstance(headers_raw, list) else []
+        )
         sender = cls._header_value(headers, _FROM_HEADER) or "(unknown sender)"
         subject = cls._header_value(headers, _SUBJECT_HEADER) or "(no subject)"
         snippet = row.get("snippet")
         received = cls._parse_date(cls._header_value(headers, _DATE_HEADER))
         labels_raw = row.get("labelIds")
+        labels_seq = cast("list[Any]", labels_raw) if isinstance(labels_raw, list) else ()
         labels = tuple(
-            str(label) for label in labels_raw if isinstance(label, str)
-        ) if isinstance(labels_raw, list) else ()
+            str(label) for label in labels_seq if isinstance(label, str)
+        )
         return EmailItem(
             user_id=user_id,
             subject=subject[:512],
@@ -289,10 +296,16 @@ class GmailConnector:
             items: list[EvidenceItem] = []
             skipped = 0
             for row in rows[:limit]:
-                if not isinstance(row, dict) or not row.get("id"):
+                if not isinstance(row, dict):
                     skipped += 1
                     continue
-                detail = await self._fetch_metadata(client, headers, str(row["id"]))
+                typed_row = cast("dict[str, Any]", row)
+                if not typed_row.get("id"):
+                    skipped += 1
+                    continue
+                detail = await self._fetch_metadata(
+                    client, headers, str(typed_row["id"])
+                )
                 if detail is None:
                     skipped += 1
                     continue
@@ -375,10 +388,12 @@ class GmailConnector:
         if detail_response.status_code != 200:
             return None
         try:
-            detail = detail_response.json()
+            detail: Any = detail_response.json()
         except ValueError:
             return None
-        return detail if isinstance(detail, dict) else None
+        if not isinstance(detail, dict):
+            return None
+        return cast("dict[str, Any]", detail)
 
 
 __all__ = ["GmailConnector", "EmailItem"]

@@ -166,8 +166,16 @@ def _live_enabled() -> bool:
     not _live_enabled(),
     reason="live demo skipped: requires ATLAS_ENABLE_GOOGLE_TASKS=true, Google credentials, and GROQ_API_KEY",
 )
-async def test_live_demo_real_connector_and_model() -> None:
-    """Real Google Tasks read through the full service flow with Groq."""
+async def test_live_demo_real_connector_and_model(tmp_path: Any) -> None:
+    """Real Google Tasks read through the full service flow with Groq.
+
+    Uses an isolated store with explicitly granted consent so the live read
+    goes through the full policy gate (consent_missing would otherwise be the
+    expected — and correct — denial for an unconsented test principal).
+    """
     demo = _load_demo()
-    code = await demo.run("task_start", USER, "what should I do next?", as_json=True)
+    store = _isolated_store(tmp_path)
+    demo._grant_consent(USER, "google_tasks", store)
+    code = await demo.run("task_start", USER, "what should I do next?",
+                          as_json=True, store=store)
     assert code == 0

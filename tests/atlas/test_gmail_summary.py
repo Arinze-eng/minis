@@ -125,6 +125,10 @@ async def test_missing_credentials_short_circuit(monkeypatch: pytest.MonkeyPatch
 
 
 async def test_placeholder_credentials_never_reach_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Hermetic: canonical names must not leak in from the ambient environment.
+    for name in ("ATLAS_GOOGLE_CLIENT_ID", "ATLAS_GOOGLE_CLIENT_SECRET",
+                 "ATLAS_GOOGLE_REFRESH_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "replace_me")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "your_client_secret")
     monkeypatch.setenv("GOOGLE_REFRESH_TOKEN", "your_refresh_token")
@@ -266,6 +270,12 @@ async def test_service_end_to_end_not_configured(monkeypatch: pytest.MonkeyPatch
     """Flag on, placeholders only -> NOT_CONFIGURED without any provider call."""
     from nanobot.atlas.store import LocalAtlasStore
 
+    # Hermetic: canonical names must not leak in from the ambient environment
+    # (otherwise a real OAuth token exchange could be attempted from a test).
+    for name in ("ATLAS_GOOGLE_CLIENT_ID", "ATLAS_GOOGLE_CLIENT_SECRET",
+                 "ATLAS_GOOGLE_REFRESH_TOKEN", "GOOGLE_CLIENT_ID",
+                 "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("ATLAS_ENABLE_GMAIL", "1")
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "replace_me")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "your_client_secret")

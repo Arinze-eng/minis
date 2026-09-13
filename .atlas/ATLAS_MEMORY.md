@@ -131,6 +131,31 @@ completed step; create a checkpoint commit when a step is stable.
   Gmail read-only evidence summary (send-flag gating for Telegram
   delivery is already implemented in `service.py`).
 
+## Protocol step record — Phase 0 baseline + decision records (complete)
+
+- Team `dripadvisor` application (from `drip.zip`) inspected in full:
+  contracts, routers (all `publicProcedure`, owner-0 fallback), store with
+  in-memory fallback + unconditional-id delete on the Drizzle path, Neon raw
+  SQL (owner-scoped delete correct there), Muse/MuseImage server model calls,
+  weather snapshot, MySQL Drizzle schema. Findings + dispositions recorded in
+  `docs/atlas-threat-model.md`; full matrix in `docs/atlas-feature-matrix.md`;
+  decisions in `docs/atlas-integration-decision.md`; product rules in
+  `docs/atlas-product-contract.md`; visual direction in
+  `docs/atlas-design-system.md` + `brand-spec.md`.
+- Baseline repairs (no behavior change):
+  1. Test hermeticity: five placeholder-env tests cleared canonical
+     `ATLAS_GOOGLE_*`/`ATLAS_SERPAPI_API_KEY` names first — real ambient
+     credentials previously won alias priority (one test could attempt a real
+     OAuth POST; none did in CI where creds are absent).
+  2. Live demo test now grants consent in an isolated store instead of
+     failing on the correct `consent_missing` denial.
+  3. `gmail.py` strict-typing casts over untyped provider JSON (0 basedpyright
+     errors on `nanobot/atlas`).
+- Verification at step completion: **158 passed / 6 skipped** (tests/atlas),
+  ruff clean, basedpyright strict: 0 errors.
+- Phase 1 entry criteria: product contract + threat model + feature matrix
+  acknowledged; Next.js shell build begins with the route tree and demo mode.
+
 ## Verification commands
 
 ```bash

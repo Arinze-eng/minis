@@ -132,6 +132,10 @@ async def test_google_tasks_placeholder_env_never_reaches_oauth(
     monkeypatch: Any,
 ) -> None:
     """Placeholder env values resolve to unusable creds via read_secret (rule 6)."""
+    # Hermetic: canonical names must not leak in from the ambient environment.
+    for name in ("ATLAS_GOOGLE_CLIENT_ID", "ATLAS_GOOGLE_CLIENT_SECRET",
+                 "ATLAS_GOOGLE_REFRESH_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "replace_me")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "your_client_secret")
     monkeypatch.setenv("GOOGLE_REFRESH_TOKEN", "your_refresh_token")
@@ -151,6 +155,8 @@ async def test_serpapi_missing_key_short_circuit(monkeypatch: Any) -> None:
 
 
 async def test_serpapi_placeholder_env_never_reaches_api(monkeypatch: Any) -> None:
+    # Hermetic: the canonical name must not leak in from the ambient environment.
+    monkeypatch.delenv("ATLAS_SERPAPI_API_KEY", raising=False)
     monkeypatch.setenv("SERPAPI_API_KEY", "your_api_key")
     connector = SerpApiConnector(client=forbidden_transport())
     result = await connector.search_products(

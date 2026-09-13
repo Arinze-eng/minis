@@ -13,6 +13,8 @@ def test_presence_does_not_print_secret(monkeypatch, capsys) -> None:
 
 
 def test_placeholder_is_reported_as_placeholder(monkeypatch, capsys) -> None:
+    # Hermetic: the canonical alias must not leak in from the ambient environment.
+    monkeypatch.delenv("ATLAS_GOOGLE_REFRESH_TOKEN", raising=False)
     monkeypatch.setenv("GOOGLE_REFRESH_TOKEN", "your_refresh_token")
     atlas_diagnose._print_presence()
     output = capsys.readouterr().out
