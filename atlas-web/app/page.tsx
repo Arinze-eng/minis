@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RouteMark } from "@/components/RouteMark";
+import { Reveal } from "@/components/Reveal";
 import "./landing.css";
 
 const LOOP = [
@@ -105,10 +106,11 @@ export default function LandingPage() {
       </section>
 
       {/* ---------- Dual-engine preview (CSS-only interactivity) ---------- */}
-      <section className="engines" aria-labelledby="engines-h">
-        <h2 id="engines-h" className="section-title">
-          Two engines, one calm surface
-        </h2>
+      <Reveal>
+        <section className="engines" aria-labelledby="engines-h">
+          <h2 id="engines-h" className="section-title">
+            Two engines, one calm surface
+          </h2>
         <div className="engine-tabs">
           {/* Wardrobe engine panel */}
           <input
@@ -185,36 +187,40 @@ export default function LandingPage() {
             </article>
           </div>
         </div>
-      </section>
+        </section>
+      </Reveal>
 
       {/* ---------- Daily loop ---------- */}
-      <section className="loop" aria-labelledby="loop-h">
-        <h2 id="loop-h" className="section-title">
-          The daily loop runs itself
-        </h2>
-        <ol className="loop-timeline">
-          {LOOP.map((step) => (
-            <li key={step.time} className={`loop-step loop-${step.accent}`}>
-              <span className="loop-time">{step.time}</span>
-              <span className="loop-node" aria-hidden="true" />
-              <div className="loop-body">
-                <h3>{step.title}</h3>
-                <p>{step.detail}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <p className="loop-footnote">
-          Sentinel status stays visible in the app header — you always know
-          what the agent is watching.
-        </p>
-      </section>
+      <Reveal>
+        <section className="loop" aria-labelledby="loop-h">
+          <h2 id="loop-h" className="section-title">
+            The daily loop runs itself
+          </h2>
+          <ol className="loop-timeline">
+            {LOOP.map((step) => (
+              <li key={step.time} className={`loop-step loop-${step.accent}`}>
+                <span className="loop-time">{step.time}</span>
+                <span className="loop-node" aria-hidden="true" />
+                <div className="loop-body">
+                  <h3>{step.title}</h3>
+                  <p>{step.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="loop-footnote">
+            Sentinel status stays visible in the app header — you always know
+            what the agent is watching.
+          </p>
+        </section>
+      </Reveal>
 
       {/* ---------- Privacy matrix ---------- */}
-      <section className="privacy" aria-labelledby="privacy-h">
-        <h2 id="privacy-h" className="section-title">
-          The zero-mutation guarantee
-        </h2>
+      <Reveal>
+        <section className="privacy" aria-labelledby="privacy-h">
+          <h2 id="privacy-h" className="section-title">
+            The zero-mutation guarantee
+          </h2>
         <div className="privacy-grid">
           {PRIVACY_MATRIX.map(({ icon: Icon, title, detail }) => (
             <article key={title} className="privacy-cell">
@@ -228,7 +234,8 @@ export default function LandingPage() {
           Deterministic policy code enforces every boundary above — the model
           never authorizes anything.
         </p>
-      </section>
+        </section>
+      </Reveal>
 
       {/* ---------- Final CTA ---------- */}
       <section className="land-final">

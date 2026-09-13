@@ -11,9 +11,9 @@ export default function PrivacyPage() {
     <main id="main" className="privacy-page">
       <h1>Privacy &amp; data</h1>
       <p className="privacy-sub">
-        Every control here is yours. In the connected flow each action is
-        enforced server-side, logged in the audit trail, and confirmed before
-        it runs.
+        Every control here is yours. Each action is enforced server-side,
+        scoped to your account, logged in the audit trail, and confirmed
+        before it runs.
       </p>
 
       <PrivacyControls />

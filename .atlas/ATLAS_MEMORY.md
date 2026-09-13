@@ -164,6 +164,42 @@ completed step; create a checkpoint commit when a step is stable.
   privacy matrix/Sentinel/briefing.
 - Next: server adapter + Postgres migration (backend half of Phase 2).
 
+## Protocol step record — Phases 2–4 integration: real store + night redesign + motion (complete)
+
+- Backend integration (real, not demo): committed Postgres migration applied
+  at boot via a journal (`schema_migrations`, single-flight, race-guarded
+  insert); PgStore (Neon-compatible) when DATABASE_URL is set, labelled
+  local-file store otherwise. Identity: middleware-minted HMAC-signed session
+  cookie (WebCrypto, edge-safe in `sessionCrypto.ts`); RSC pages are
+  read-only consumers; route handlers mint via `requirePrincipal`. Fixes the
+  "Cookies can only be modified in a Server Action" RSC 500.
+- API (principal-scoped + audited): wardrobe CRUD, idempotent wear log,
+  signals derive/list/state (snooze/dismiss/pause with until), money state,
+  notifications read, privacy export + confirm-gated wipe.
+- Signal engine (Phase 3) + first cross-domain signal (Phase 4): renewal,
+  price-change, unworn, CPW-milestone, wardrobe×money per-wear cost — all
+  dedup-key idempotent.
+- E2E verified against the live Neon database: create → wear (repeat key
+  returns duplicate:true) → cross-domain signal → snooze → notifications →
+  export → cross-principal isolation (fresh session sees zero) → wipe
+  confirm-gate 400 → wipe → empty. Fixed a PK-collision bug in notification
+  seeding (ids are now fresh; dedupKey owns idempotency).
+- Night mode redesigned: single-point `light-dark()` token palette (zero
+  duplicated blocks, static fallback for older browsers), warm-basalt night
+  family harmonized with the paper brand (never gray/flat black), parchment
+  ink, AA-checked muted/on-* pairs; themeColor + manifest updated.
+- Motion: motion/react springs (stiffness 300 / damping 30) — drawer slide
+  + stagger + focus management, garment/finding card entrances + hover,
+  briefing status, button press scale, landing `Reveal` client leaf (RSC
+  preserved). Everything collapses under prefers-reduced-motion.
+- Privacy hub no longer demo: export downloads the real principal-scoped
+  snapshot; wipe really deletes after two-step confirm; disconnect is
+  honestly disabled until a source connection exists.
+- Verification: 41 vitest green, tsc clean, build clean (0 errors),
+  production smoke 200 across all 8 routes + API workflow above.
+- Next: Telegram delivery gates (Phase 5), Cloudinary signed uploads, real
+  auth provider swap-in point documented in sessionCrypto/identity.
+
 ## Protocol step record — Phase 2 wardrobe + audit surfaces (complete)
 
 - Direction decision (user-approved): keep Atlas identity + warm-paper system

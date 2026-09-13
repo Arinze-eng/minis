@@ -1,67 +1,131 @@
 /* ============================================================================
-   Atlas theme engine — dual-theme semantic tokens.
+   Atlas theme engine — single-point dual-theme tokens.
 
-   Two palettes from the design contract:
-   - Light "Atelier Editorial": warm porcelain, white cards, charcoal ink.
-   - Dark  "Atlas Night": graphite basalt, low-sheen slate, parchment text.
+   One palette, two modes, zero duplication: every color is declared once via
+   light-dark() (with a static light fallback for browsers without support).
+   The pre-hydration ThemeScript sets data-theme so the mode is correct at
+   first paint; light-dark() resolves against the used color-scheme.
+
+   - Light "Atelier Editorial": warm porcelain paper, white cards, charcoal ink.
+   - Dark  "Atlas Night": warm basalt — harmonized with the paper family, not
+     a gray void. Parchment ink, warm amber chrome accents.
 
    Rules:
-   - Components consume ONLY semantic tokens (--color-*, --shadow-*, etc.);
-     raw hex values never appear outside this file (brand marks exempt).
-   - Functional accents adapt per theme (indigo/amber/emerald).
-   - Motion: 150ms color transitions; `prefers-reduced-motion` collapses all.
+   - Components consume ONLY semantic tokens (--color-*, --shadow-*); raw hex
+     values never appear outside this file (brand marks exempt).
+   - Contrast: every on-* token is paired with its background (WCAG AA); muted
+     ink is >= 4.5:1 on both surfaces.
+   - Motion: 150ms color transitions; prefers-reduced-motion collapses all.
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* --- Atelier Editorial (light) --- */
+  /* Static light fallback (used only where light-dark() is unsupported). */
   --color-bg: #f9f9fb;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-chrome: #14161c; /* nav dock/tab bar (dark in both themes) */
+  --color-chrome: #14161c;
   --color-chrome-raised: #1d2029;
-  --color-on-chrome: #f2f3f5;
-  --color-on-chrome-muted: rgba(242, 243, 245, 0.64);
+  --color-on-chrome: #f4f2ed;
+  --color-on-chrome-muted: rgba(244, 242, 237, 0.64);
   --color-chrome-line: rgba(255, 255, 255, 0.09);
-
   --color-ink: #121316;
   --color-ink-muted: #5e6472;
   --color-line: rgba(0, 0, 0, 0.06);
   --color-line-strong: rgba(0, 0, 0, 0.12);
-
-  --color-accent: #3b82f6; /* indigo cobalt — active / wardrobe */
+  --color-accent: #3b82f6;
   --color-accent-deep: #2563eb;
   --color-on-accent: #ffffff;
   --color-accent-soft: rgba(59, 130, 246, 0.1);
-
-  --color-alert: #d97706; /* amber — review-needed / leaks */
+  --color-alert: #d97706;
   --color-alert-deep: #b45309;
   --color-on-alert: #ffffff;
   --color-alert-soft: rgba(217, 119, 6, 0.1);
-
-  --color-good: #059669; /* emerald — healthy CPW / confirmation */
+  --color-good: #059669;
   --color-good-deep: #047857;
   --color-on-good: #ffffff;
   --color-good-soft: rgba(5, 150, 105, 0.1);
-
   --color-danger: #dc2626;
   --color-on-danger: #ffffff;
   --color-danger-soft: rgba(220, 38, 38, 0.08);
-
-  --color-lavender: #7c6fb0; /* decorative second voice (kept subtle) */
+  --color-lavender: #7c6fb0;
   --color-lavender-soft: rgba(124, 111, 176, 0.12);
-
-  /* Elevation */
   --shadow-card: 0 1px 2px rgba(15, 17, 21, 0.04), 0 2px 8px rgba(15, 17, 21, 0.04);
   --shadow-pop: 0 4px 12px rgba(15, 17, 21, 0.08), 0 12px 32px rgba(15, 17, 21, 0.12);
   --shadow-drawer: -24px 0 64px rgba(15, 17, 21, 0.24);
+}
 
-  /* Typography (unchanged pairing) */
+@supports (color: light-dark(#fff, #000)) {
+  :root {
+    color-scheme: light dark;
+
+    /* --- Surfaces --------------------------------------------------------- */
+    --color-bg: light-dark(#f9f9fb, #141311);        /* warm basalt, never flat black */
+    --color-surface: light-dark(#ffffff, #1e1c19);   /* warm low-sheen slate */
+    --color-surface-raised: light-dark(#ffffff, #272421);
+    --color-chrome: light-dark(#14161c, #0e0d0b);    /* nav dock/tab bar */
+    --color-chrome-raised: light-dark(#1d2029, #1b1916);
+    --color-on-chrome: light-dark(#f4f2ed, #f2efe8); /* parchment on basalt */
+    --color-on-chrome-muted: light-dark(rgba(244, 242, 237, 0.64), rgba(242, 239, 232, 0.66));
+    --color-chrome-line: light-dark(rgba(255, 255, 255, 0.09), rgba(243, 230, 205, 0.1));
+
+    /* --- Ink -------------------------------------------------------------- */
+    --color-ink: light-dark(#121316, #f0ede6);       /* parchment ink */
+    --color-ink-muted: light-dark(#5e6472, #a8a294); /* ash — AA on both surfaces */
+    --color-line: light-dark(rgba(0, 0, 0, 0.06), rgba(243, 230, 205, 0.1));
+    --color-line-strong: light-dark(rgba(0, 0, 0, 0.12), rgba(243, 230, 205, 0.18));
+
+    /* --- Accents (adapt per mode) ----------------------------------------- */
+    --color-accent: light-dark(#3b82f6, #8db8f8);    /* indigo cobalt / sky cobalt */
+    --color-accent-deep: light-dark(#2563eb, #b3ccf9);
+    --color-on-accent: light-dark(#ffffff, #0b1220);
+    --color-accent-soft: light-dark(rgba(59, 130, 246, 0.1), rgba(141, 184, 248, 0.16));
+
+    --color-alert: light-dark(#d97706, #f0a13c);     /* amber / warm amber */
+    --color-alert-deep: light-dark(#b45309, #f7bd6b);
+    --color-on-alert: light-dark(#ffffff, #211603);
+    --color-alert-soft: light-dark(rgba(217, 119, 6, 0.1), rgba(240, 161, 60, 0.16));
+
+    --color-good: light-dark(#059669, #4ade80);      /* emerald / mint */
+    --color-good-deep: light-dark(#047857, #86efac);
+    --color-on-good: light-dark(#ffffff, #052012);
+    --color-good-soft: light-dark(rgba(5, 150, 105, 0.1), rgba(74, 222, 128, 0.16));
+
+    --color-danger: light-dark(#dc2626, #f87171);
+    --color-on-danger: light-dark(#ffffff, #2a0505);
+    --color-danger-soft: light-dark(rgba(220, 38, 38, 0.08), rgba(248, 113, 113, 0.16));
+
+    --color-lavender: light-dark(#7c6fb0, #b5a8e0);  /* decorative second voice */
+    --color-lavender-soft: light-dark(rgba(124, 111, 176, 0.12), rgba(181, 168, 224, 0.16));
+
+    /* --- Elevation (tinted shadows) ---------------------------------------- */
+    --shadow-card: light-dark(
+      0 1px 2px rgba(15, 17, 21, 0.04), 0 2px 8px rgba(15, 17, 21, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4)
+    );
+    --shadow-pop: light-dark(
+      0 4px 12px rgba(15, 17, 21, 0.08), 0 12px 32px rgba(15, 17, 21, 0.12),
+      0 4px 12px rgba(0, 0, 0, 0.55), 0 12px 32px rgba(0, 0, 0, 0.6)
+    );
+    --shadow-drawer: light-dark(-24px 0 64px rgba(15, 17, 21, 0.24), -24px 0 64px rgba(0, 0, 0, 0.65));
+  }
+}
+
+/* Explicit user choice overrides the OS preference for light-dark(). */
+[data-theme="light"] {
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* --- Typography / space / motion tokens (mode-independent) ------------------ */
+
+:root {
   --font-display: var(--font-space-grotesk), "DM Sans", system-ui, sans-serif;
   --font-body: var(--font-dm-sans), system-ui, sans-serif;
 
-  /* Space + radius (4/8 discipline) */
   --radius-control: 8px;
   --radius-card: 14px;
   --radius-feature: 20px;
@@ -75,7 +139,6 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Motion */
   --dur-fast: 150ms;
   --dur-move: 240ms;
   --dur-drawer: 280ms;
@@ -83,112 +146,10 @@
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* --- Atlas Night (dark) --- */
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  --color-bg: #0f1115;
-  --color-surface: #171920;
-  --color-surface-raised: #1d2029;
-  --color-chrome: #0c0e12;
-  --color-chrome-raised: #171920;
-  --color-on-chrome: #f2f3f5;
-  --color-on-chrome-muted: rgba(242, 243, 245, 0.64);
-  --color-chrome-line: rgba(255, 255, 255, 0.08);
-
-  --color-ink: #f2f3f5;
-  --color-ink-muted: #8a909e;
-  --color-line: rgba(255, 255, 255, 0.08);
-  --color-line-strong: rgba(255, 255, 255, 0.14);
-
-  --color-accent: #60a5fa;
-  --color-accent-deep: #93c5fd;
-  --color-on-accent: #0b1220;
-  --color-accent-soft: rgba(96, 165, 250, 0.14);
-
-  --color-alert: #f59e0b;
-  --color-alert-deep: #fbbf24;
-  --color-on-alert: #211603;
-  --color-alert-soft: rgba(245, 158, 11, 0.14);
-
-  --color-good: #10b981;
-  --color-good-deep: #34d399;
-  --color-on-good: #032015;
-  --color-good-soft: rgba(16, 185, 129, 0.14);
-
-  --color-danger: #ef4444;
-  --color-on-danger: #fff5f5;
-  --color-danger-soft: rgba(239, 68, 68, 0.14);
-
-  --color-lavender: #a89ad6;
-  --color-lavender-soft: rgba(168, 154, 214, 0.16);
-
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.55);
-  --shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.6);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --color-bg: #0f1115;
-    --color-surface: #171920;
-    --color-surface-raised: #1d2029;
-    --color-chrome: #0c0e12;
-    --color-chrome-raised: #171920;
-    --color-on-chrome: #f2f3f5;
-    --color-on-chrome-muted: rgba(242, 243, 245, 0.64);
-    --color-chrome-line: rgba(255, 255, 255, 0.08);
-
-    --color-ink: #f2f3f5;
-    --color-ink-muted: #8a909e;
-    --color-line: rgba(255, 255, 255, 0.08);
-    --color-line-strong: rgba(255, 255, 255, 0.14);
-
-    --color-accent: #60a5fa;
-    --color-accent-deep: #93c5fd;
-    --color-on-accent: #0b1220;
-    --color-accent-soft: rgba(96, 165, 250, 0.14);
-
-    --color-alert: #f59e0b;
-    --color-alert-deep: #fbbf24;
-    --color-on-alert: #211603;
-    --color-alert-soft: rgba(245, 158, 11, 0.14);
-
-    --color-good: #10b981;
-    --color-good-deep: #34d399;
-    --color-on-good: #032015;
-    --color-good-soft: rgba(16, 185, 129, 0.14);
-
-    --color-danger: #ef4444;
-    --color-on-danger: #fff5f5;
-    --color-danger-soft: rgba(239, 68, 68, 0.14);
-
-    --color-lavender: #a89ad6;
-    --color-lavender-soft: rgba(168, 154, 214, 0.16);
-
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.55);
-    --shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.6);
-  }
-}
-
-/* Respect explicit choice even before JS re-runs (FOUC guard companion). */
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="light"] {
-    color-scheme: light;
-  }
-}
-
 /* --- Base ------------------------------------------------------------------ */
 
 * {
   box-sizing: border-box;
-}
-
-html {
-  color-scheme: light dark;
 }
 
 body {
@@ -218,6 +179,27 @@ a {
 
 button {
   font-family: inherit;
+  /* Tactile press (secondary action principle): a subtle scale-down that
+     reads as a physical push. Collapsed under reduced-motion below. */
+  transition: transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) ease-in-out,
+    border-color var(--dur-fast) ease-in-out,
+    color var(--dur-fast) ease-in-out;
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Shared card entrance: soft rise, applied per-surface via local CSS. */
+@keyframes atlas-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 :focus-visible {

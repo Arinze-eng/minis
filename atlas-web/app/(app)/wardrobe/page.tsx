@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { demoWardrobe } from "@/lib/demo/wardrobe";
+import { principalFromCookies } from "@/lib/server/identity";
+import { getStore } from "@/lib/server/store";
+import { syncSignalsAndNotifications } from "@/lib/server/seed";
 import {
   costPerWear,
   filterGarments,
   availableColors,
   availableOccasions,
   CATEGORY_LABELS,
-  DEFAULT_FILTERS,
   type Garment,
   type GarmentCategory,
   type WardrobeFilters,
 } from "@/lib/wardrobe";
 import { formatCPW } from "@/lib/format";
+import { GarmentCard } from "./GarmentCard";
 import "./wardrobe.css";
 
 export const metadata: Metadata = {
@@ -48,40 +50,34 @@ function buildFilterHref(current: SearchParams, patch: Partial<SearchParams>): s
   return qs ? `/wardrobe?${qs}` : "/wardrobe";
 }
 
-function GarmentCard({ garment }: { garment: Garment }) {
-  const cpw = costPerWear(garment);
-  const cpwClass =
-    cpw.basis === "confirmed_wears" &&
-    garment.price !== undefined &&
-    cpw.value <= garment.price / 10
-      ? "cpw-pill cpw-good"
-      : cpw.basis === "confirmed_wears"
-        ? "cpw-pill"
-        : "cpw-pill cpw-unknown";
-  return (
-    <article className="garment-card">
-      <div className="garment-media" aria-hidden="true">
-        {/* Placeholder media: real assets arrive with the signed-upload phase. */}
-        <span className="garment-media-letter">{garment.name.charAt(0)}</span>
-      </div>
-      <div className="garment-body">
-        <h3>{garment.name}</h3>
-        <p className="garment-tags">
-          {CATEGORY_LABELS[garment.category]} · {garment.colors.join(", ")}
-          {garment.material ? ` · ${garment.material}` : ""}
-        </p>
-        <p className="garment-occasions">{garment.occasions.join(" · ")}</p>
-        <div className="garment-pills">
-          <span className={cpwClass} title="Cost per wear (price / confirmed wears)">
-            {formatCPW(cpw)}
-          </span>
-          <span className="wear-pill" title="Confirmed wear events">
-            {garment.wearCount} {garment.wearCount === 1 ? "wear" : "wears"}
-          </span>
-        </div>
-      </div>
-    </article>
-  );
+function toDomainGarment(row: Awaited<ReturnType<typeof getStore>>["store"] extends never ? never : GarmentFromStore): Garment {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category as Garment["category"],
+    colors: row.colors,
+    material: row.material ?? undefined,
+    pattern: row.pattern ?? undefined,
+    warmth: row.warmth,
+    formality: row.formality,
+    seasons: row.seasons,
+    occasions: row.occasions,
+    price: row.price ?? undefined,
+    currency: row.currency ?? undefined,
+    wearCount: row.wearCount,
+    status: row.status === "confirmed" ? "confirmed" : "needs_confirmation",
+    analysisProvider: (row.analysisProvider as Garment["analysisProvider"]) ?? "user",
+    imageAlt: `${row.name}, garment record`,
+    addedAt: row.addedAt,
+    correctionHistory: [],
+  };
+}
+
+type GarmentFromStore = Awaited<ReturnType<typeof listGarmentsSafe>>[number];
+
+async function listGarmentsSafe(principalId: string) {
+  const { store } = getStore();
+  return store.listGarments(principalId);
 }
 
 export default async function WardrobePage({
@@ -91,16 +87,27 @@ export default async function WardrobePage({
 }) {
   const params = await searchParams;
   const filters = readFilters(params);
-  const snapshot = demoWardrobe();
-  const filtered = filterGarments(snapshot.garments, filters);
-  const colors = availableColors(snapshot.garments);
-  const occasions = availableOccasions(snapshot.garments);
+  const principal = await principalFromCookies();
+
+  // First-run sync: derive signals from whatever exists (idempotent).
+  await syncSignalsAndNotifications(principal.userId);
+
+  const { mode } = getStore();
+  const storeGarments = await listGarmentsSafe(principal.userId);
+  const garments = storeGarments.map(toDomainGarment);
+  const pending = garments.filter((g) => g.status === "needs_confirmation");
+  const filtered = filterGarments(garments, filters);
+  const colors = availableColors(garments);
+  const occasions = availableOccasions(garments);
 
   return (
     <main id="main" className="wardrobe-page">
-      <p className="demo-note" role="note">
-        {snapshot.demoLabel}
-      </p>
+      {mode === "local_file" ? (
+        <p className="demo-note" role="note">
+          Local store — records stay on this device under your session.
+          Set DATABASE_URL for the shared Postgres store.
+        </p>
+      ) : null}
       <header className="wardrobe-head">
         <h1>Wardrobe</h1>
         <Link className="btn-primary" href="/wardrobe/add">
@@ -108,20 +115,13 @@ export default async function WardrobePage({
         </Link>
       </header>
 
-      {snapshot.pending.length > 0 ? (
+      {pending.length > 0 ? (
         <section className="confirm-queue" aria-labelledby="queue-h">
-          <h2 id="queue-h">Needs your confirmation ({snapshot.pending.length})</h2>
-          {snapshot.pending.map((p) => (
-            <Link
-              key={p.garment.id}
-              href={`/wardrobe/add?review=${p.garment.id}`}
-              className="queue-row"
-            >
-              <span className="queue-name">{p.garment.name}</span>
-              <span className="queue-detail">
-                {Object.keys(p.suggestedTags).length} model-suggested tags await
-                your review
-              </span>
+          <h2 id="queue-h">Needs your confirmation ({pending.length})</h2>
+          {pending.map((p) => (
+            <Link key={p.id} href={`/wardrobe/add?review=${p.id}`} className="queue-row">
+              <span className="queue-name">{p.name}</span>
+              <span className="queue-detail">Confirm tags to unlock outfit planning</span>
               <span className="queue-cta">Review tags →</span>
             </Link>
           ))}
@@ -138,7 +138,7 @@ export default async function WardrobePage({
             All
           </Link>
           {(Object.keys(CATEGORY_LABELS) as GarmentCategory[])
-            .filter((c) => snapshot.garments.some((g) => g.category === c))
+            .filter((c) => garments.some((g) => g.category === c))
             .map((c) => (
               <Link
                 key={c}
@@ -211,7 +211,7 @@ export default async function WardrobePage({
         <div className="empty-state">
           <h2>No garments match these filters</h2>
           <p>Loosen a filter, or add the piece you are thinking of.</p>
-          <Link className="btn-secondary" href={buildFilterHref(params, DEFAULT_FILTERS)}>
+          <Link className="btn-secondary" href={buildFilterHref(params, { category: "all", occasion: "all", color: "all", q: "" })}>
             Clear filters
           </Link>
         </div>

@@ -1,19 +1,28 @@
 import type { Metadata } from "next";
-import { demoMoney } from "@/lib/demo/audit";
-import { summarizeMoney } from "@/lib/audit";
-import { formatMoney } from "@/lib/format";
+import { principalFromCookies } from "@/lib/server/identity";
+import { getStore } from "@/lib/server/store";
+import { syncSignalsAndNotifications } from "@/lib/server/seed";
+import { annualizedAmount, type SubscriptionFinding } from "@/lib/audit";
+import { FindingCard } from "./FindingCard";
 import "./money.css";
 
 export const metadata: Metadata = {
   title: "Money review",
 };
 
-export default function MoneyPage() {
-  const summary = demoMoney();
-  const { annualizedTotal } = summarizeMoney(summary.findings);
-  const active = summary.findings.filter((f) => f.state === "active");
-  const priceChanges = summary.findings.filter((f) => f.priceChangedAt);
-  const trials = summary.findings.filter((f) => f.trialEndDate);
+export default async function MoneyPage() {
+  const principal = await principalFromCookies();
+  await syncSignalsAndNotifications(principal.userId);
+  const { store, mode } = getStore();
+  const findings = await store.listFindings(principal.userId);
+  const annualizedTotal = findings.reduce(
+    (sum, f) =>
+      sum + (f.state !== "ignored" && f.annualized !== null ? Number(f.annualized) : 0),
+    0,
+  );
+  const active = findings.filter((f) => f.state === "active");
+  const priceChanges = findings.filter((f) => f.priceChanged);
+  const trials = findings.filter((f) => f.trialEnd);
 
   return (
     <main id="main" className="money-page">
@@ -23,116 +32,60 @@ export default function MoneyPage() {
         prepares the review — cancellation is always a manual, user-executed
         step at the merchant.
       </p>
-      <p className="demo-note" role="note">
-        {summary.demoLabel}
-      </p>
+      {mode === "local_file" ? (
+        <p className="demo-note" role="note">
+          Local store with labelled synthetic merchants (sandbox fixtures). No
+          mailbox or bank is contacted. Set DATABASE_URL for the shared store.
+        </p>
+      ) : null}
 
       <section className="money-summary" aria-label="Annualized summary">
         <div className="summary-big">
           <span className="summary-label">Annualized cost of active findings</span>
           <span className="summary-value">
-            {formatMoney(annualizedTotal, summary.currency)}
+            {formatMoney(annualizedTotal, "USD")}
           </span>
-          <span className="summary-assumption">{summary.cadenceAssumption}</span>
+          <span className="summary-assumption">
+            Annualized = amount × periods/year; unknown cadence is never
+            annualized
+          </span>
         </div>
         <div className="summary-side">
-          <p>
-            <strong>{active.length}</strong> active finding
-            {active.length === 1 ? "" : "s"}
-          </p>
+          <p><strong>{active.length}</strong> active finding{active.length === 1 ? "" : "s"}</p>
           {priceChanges.length > 0 ? (
-            <p>
-              <strong>{priceChanges.length}</strong> price change
-              {priceChanges.length === 1 ? "" : "s"} this cycle
-            </p>
+            <p><strong>{priceChanges.length}</strong> price change{priceChanges.length === 1 ? "" : "s"} detected</p>
           ) : null}
           {trials.length > 0 ? (
-            <p>
-              <strong>{trials.length}</strong> trial ending within days
-            </p>
+            <p><strong>{trials.length}</strong> trial ending within days</p>
           ) : null}
-          <p className="summary-refresh">
-            Refreshed {new Date(summary.refreshedAt).toLocaleString()}
-          </p>
         </div>
       </section>
 
       <section className="finding-list" aria-label="Subscription findings">
-        {summary.findings.map((f) => (
-          <article key={f.id} className="finding-card">
-            <header className="finding-head">
-              <h2>{f.merchant}</h2>
-              {f.priceChangedAt ? (
-                <span className="finding-flag flag-change">price changed</span>
-              ) : null}
-              {f.trialEndDate ? (
-                <span className="finding-flag flag-trial">
-                  trial ends {new Date(f.trialEndDate).toLocaleDateString()}
-                </span>
-              ) : null}
-              {f.nextRenewalDate ? (
-                <span className="finding-flag flag-renewal">
-                  renews {new Date(f.nextRenewalDate).toLocaleDateString()}
-                </span>
-              ) : null}
-            </header>
-
-            <div className="finding-numbers">
-              <span className="finding-amount">
-                {formatMoney(f.amount, f.currency)}
-                <span className="finding-cadence">
-                  / {f.cadence === "unknown" ? "cycle unclear" : f.cadence}
-                </span>
-              </span>
-              <span className="finding-annual">
-                {f.annualized !== undefined
-                  ? `${formatMoney(f.annualized, f.currency)} / year`
-                  : "not annualized — cadence unclear"}
-              </span>
-              <span className="finding-confidence" title="Extraction confidence">
-                confidence {Math.round(f.confidence * 100)}%
-              </span>
-            </div>
-
-            <details className="evidence-drawer">
-              <summary>Evidence ({f.sources.length})</summary>
-              <ul>
-                {f.sources.map((s) => (
-                  <li key={s.reference}>
-                    <span className="evidence-kind">{s.kind}</span>
-                    <span className="evidence-ref">{s.reference}</span>
-                    {s.snippet ? <span className="evidence-snippet">{s.snippet}</span> : null}
-                    {s.receivedAt ? (
-                      <span className="evidence-date">
-                        {new Date(s.receivedAt).toLocaleDateString()}
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-              <p className="evidence-note">
-                Snippets are bounded and redacted; full message bodies are never
-                stored. Extraction version {f.extractionVersion}.
-              </p>
-            </details>
-
-            <div className="finding-actions">
-              <button type="button" className="btn-primary" disabled title="Demo mode — state changes are illustrative">
-                Keep
-              </button>
-              <button type="button" className="btn-secondary" disabled title="Demo mode — state changes are illustrative">
-                Ignore
-              </button>
-              <a
-                className="btn-secondary finding-cancel-link"
-                href="#cancel-guide"
-                title="Demo mode — guide is illustrative"
-              >
-                Manual cancel guide
-              </a>
-            </div>
-          </article>
+        {findings.map((f) => (
+          <FindingCard
+            key={f.id}
+            finding={{
+              id: f.id,
+              merchant: f.merchant,
+              productName: f.productName ?? undefined,
+              amount: Number(f.amount),
+              currency: f.currency,
+              cadence: f.cadence as SubscriptionFinding["cadence"],
+              annualized: f.annualized !== null ? Number(f.annualized) : annualizedAmount(Number(f.amount), f.cadence as SubscriptionFinding["cadence"]),
+              nextRenewalDate: f.nextRenewal ?? undefined,
+              trialEndDate: f.trialEnd ?? undefined,
+              priceChangedAt: f.priceChanged ?? undefined,
+              state: f.state as "active" | "kept" | "ignored" | "cancel_prepared",
+              confidence: f.confidence,
+              extractionVersion: f.extractionVersion,
+              sources: f.sources as SubscriptionFinding["sources"],
+            }}
+          />
         ))}
+        {findings.length === 0 ? (
+          <p className="evidence-note">No findings yet — run a scan from Sources (demo) or connect a read-only source.</p>
+        ) : null}
       </section>
 
       <section id="cancel-guide" className="cancel-guide" aria-labelledby="cancel-h">
@@ -155,4 +108,12 @@ export default function MoneyPage() {
       </section>
     </main>
   );
+}
+
+function formatMoney(value: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  }).format(value);
 }

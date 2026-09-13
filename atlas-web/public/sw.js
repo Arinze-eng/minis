@@ -10,7 +10,7 @@
  *  - no background sync of destructive or financial operations (none exist).
  */
 
-const VERSION = "atlas-v1";
+const VERSION = "atlas-v5";
 const SHELL_CACHE = `${VERSION}-shell`;
 
 self.addEventListener("install", (event) => {

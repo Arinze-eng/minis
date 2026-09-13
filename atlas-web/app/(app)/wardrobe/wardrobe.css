@@ -268,3 +268,30 @@
   font-size: 0.82rem;
   color: var(--color-ink-muted);
 }
+
+.garment-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.garment-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  background: transparent;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: color var(--dur-fast) ease-in-out, border-color var(--dur-fast) ease-in-out;
+}
+
+.garment-delete:hover {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+}
