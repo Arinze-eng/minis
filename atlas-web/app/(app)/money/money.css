@@ -11,7 +11,7 @@
 }
 
 .money-sub {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin: var(--space-2) 0 var(--space-4);
   max-width: 62ch;
 }
@@ -20,8 +20,8 @@
   margin: 0 0 var(--space-6);
   padding: var(--space-2) var(--space-3);
   font-size: 0.85rem;
-  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
   border-radius: var(--radius-control);
 }
 
@@ -29,8 +29,8 @@
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: var(--space-6);
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
@@ -39,7 +39,7 @@
 .summary-label {
   display: block;
   font-size: 0.85rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin-bottom: var(--space-1);
 }
 
@@ -54,12 +54,12 @@
   display: block;
   margin-top: var(--space-2);
   font-size: 0.8rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   max-width: 40ch;
 }
 
 .summary-side {
-  border-left: 1px solid var(--atlas-line);
+  border-left: 1px solid var(--color-line);
   padding-left: var(--space-6);
   font-size: 0.95rem;
 }
@@ -70,7 +70,7 @@
 }
 
 .summary-refresh {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.82rem;
 }
 
@@ -81,8 +81,8 @@
 }
 
 .finding-card {
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   padding: var(--space-5) var(--space-6);
 }
@@ -106,18 +106,18 @@
 }
 
 .flag-change {
-  background: color-mix(in srgb, var(--atlas-amber) 25%, transparent);
-  color: var(--atlas-ink);
+  background: color-mix(in srgb, var(--color-alert) 25%, transparent);
+  color: var(--color-ink);
 }
 
 .flag-trial {
-  background: color-mix(in srgb, var(--atlas-red) 16%, transparent);
-  color: var(--atlas-red);
+  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
+  color: var(--color-danger);
 }
 
 .flag-renewal {
-  background: color-mix(in srgb, var(--atlas-lilac) 25%, transparent);
-  color: var(--atlas-lilac-deep);
+  background: color-mix(in srgb, var(--color-accent) 25%, transparent);
+  color: var(--color-accent-deep);
 }
 
 .finding-numbers {
@@ -136,25 +136,25 @@
 
 .finding-cadence {
   font-size: 0.8rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-weight: 400;
 }
 
 .finding-annual,
 .finding-confidence {
   font-size: 0.88rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .evidence-drawer {
-  border-top: 1px solid var(--atlas-line);
+  border-top: 1px solid var(--color-line);
   padding-top: var(--space-3);
   font-size: 0.9rem;
 }
 
 .evidence-drawer summary {
   cursor: pointer;
-  color: var(--atlas-lilac-deep);
+  color: var(--color-accent-deep);
 }
 
 .evidence-drawer ul {
@@ -176,15 +176,15 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--color-line);
   border-radius: 4px;
   padding: 2px 6px;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .evidence-ref {
   font-size: 0.8rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .evidence-snippet {
@@ -194,13 +194,13 @@
 
 .evidence-date {
   font-size: 0.8rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .evidence-note {
   font-size: 0.8rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin: var(--space-2) 0 0;
 }
 
@@ -225,15 +225,15 @@
 }
 
 .btn-primary {
-  background: var(--atlas-lime);
-  color: var(--atlas-graphite);
+  background: var(--color-good);
+  color: var(--color-on-good);
 }
 
 .btn-secondary,
 .finding-cancel-link {
   background: transparent;
-  color: var(--atlas-ink);
-  border-color: var(--atlas-line);
+  color: var(--color-ink);
+  border-color: var(--color-line);
 }
 
 .btn-primary:disabled,
@@ -245,8 +245,8 @@
 /* Cancel guide */
 .cancel-guide {
   margin-top: var(--space-8);
-  background: color-mix(in srgb, var(--atlas-lilac) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--atlas-lilac) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
   border-radius: var(--radius-card);
   padding: var(--space-6);
 }
@@ -269,7 +269,7 @@
 
 .cancel-note {
   font-size: 0.85rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 @media (max-width: 700px) {
@@ -280,7 +280,7 @@
   .summary-side {
     border-left: 0;
     padding-left: 0;
-    border-top: 1px solid var(--atlas-line);
+    border-top: 1px solid var(--color-line);
     padding-top: var(--space-4);
   }
 }

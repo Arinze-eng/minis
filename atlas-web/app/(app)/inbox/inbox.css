@@ -17,11 +17,11 @@
   grid-area: banner;
   margin: var(--space-4) 0;
   padding: var(--space-2) var(--space-4);
-  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
   border-radius: var(--radius-control);
   font-size: 0.9rem;
-  color: var(--atlas-ink);
+  color: var(--color-ink);
 }
 
 .inbox-main {
@@ -34,7 +34,7 @@
 }
 
 .inbox-sub {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin: var(--space-2) 0 var(--space-6);
 }
 
@@ -56,8 +56,8 @@
 }
 
 .strip-metric {
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   padding: var(--space-4) var(--space-5);
 }
@@ -67,7 +67,7 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin-bottom: var(--space-1);
 }
 
@@ -82,7 +82,7 @@
   display: block;
   margin-top: var(--space-1);
   font-size: 0.76rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .urgent-ribbon {
@@ -97,16 +97,16 @@
   align-items: baseline;
   text-decoration: none;
   color: inherit;
-  border: 1px solid color-mix(in srgb, var(--atlas-amber) 40%, transparent);
-  border-left: 3px solid var(--atlas-amber);
-  background: color-mix(in srgb, var(--atlas-amber) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 40%, transparent);
+  border-left: 3px solid var(--color-alert);
+  background: color-mix(in srgb, var(--color-alert) 8%, transparent);
   border-radius: var(--radius-control);
   padding: var(--space-2) var(--space-4);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .urgent-item:hover {
-  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
 }
 
 .urgent-title {
@@ -116,23 +116,23 @@
 
 .urgent-detail {
   font-size: 0.84rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .signal-card {
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   padding: var(--space-4) var(--space-6);
 }
 
 .signal-card.urgency-review {
-  border-left: 3px solid var(--atlas-amber);
+  border-left: 3px solid var(--color-alert);
 }
 
 .signal-card.urgency-urgent {
-  border-left: 3px solid var(--atlas-red);
+  border-left: 3px solid var(--color-danger);
 }
 
 .signal-head {
@@ -149,20 +149,20 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--atlas-ink-soft);
+  background: var(--color-ink-muted);
   flex: none;
 }
 
 .urgency-review {
-  background: var(--atlas-amber);
+  background: var(--color-alert);
 }
 
 .urgency-urgent {
-  background: var(--atlas-red);
+  background: var(--color-danger);
 }
 
 .signal-implication {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin: var(--space-2) 0 var(--space-4);
 }
 
@@ -180,7 +180,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--atlas-lilac-deep);
+  background: var(--color-accent-deep);
   position: relative;
 }
 
@@ -191,7 +191,7 @@
   right: 100%;
   width: var(--space-1);
   height: 2px;
-  background: var(--atlas-line);
+  background: var(--color-line);
 }
 
 .waypoint:first-child::before {
@@ -199,7 +199,7 @@
 }
 
 .waypoint-stale {
-  background: var(--atlas-ink-soft);
+  background: var(--color-ink-muted);
   opacity: 0.6;
 }
 
@@ -208,7 +208,7 @@
   height: 2px;
   background-image: linear-gradient(
     to right,
-    var(--atlas-line) 55%,
+    var(--color-line) 55%,
     transparent 55%
   );
   background-size: 8px 2px;
@@ -216,7 +216,7 @@
 }
 
 .waypoint-dest-node {
-  background: var(--atlas-lime);
+  background: var(--color-good);
   width: 12px;
   height: 12px;
 }
@@ -235,27 +235,27 @@
 
 .signal-why {
   font-size: 0.9rem;
-  color: var(--atlas-lilac-deep);
+  color: var(--color-accent-deep);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .signal-capability {
   font-size: 0.82rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .signal-meta {
   margin: var(--space-3) 0 0;
   font-size: 0.8rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
 /* Right rail */
 .inbox-rail {
   grid-area: rail;
-  border-left: 1px solid var(--atlas-line);
+  border-left: 1px solid var(--color-line);
   padding: var(--space-6) 0 var(--space-12) var(--space-6);
 }
 
@@ -284,7 +284,7 @@
 }
 
 .rail-source-mode {
-  color: var(--atlas-lilac-deep);
+  color: var(--color-accent-deep);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -292,19 +292,19 @@
 
 .rail-source-detail {
   grid-column: 1 / -1;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.82rem;
 }
 
 .rail-note {
   margin-top: var(--space-6);
   font-size: 0.82rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .rail-link {
   font-size: 0.88rem;
-  color: var(--atlas-lilac-deep);
+  color: var(--color-accent-deep);
 }
 
 @media (max-width: 880px) {
@@ -322,7 +322,7 @@
   .inbox-rail {
     grid-area: auto;
     border-left: 0;
-    border-top: 1px solid var(--atlas-line);
+    border-top: 1px solid var(--color-line);
     padding-left: 0;
   }
 }
@@ -337,4 +337,135 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Morning briefing */
+.briefing {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-card);
+}
+
+.briefing-weather {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-size: 0.86rem;
+  color: var(--color-ink-muted);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-line);
+  margin-bottom: var(--space-4);
+}
+
+.weather-condition {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.weather-temp,
+.weather-rain {
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-source {
+  font-size: 0.74rem;
+}
+
+.briefing h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-muted);
+  margin-bottom: var(--space-1);
+}
+
+.briefing-outfit {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.briefing-reason {
+  margin: 0 0 var(--space-4);
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+  max-width: 60ch;
+}
+
+.briefing-cpw {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+}
+
+.briefing-cpw-item {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.briefing-cpw-item strong {
+  color: var(--color-good-deep);
+}
+
+.briefing-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-ghost,
+.btn-secondary {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) ease-in-out;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-deep);
+}
+
+.btn-primary:disabled {
+  opacity: 0.72;
+  cursor: default;
+}
+
+.btn-ghost,
+.btn-secondary {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-line-strong);
+}
+
+.btn-primary:active,
+.btn-ghost:active,
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.briefing-status {
+  margin: var(--space-4) 0 0;
+  font-size: 0.85rem;
+  color: var(--color-good-deep);
 }

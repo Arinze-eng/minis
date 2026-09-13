@@ -131,6 +131,39 @@ completed step; create a checkpoint commit when a step is stable.
   Gmail read-only evidence summary (send-flag gating for Telegram
   delivery is already implemented in `service.py`).
 
+## Protocol step record — UI polish pass: theme engine + landing + agent hub (complete)
+
+- Dual-theme engine: semantic tokens in `globals.css` (light "Atelier
+  Editorial" porcelain/white, dark "Atlas Night" graphite basalt/slate;
+  indigo/amber/emerald functional accents), `data-theme` + media-query
+  fallback, FOUC pre-hydration script (`ThemeScript`, key `atlas-theme`),
+  `ThemeToggle` (light→dark→system cycle, localStorage-persisted), icons +
+  manifest recolored to the new accent. All component CSS remapped to
+  semantic tokens; dark-chrome surfaces get dedicated on-chrome text tokens;
+  accent fills carry on-accent/on-good/on-alert text tokens for AA contrast.
+- Landing rebuilt (`app/page.tsx`): editorial hero, CSS-only dual-engine
+  preview (radio-tab + `:has()` swap; CPW bars animate once, leak row pulses),
+  Daily Loop timeline (07:30 curate / 14:00 renewals / 20:00 CPW rebalance),
+  zero-mutation privacy matrix, header with theme toggle, no cramped grids.
+- Autonomous agent hub: `lib/notifications.ts` (categories, pure tab filter,
+  unread count, Intl relative time) + `lib/demo/agent.ts` (briefing,
+  notifications matching the brief's examples, pure `withWearLogged`);
+  `AppHeader` on all app routes with Sentinel status pill (breathing dot:
+  "Sentinel active · renewals & weather") + bell with unread badge;
+  `NotificationDrawer` slide-over (All/Renewals/Closet/System tabs, ESC +
+  overlay close, dismiss = mark-read, aria-live); MorningBriefing on `/inbox`
+  (weather chip labelled as demo snapshot, outfit suggestion from confirmed
+  garments, Mark Worn Today recomputes CPW live via pure function).
+- Animations: all CSS only (150ms color ease, 240–280ms ease-out/drawer
+  curves), sentinel breathe + leak pulse ambient, card/bar entrance
+  animations, `prefers-reduced-motion` collapses everything. No new deps
+  beyond lucide-react (already present).
+- Verification: 30 vitest tests green (was 22; +8 for tabs/sort/unread/
+  relative-time/wear-purity), tsc clean, build clean (14 routes), start
+  smoke 200 across all routes with content assertions for loop/engines/
+  privacy matrix/Sentinel/briefing.
+- Next: server adapter + Postgres migration (backend half of Phase 2).
+
 ## Protocol step record — Phase 2 wardrobe + audit surfaces (complete)
 
 - Direction decision (user-approved): keep Atlas identity + warm-paper system

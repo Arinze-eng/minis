@@ -1,4 +1,5 @@
 import { AppNav } from "@/components/AppNav";
+import { AppHeader } from "@/components/AppHeader";
 import { NetworkBanner } from "@/components/NetworkBanner";
 import "../shell.css";
 
@@ -12,6 +13,7 @@ export default function AppLayout({
       </a>
       <AppNav />
       <div className="app-content">
+        <AppHeader />
         <NetworkBanner />
         {children}
       </div>

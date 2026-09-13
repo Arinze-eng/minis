@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Space_Grotesk } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { ThemeScript } from "@/components/ThemeScript";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -23,12 +24,10 @@ export const metadata: Metadata = {
   description:
     "Atlas notices the work you are avoiding, prepares the next move, and asks before it acts.",
   applicationName: "Atlas",
-};
-
-export const viewport: Viewport = {
+};export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f2ea" },
-    { media: "(prefers-color-scheme: dark)", color: "#17191e" },
+    { media: "(prefers-color-scheme: light)", color: "#f9f9fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1115" },
   ],
 };
 
@@ -36,8 +35,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${dmSans.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${dmSans.variable}`}>
+      <head>
+        <ThemeScript />
+      </head>
       <body>
+
         {children}
         <ServiceWorkerRegistration />
       </body>

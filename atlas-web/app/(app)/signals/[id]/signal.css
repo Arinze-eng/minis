@@ -11,7 +11,7 @@
 }
 
 .signal-crumb a {
-  color: var(--atlas-lilac-deep);
+  color: var(--color-accent-deep);
   text-decoration: none;
 }
 
@@ -19,14 +19,14 @@
   margin: 0 0 var(--space-4);
   padding: var(--space-2) var(--space-3);
   font-size: 0.85rem;
-  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
   border-radius: var(--radius-control);
 }
 
 .signal-detail {
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-feature);
   padding: var(--space-8);
 }
@@ -37,14 +37,14 @@
 }
 
 .signal-detected {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.88rem;
   margin: 0 0 var(--space-6);
   font-variant-numeric: tabular-nums;
 }
 
 .signal-section {
-  border-top: 1px solid var(--atlas-line);
+  border-top: 1px solid var(--color-line);
   padding: var(--space-6) 0;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .signal-implication-line {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .evidence-list {
@@ -78,18 +78,18 @@
 }
 
 .evidence-source-fresh {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
 }
 
 .uncertainty-line {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.88rem;
 }
 
 .signal-not {
-  background: color-mix(in srgb, var(--atlas-lilac) 12%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border-radius: var(--radius-card);
   border-top: 0;
   padding: var(--space-6);
@@ -124,14 +124,14 @@
 }
 
 .btn-primary {
-  background: var(--atlas-lime);
-  color: var(--atlas-graphite);
+  background: var(--color-good);
+  color: var(--color-on-good);
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--atlas-ink);
-  border-color: var(--atlas-line);
+  color: var(--color-ink);
+  border-color: var(--color-line);
 }
 
 .btn-primary:disabled,
@@ -141,6 +141,6 @@
 }
 
 .next-note {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.85rem;
 }

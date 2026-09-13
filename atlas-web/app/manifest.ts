@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/inbox",
     scope: "/",
     display: "standalone",
-    background_color: "#f5f2ea",
-    theme_color: "#17191e",
+    background_color: "#f9f9fb",
+    theme_color: "#14161c",
     icons: [
       {
         src: "/icons/icon-192.png",

@@ -7,7 +7,7 @@
 }
 
 .crumb a {
-  color: var(--atlas-lilac-deep);
+  color: var(--color-accent-deep);
   text-decoration: none;
 }
 
@@ -17,7 +17,7 @@
 }
 
 .add-sub {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin: 0 0 var(--space-4);
 }
 
@@ -25,8 +25,8 @@
   margin: 0 0 var(--space-6);
   padding: var(--space-2) var(--space-3);
   font-size: 0.85rem;
-  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
   border-radius: var(--radius-control);
 }
 
@@ -46,7 +46,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-12) var(--space-6);
-  border: 1.5px dashed var(--atlas-line);
+  border: 1.5px dashed var(--color-line);
   border-radius: var(--radius-feature);
   cursor: pointer;
   text-align: center;
@@ -55,13 +55,13 @@
 }
 
 .capture-drop:hover {
-  border-color: var(--atlas-lilac);
-  background: color-mix(in srgb, var(--atlas-lilac) 7%, transparent);
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
 }
 
 .capture-hint {
   font-size: 0.82rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   max-width: 42ch;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .capture-error {
-  color: var(--atlas-red);
+  color: var(--color-danger);
   font-size: 0.92rem;
 }
 
@@ -94,8 +94,8 @@
   max-height: 420px;
   object-fit: contain;
   border-radius: var(--radius-card);
-  border: 1px solid var(--atlas-line);
-  background: var(--atlas-paper-raised);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface-raised);
 }
 
 .capture-preview-actions {
@@ -120,14 +120,14 @@
 }
 
 .btn-primary {
-  background: var(--atlas-lime);
-  color: var(--atlas-graphite);
+  background: var(--color-good);
+  color: var(--color-on-good);
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--atlas-ink);
-  border-color: var(--atlas-line);
+  color: var(--color-ink);
+  border-color: var(--color-line);
 }
 
 .btn-primary:active,
@@ -137,9 +137,9 @@
 
 /* Tag review */
 .tag-review {
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
-  background: var(--atlas-paper-raised);
+  background: var(--color-surface-raised);
   padding: var(--space-6);
 }
 
@@ -148,7 +148,7 @@
 }
 
 .tag-review-note {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   font-size: 0.9rem;
   margin: var(--space-2) 0 var(--space-5);
 }
@@ -171,10 +171,10 @@
   font: inherit;
   font-weight: 400;
   padding: 8px 10px;
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-control);
-  background: var(--atlas-paper);
-  color: var(--atlas-ink);
+  background: var(--color-bg);
+  color: var(--color-ink);
 }
 
 .confidence-list {
@@ -188,8 +188,8 @@
   font-size: 0.75rem;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--atlas-lilac) 55%, transparent);
-  color: var(--atlas-lilac-deep);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  color: var(--color-accent-deep);
   font-variant-numeric: tabular-nums;
 }
 
@@ -202,12 +202,12 @@
 .tag-review-footnote {
   margin: var(--space-4) 0 0;
   font-size: 0.82rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .capture-resolved {
-  border: 1px solid color-mix(in srgb, var(--atlas-lime) 55%, transparent);
-  background: color-mix(in srgb, var(--atlas-lime) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-good) 55%, transparent);
+  background: color-mix(in srgb, var(--color-good) 12%, transparent);
   border-radius: var(--radius-card);
   padding: var(--space-6);
 }

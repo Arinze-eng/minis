@@ -85,19 +85,19 @@ export function ScanTerminal() {
         <div className="scan-live">
           <div className="gauge-wrap" role="img" aria-label={`Scan ${percent} percent complete`}>
             <svg viewBox="0 0 120 120" width="150" height="150" aria-hidden="true">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--atlas-line)" strokeWidth="10" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--color-line)" strokeWidth="10" />
               <circle
                 cx="60"
                 cy="60"
                 r="52"
                 fill="none"
-                stroke="var(--atlas-lime)"
+                stroke="var(--color-good)"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${(percent / 100) * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
                 transform="rotate(-90 60 60)"
               />
-              <text x="60" y="66" textAnchor="middle" fontSize="22" fill="var(--atlas-ink)">
+              <text x="60" y="66" textAnchor="middle" fontSize="22" fill="var(--color-ink)">
                 {percent}%
               </text>
             </svg>

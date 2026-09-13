@@ -1,25 +1,70 @@
-:root {
-  /* Atlas design tokens — docs/atlas-design-system.md §1 */
-  --atlas-paper: #f5f2ea;
-  --atlas-paper-raised: #fbf9f3;
-  --atlas-graphite: #17191e;
-  --atlas-graphite-raised: #22252c;
-  --atlas-ink: #1c1e24;
-  --atlas-ink-soft: #5c6068;
-  --atlas-line: rgba(28, 30, 36, 0.12);
-  --atlas-lime: #a8d139;
-  --atlas-lime-deep: #7da321;
-  --atlas-lilac: #b9a7e6;
-  --atlas-lilac-deep: #6f5bb5;
-  --atlas-amber: #d9a13b;
-  --atlas-red: #c2503c;
+/* ============================================================================
+   Atlas theme engine — dual-theme semantic tokens.
 
+   Two palettes from the design contract:
+   - Light "Atelier Editorial": warm porcelain, white cards, charcoal ink.
+   - Dark  "Atlas Night": graphite basalt, low-sheen slate, parchment text.
+
+   Rules:
+   - Components consume ONLY semantic tokens (--color-*, --shadow-*, etc.);
+     raw hex values never appear outside this file (brand marks exempt).
+   - Functional accents adapt per theme (indigo/amber/emerald).
+   - Motion: 150ms color transitions; `prefers-reduced-motion` collapses all.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- Atelier Editorial (light) --- */
+  --color-bg: #f9f9fb;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-chrome: #14161c; /* nav dock/tab bar (dark in both themes) */
+  --color-chrome-raised: #1d2029;
+  --color-on-chrome: #f2f3f5;
+  --color-on-chrome-muted: rgba(242, 243, 245, 0.64);
+  --color-chrome-line: rgba(255, 255, 255, 0.09);
+
+  --color-ink: #121316;
+  --color-ink-muted: #5e6472;
+  --color-line: rgba(0, 0, 0, 0.06);
+  --color-line-strong: rgba(0, 0, 0, 0.12);
+
+  --color-accent: #3b82f6; /* indigo cobalt — active / wardrobe */
+  --color-accent-deep: #2563eb;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: rgba(59, 130, 246, 0.1);
+
+  --color-alert: #d97706; /* amber — review-needed / leaks */
+  --color-alert-deep: #b45309;
+  --color-on-alert: #ffffff;
+  --color-alert-soft: rgba(217, 119, 6, 0.1);
+
+  --color-good: #059669; /* emerald — healthy CPW / confirmation */
+  --color-good-deep: #047857;
+  --color-on-good: #ffffff;
+  --color-good-soft: rgba(5, 150, 105, 0.1);
+
+  --color-danger: #dc2626;
+  --color-on-danger: #ffffff;
+  --color-danger-soft: rgba(220, 38, 38, 0.08);
+
+  --color-lavender: #7c6fb0; /* decorative second voice (kept subtle) */
+  --color-lavender-soft: rgba(124, 111, 176, 0.12);
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(15, 17, 21, 0.04), 0 2px 8px rgba(15, 17, 21, 0.04);
+  --shadow-pop: 0 4px 12px rgba(15, 17, 21, 0.08), 0 12px 32px rgba(15, 17, 21, 0.12);
+  --shadow-drawer: -24px 0 64px rgba(15, 17, 21, 0.24);
+
+  /* Typography (unchanged pairing) */
   --font-display: var(--font-space-grotesk), "DM Sans", system-ui, sans-serif;
   --font-body: var(--font-dm-sans), system-ui, sans-serif;
 
-  --radius-control: 6px;
-  --radius-card: 12px;
-  --radius-feature: 18px;
+  /* Space + radius (4/8 discipline) */
+  --radius-control: 8px;
+  --radius-card: 14px;
+  --radius-feature: 20px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -28,22 +73,115 @@
   --space-6: 24px;
   --space-8: 32px;
   --space-12: 48px;
+  --space-16: 64px;
 
-  --dur-fast: 160ms;
+  /* Motion */
+  --dur-fast: 150ms;
   --dur-move: 240ms;
+  --dur-drawer: 280ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* --- Atlas Night (dark) --- */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #0f1115;
+  --color-surface: #171920;
+  --color-surface-raised: #1d2029;
+  --color-chrome: #0c0e12;
+  --color-chrome-raised: #171920;
+  --color-on-chrome: #f2f3f5;
+  --color-on-chrome-muted: rgba(242, 243, 245, 0.64);
+  --color-chrome-line: rgba(255, 255, 255, 0.08);
+
+  --color-ink: #f2f3f5;
+  --color-ink-muted: #8a909e;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.14);
+
+  --color-accent: #60a5fa;
+  --color-accent-deep: #93c5fd;
+  --color-on-accent: #0b1220;
+  --color-accent-soft: rgba(96, 165, 250, 0.14);
+
+  --color-alert: #f59e0b;
+  --color-alert-deep: #fbbf24;
+  --color-on-alert: #211603;
+  --color-alert-soft: rgba(245, 158, 11, 0.14);
+
+  --color-good: #10b981;
+  --color-good-deep: #34d399;
+  --color-on-good: #032015;
+  --color-good-soft: rgba(16, 185, 129, 0.14);
+
+  --color-danger: #ef4444;
+  --color-on-danger: #fff5f5;
+  --color-danger-soft: rgba(239, 68, 68, 0.14);
+
+  --color-lavender: #a89ad6;
+  --color-lavender-soft: rgba(168, 154, 214, 0.16);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.6);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --atlas-paper: #17191e;
-    --atlas-paper-raised: #22252c;
-    --atlas-graphite: #101216;
-    --atlas-ink: #ece9e1;
-    --atlas-ink-soft: #a2a49f;
-    --atlas-line: rgba(236, 233, 225, 0.14);
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --color-bg: #0f1115;
+    --color-surface: #171920;
+    --color-surface-raised: #1d2029;
+    --color-chrome: #0c0e12;
+    --color-chrome-raised: #171920;
+    --color-on-chrome: #f2f3f5;
+    --color-on-chrome-muted: rgba(242, 243, 245, 0.64);
+    --color-chrome-line: rgba(255, 255, 255, 0.08);
+
+    --color-ink: #f2f3f5;
+    --color-ink-muted: #8a909e;
+    --color-line: rgba(255, 255, 255, 0.08);
+    --color-line-strong: rgba(255, 255, 255, 0.14);
+
+    --color-accent: #60a5fa;
+    --color-accent-deep: #93c5fd;
+    --color-on-accent: #0b1220;
+    --color-accent-soft: rgba(96, 165, 250, 0.14);
+
+    --color-alert: #f59e0b;
+    --color-alert-deep: #fbbf24;
+    --color-on-alert: #211603;
+    --color-alert-soft: rgba(245, 158, 11, 0.14);
+
+    --color-good: #10b981;
+    --color-good-deep: #34d399;
+    --color-on-good: #032015;
+    --color-good-soft: rgba(16, 185, 129, 0.14);
+
+    --color-danger: #ef4444;
+    --color-on-danger: #fff5f5;
+    --color-danger-soft: rgba(239, 68, 68, 0.14);
+
+    --color-lavender: #a89ad6;
+    --color-lavender-soft: rgba(168, 154, 214, 0.16);
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.55);
+    --shadow-drawer: -24px 0 64px rgba(0, 0, 0, 0.6);
   }
 }
+
+/* Respect explicit choice even before JS re-runs (FOUC guard companion). */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+}
+
+/* --- Base ------------------------------------------------------------------ */
 
 * {
   box-sizing: border-box;
@@ -55,12 +193,36 @@ html {
 
 body {
   margin: 0;
-  background: var(--atlas-paper);
-  color: var(--atlas-ink);
+  background: var(--color-bg);
+  color: var(--color-ink);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  transition: background-color var(--dur-fast) ease-in-out,
+    color var(--dur-fast) ease-in-out;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .visually-hidden {
@@ -73,23 +235,6 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  line-height: 1.15;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-}
-
-:focus-visible {
-  outline: 2px solid var(--atlas-lilac-deep);
-  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -11,7 +11,7 @@
 }
 
 .sources-sub {
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
   margin: var(--space-2) 0 var(--space-4);
   max-width: 62ch;
 }
@@ -20,14 +20,14 @@
   margin: 0 0 var(--space-6);
   padding: var(--space-2) var(--space-3);
   font-size: 0.85rem;
-  background: color-mix(in srgb, var(--atlas-amber) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--atlas-amber) 45%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
   border-radius: var(--radius-control);
 }
 
 .permissions-banner {
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   padding: var(--space-5) var(--space-6);
   margin-bottom: var(--space-6);
@@ -48,15 +48,15 @@
 
 .permissions-banner code {
   font-size: 0.84rem;
-  background: color-mix(in srgb, var(--atlas-lilac) 14%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   border-radius: 4px;
   padding: 1px 6px;
 }
 
 /* Scan terminal */
 .scan-terminal {
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   padding: var(--space-5) var(--space-6);
   margin-bottom: var(--space-6);
@@ -70,7 +70,7 @@
 .scan-idle p {
   margin: 0 0 var(--space-4);
   max-width: 58ch;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 .btn-primary,
@@ -85,14 +85,14 @@
 }
 
 .btn-primary {
-  background: var(--atlas-lime);
-  color: var(--atlas-graphite);
+  background: var(--color-good);
+  color: var(--color-on-good);
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--atlas-ink);
-  border-color: var(--atlas-line);
+  color: var(--color-ink);
+  border-color: var(--color-line);
 }
 
 .scan-live {
@@ -112,7 +112,7 @@
 }
 
 .scan-counters span {
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--color-line);
   border-radius: 999px;
   padding: 3px 10px;
 }
@@ -120,8 +120,8 @@
 .scan-log {
   font-family: ui-monospace, monospace;
   font-size: 0.8rem;
-  background: color-mix(in srgb, var(--atlas-graphite) 6%, transparent);
-  border: 1px solid var(--atlas-line);
+  background: color-mix(in srgb, var(--color-chrome) 6%, transparent);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-control);
   padding: var(--space-3) var(--space-4);
   max-height: 200px;
@@ -133,7 +133,7 @@
 }
 
 .scan-done {
-  color: var(--atlas-lime-deep);
+  color: var(--color-good-deep);
   font-weight: 600;
 }
 
@@ -161,8 +161,8 @@
   grid-template-columns: auto auto 1fr;
   gap: var(--space-3);
   align-items: baseline;
-  background: var(--atlas-paper-raised);
-  border: 1px solid var(--atlas-line);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-control);
   padding: var(--space-3) var(--space-4);
 }
@@ -180,18 +180,18 @@
 }
 
 .health-on {
-  background: color-mix(in srgb, var(--atlas-lime) 30%, transparent);
+  background: color-mix(in srgb, var(--color-good) 30%, transparent);
 }
 
 .health-off {
   background: transparent;
-  border: 1px dashed var(--atlas-line);
-  color: var(--atlas-ink-soft);
+  border: 1px dashed var(--color-line);
+  color: var(--color-ink-muted);
 }
 
 .health-detail {
   font-size: 0.85rem;
-  color: var(--atlas-ink-soft);
+  color: var(--color-ink-muted);
 }
 
 @media (max-width: 640px) {

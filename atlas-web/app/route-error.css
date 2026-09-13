@@ -16,7 +16,7 @@
   padding: 8px 18px;
   border-radius: var(--radius-control);
   border: 0;
-  background: var(--atlas-lime);
-  color: var(--atlas-graphite);
+  background: var(--color-good);
+  color: var(--color-chrome);
   cursor: pointer;
 }
