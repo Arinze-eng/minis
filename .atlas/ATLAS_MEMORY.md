@@ -335,3 +335,33 @@ uv run --no-sync python scripts/atlas_diagnose.py
   scope fix (server-derived verified-context scopes). Verification:
   141 passed / 9 skipped (tests/atlas), ruff clean, basedpyright strict
   clean on nanobot/atlas + scripts/atlas_demo.py.
+
+### atlas-web (Next.js frontend, under active development)
+
+- `5e97644` — Phase 0 baseline records + backend test-hermeticity repairs.
+- `1c8a34b` — Next.js 15 App Router shell: landing, inbox, signal detail,
+  PWA manifest + service worker, labelled demo mode.
+- `75e435f` — Wardrobe/money/sources/privacy surfaces, adaptive shell
+  (desktop dock, mobile tab bar), 22 tests.
+- `629b574` — Dual-theme engine (`light-dark()` tokens, FOUC guard),
+  editorial landing with Daily Loop, Sentinel header, notification drawer,
+  morning briefing, motion polish. 30 tests.
+- `5887bc8` — Real backend integration: middleware-minted HMAC sessions
+  (RSC-safe), Postgres store with committed migrations + race-guarded
+  journal, deterministic signal engine incl. cross-domain wardrobe×money
+  rule, API routes (wardrobe/wear/signals/money/notifications/privacy),
+  idempotent wear logging, night-mode redesign (warm basalt), motion/react
+  animation layer. 41 tests. Full workflow smoke-verified against live
+  Postgres incl. cross-principal isolation and wipe.
+- `313f764` — Stop tracking legacy dev session secret file.
+- (this commit) — Real image pipeline: signed Cloudinary uploads
+  (`lib/server/cloudinary.ts`, server-only), magic-byte/dimension image
+  validation, consent gate enforced server-side before upload (revoked
+  consent → 403, verified), owner-scoped signed asset view route,
+  delete with real provider cleanup, PATCH garment confirm, idempotency-key
+  consumption. Migration `002_assets_consent.sql`. Capture flow rebuilt:
+  consent disclosure panel, honest provider-unavailable state, user-entered
+  tags until an analysis provider is configured. Compliance review +
+  local runbook added (`docs/atlas-compliance-review.md`,
+  `docs/atlas-run-local.md`). Verification: 41 tests, tsc clean, build
+  clean, live smoke incl. non-owner 404 and provider cleanup.

@@ -93,3 +93,58 @@ function strOrNull(v: unknown, maxLen: number): string | null {
 // scopedKey is used by wear/feedback routes that import this module's helpers;
 // keep the reference so tree-shaking doesn't complain in strict builds.
 void scopedKey;
+
+export async function PATCH(request: Request) {
+  const principal = await requirePrincipal();
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  const id = typeof body.id === "string" ? body.id : "";
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";
+  const category = typeof body.category === "string" ? body.category : "";
+  if (!id || !name || !CATEGORIES.has(category)) {
+    return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+  }
+
+  // Idempotent confirm: the same confirmation key never double-writes.
+  const confirmKey = typeof body.clientConfirmKey === "string" ? body.clientConfirmKey : null;
+  const { store, mode } = getStore();
+  if (confirmKey) {
+    const consumed = await store.consumeIdempotencyKey(
+      principal.userId,
+      scopedKey(principal, "garment_confirm", confirmKey),
+    );
+    if (!consumed) {
+      return NextResponse.json({ error: "duplicate_confirmation" }, { status: 409 });
+    }
+  }
+
+  const warmth = clampInt(body.warmth, 0, 3, 1);
+  const formality = clampInt(body.formality, 0, 3, 1);
+  const price = typeof body.price === "number" && body.price > 0 ? Math.min(body.price, 1_000_000) : null;
+
+  const garment = await store.updateGarment(principal.userId, id, {
+    name,
+    category,
+    colors: strArray(body.colors, 8),
+    material: strOrNull(body.material, 80),
+    pattern: strOrNull(body.pattern, 80),
+    warmth,
+    formality,
+    seasons: strArray(body.seasons, 6),
+    occasions: strArray(body.occasions, 8),
+    price,
+    currency: typeof body.currency === "string" ? body.currency.slice(0, 3).toUpperCase() : "USD",
+  });
+  if (!garment) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  await store.audit(principal.userId, "garment_confirmed", garment.id, { mode });
+  await syncSignalsAndNotifications(principal.userId);
+  return NextResponse.json({ garment });
+}

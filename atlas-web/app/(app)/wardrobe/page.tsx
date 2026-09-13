@@ -67,6 +67,7 @@ function toDomainGarment(row: Awaited<ReturnType<typeof getStore>>["store"] exte
     wearCount: row.wearCount,
     status: row.status === "confirmed" ? "confirmed" : "needs_confirmation",
     analysisProvider: (row.analysisProvider as Garment["analysisProvider"]) ?? "user",
+    imageRef: row.imageRef ?? null,
     imageAlt: `${row.name}, garment record`,
     addedAt: row.addedAt,
     correctionHistory: [],

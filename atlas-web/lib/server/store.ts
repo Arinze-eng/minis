@@ -33,6 +33,7 @@ export interface GarmentRow {
   wearCount: number;
   status: string;
   analysisProvider: string;
+  imageRef?: string | null;
   addedAt: string;
 }
 
@@ -84,7 +85,30 @@ export interface NotificationRow {
   createdAt: string;
 }
 
-const MIGRATIONS = ["001_atlas_core"] as const;
+const MIGRATIONS = ["001_atlas_core", "002_assets_consent"] as const;
+
+export interface AssetRow {
+  id: string;
+  principalId: string;
+  provider: string;
+  publicId: string;
+  bytes: number;
+  width?: number | null;
+  height?: number | null;
+  mime: string;
+  purpose: string;
+  status: string;
+  createdAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ConsentRow {
+  scope: string;
+  granted: boolean;
+  grantedAt?: string | null;
+  revokedAt?: string | null;
+  consentVersion: string;
+}
 
 // ---------------------------------------------------------------------------
 // Postgres backend
@@ -170,14 +194,15 @@ class PgStore {
     const { rows } = await pool.query(
       `INSERT INTO wardrobe_garments
         (id, principal_id, name, category, colors, material, pattern, warmth, formality,
-         seasons, occasions, price, currency, wear_count, status, analysis_provider)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         seasons, occasions, price, currency, wear_count, status, analysis_provider, image_ref)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
       [
         g.id, principalId, g.name, g.category, JSON.stringify(g.colors),
         g.material ?? null, g.pattern ?? null, g.warmth, g.formality,
         JSON.stringify(g.seasons), JSON.stringify(g.occasions),
         g.price ?? null, g.currency ?? null, g.wearCount, g.status, g.analysisProvider,
+        g.imageRef ?? null,
       ],
     );
     return mapGarment(rows[0]);
@@ -191,6 +216,43 @@ class PgStore {
       [id, principalId],
     );
     return (res.rowCount ?? 0) > 0;
+  }
+
+  /** Confirm-and-update a pending garment; ownership-checked, returns the row. */
+  async updateGarment(
+    principalId: string,
+    id: string,
+    patch: {
+      name: string;
+      category: string;
+      colors: string[];
+      material?: string | null;
+      pattern?: string | null;
+      warmth: number;
+      formality: number;
+      seasons: string[];
+      occasions: string[];
+      price?: number | null;
+      currency?: string | null;
+    },
+  ): Promise<GarmentRow | null> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `UPDATE wardrobe_garments SET
+         name = $3, category = $4, colors = $5, material = $6, pattern = $7,
+         warmth = $8, formality = $9, seasons = $10, occasions = $11,
+         price = $12, currency = $13, status = 'confirmed',
+         analysis_provider = 'user_confirmed', updated_at = now()
+       WHERE id = $1 AND principal_id = $2 RETURNING *`,
+      [
+        id, principalId, patch.name, patch.category, JSON.stringify(patch.colors),
+        patch.material ?? null, patch.pattern ?? null, patch.warmth, patch.formality,
+        JSON.stringify(patch.seasons), JSON.stringify(patch.occasions),
+        patch.price ?? null, patch.currency ?? null,
+      ],
+    );
+    return rows[0] ? mapGarment(rows[0]) : null;
   }
 
   /** Log a wear; idempotent per key; bumps wear_count in one transaction. */
@@ -379,12 +441,106 @@ class PgStore {
     );
   }
 
+  /** Consume an idempotency key; false means it was already used. */
+  async consumeIdempotencyKey(principalId: string, key: string): Promise<boolean> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const res = await pool.query(
+      "INSERT INTO idempotency_keys (principal_id, key) VALUES ($1,$2) ON CONFLICT (principal_id, key) DO NOTHING",
+      [principalId, key],
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
+
+  // --- Assets + consent (migration 002) ------------------------------------
+
+  async createAsset(
+    principalId: string,
+    a: Omit<AssetRow, "principalId" | "createdAt" | "deletedAt" | "status">,
+  ): Promise<AssetRow> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO wardrobe_assets
+        (id, principal_id, provider, public_id, bytes, width, height, mime, purpose, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active') RETURNING *`,
+      [a.id, principalId, a.provider, a.publicId, a.bytes, a.width ?? null, a.height ?? null, a.mime, a.purpose],
+    );
+    return mapAsset(rows[0]);
+  }
+
+  async getAsset(principalId: string, id: string): Promise<AssetRow | null> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM wardrobe_assets WHERE id = $1 AND principal_id = $2",
+      [id, principalId],
+    );
+    return rows[0] ? mapAsset(rows[0]) : null;
+  }
+
+  async markAssetDeleted(principalId: string, id: string): Promise<AssetRow | null> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `UPDATE wardrobe_assets SET status = 'deleted', deleted_at = now()
+       WHERE id = $1 AND principal_id = $2 AND status = 'active' RETURNING *`,
+      [id, principalId],
+    );
+    return rows[0] ? mapAsset(rows[0]) : null;
+  }
+
+  async getConsent(principalId: string, scope: string): Promise<ConsentRow> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM consent_grants WHERE principal_id = $1 AND scope = $2",
+      [principalId, scope],
+    );
+    if (!rows[0]) {
+      return { scope, granted: false, grantedAt: null, revokedAt: null, consentVersion: "v1" };
+    }
+    const r = rows[0];
+    return {
+      scope,
+      granted: Boolean(r.granted) && !r.revoked_at,
+      grantedAt: r.granted_at ? new Date(r.granted_at as string).toISOString() : null,
+      revokedAt: r.revoked_at ? new Date(r.revoked_at as string).toISOString() : null,
+      consentVersion: String(r.consent_version),
+    };
+  }
+
+  async setConsent(principalId: string, scope: string, granted: boolean): Promise<ConsentRow> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO consent_grants (principal_id, scope, granted, granted_at, revoked_at)
+       VALUES ($1,$2,$3,CASE WHEN $3 THEN now() ELSE NULL END, CASE WHEN $3 THEN NULL ELSE now() END)
+       ON CONFLICT (principal_id, scope) DO UPDATE SET
+         granted = EXCLUDED.granted,
+         granted_at = EXCLUDED.granted_at,
+         revoked_at = CASE WHEN EXCLUDED.granted THEN NULL ELSE now() END,
+         updated_at = now()
+       RETURNING *`,
+      [principalId, scope, granted],
+    );
+    const r = rows[0];
+    return {
+      scope,
+      granted: Boolean(r.granted) && !r.revoked_at,
+      grantedAt: r.granted_at ? new Date(r.granted_at as string).toISOString() : null,
+      revokedAt: r.revoked_at ? new Date(r.revoked_at as string).toISOString() : null,
+      consentVersion: String(r.consent_version),
+    };
+  }
+
   async wipe(principalId: string): Promise<void> {
     await this.ensureMigrated();
     const pool = await this.getPool();
     const tables = [
       "wear_events", "wardrobe_garments", "money_findings", "signals",
       "notifications", "audit_events", "idempotency_keys",
+      "wardrobe_assets", "consent_grants",
     ];
     for (const t of tables) {
       await pool.query(`DELETE FROM ${t} WHERE principal_id = $1`, [principalId]);
@@ -410,6 +566,7 @@ function mapGarment(r: Record<string, unknown>): GarmentRow {
     wearCount: Number(r.wear_count),
     status: String(r.status),
     analysisProvider: String(r.analysis_provider),
+    imageRef: (r.image_ref as string) ?? null,
     addedAt: new Date(r.added_at as string).toISOString(),
   };
 }
@@ -451,6 +608,23 @@ function mapSignal(r: Record<string, unknown>): SignalRow {
     state: String(r.state),
     stateUntil: r.state_until ? new Date(r.state_until as string).toISOString() : null,
     createdAt: new Date(r.created_at as string).toISOString(),
+  };
+}
+
+function mapAsset(r: Record<string, unknown>): AssetRow {
+  return {
+    id: String(r.id),
+    principalId: String(r.principal_id),
+    provider: String(r.provider),
+    publicId: String(r.public_id),
+    bytes: Number(r.bytes),
+    width: r.width !== null && r.width !== undefined ? Number(r.width) : null,
+    height: r.height !== null && r.height !== undefined ? Number(r.height) : null,
+    mime: String(r.mime),
+    purpose: String(r.purpose),
+    status: String(r.status),
+    createdAt: new Date(r.created_at as string).toISOString(),
+    deletedAt: r.deleted_at ? new Date(r.deleted_at as string).toISOString() : null,
   };
 }
 
@@ -521,6 +695,31 @@ class LocalFileStore {
     const removed = next.length < rows.length;
     if (removed) this.write(principalId, "garments", next);
     return removed;
+  }
+
+  async updateGarment(
+    principalId: string,
+    id: string,
+    patch: {
+      name: string;
+      category: string;
+      colors: string[];
+      material?: string | null;
+      pattern?: string | null;
+      warmth: number;
+      formality: number;
+      seasons: string[];
+      occasions: string[];
+      price?: number | null;
+      currency?: string | null;
+    },
+  ): Promise<GarmentRow | null> {
+    const rows = this.read<GarmentRow>(principalId, "garments");
+    const target = rows.find((g) => g.id === id);
+    if (!target) return null;
+    Object.assign(target, patch, { status: "confirmed", analysisProvider: "user_confirmed" });
+    this.write(principalId, "garments", rows);
+    return target;
   }
 
   async logWear(principalId: string, garmentId: string, idempotencyKey: string): Promise<{ ok: boolean; duplicate: boolean; wearCount?: number }> {
@@ -619,8 +818,67 @@ class LocalFileStore {
     this.write(principalId, "audit", rows);
   }
 
+  async consumeIdempotencyKey(principalId: string, key: string): Promise<boolean> {
+    const rows = this.read<{ key: string }>(principalId, "idempotency");
+    if (rows.some((k) => k.key === key)) return false;
+    rows.push({ key });
+    this.write(principalId, "idempotency", rows);
+    return true;
+  }
+
+  // --- Assets + consent (mirrors the Postgres backend) ---------------------
+
+  async createAsset(
+    principalId: string,
+    a: Omit<AssetRow, "principalId" | "createdAt" | "deletedAt" | "status">,
+  ): Promise<AssetRow> {
+    const row: AssetRow = {
+      ...a, principalId, status: "active", createdAt: new Date().toISOString(), deletedAt: null,
+    };
+    const rows = this.read<AssetRow>(principalId, "assets");
+    rows.push(row);
+    this.write(principalId, "assets", rows);
+    return row;
+  }
+
+  async getAsset(principalId: string, id: string): Promise<AssetRow | null> {
+    return this.read<AssetRow>(principalId, "assets").find((a) => a.id === id && a.status === "active") ?? null;
+  }
+
+  async markAssetDeleted(principalId: string, id: string): Promise<AssetRow | null> {
+    const rows = this.read<AssetRow>(principalId, "assets");
+    const target = rows.find((a) => a.id === id && a.status === "active");
+    if (!target) return null;
+    target.status = "deleted";
+    target.deletedAt = new Date().toISOString();
+    this.write(principalId, "assets", rows);
+    return target;
+  }
+
+  async getConsent(principalId: string, scope: string): Promise<ConsentRow> {
+    const rows = this.read<ConsentRow>(principalId, "consents");
+    return rows.find((c) => c.scope === scope) ?? { scope, granted: false, grantedAt: null, revokedAt: null, consentVersion: "v1" };
+  }
+
+  async setConsent(principalId: string, scope: string, granted: boolean): Promise<ConsentRow> {
+    const rows = this.read<ConsentRow>(principalId, "consents");
+    const idx = rows.findIndex((c) => c.scope === scope);
+    const now = new Date().toISOString();
+    const row: ConsentRow = {
+      scope,
+      granted,
+      grantedAt: granted ? now : null,
+      revokedAt: granted ? null : now,
+      consentVersion: "v1",
+    };
+    if (idx >= 0) rows[idx] = row;
+    else rows.push(row);
+    this.write(principalId, "consents", rows);
+    return row;
+  }
+
   async wipe(principalId: string): Promise<void> {
-    for (const name of ["garments", "findings", "signals", "notifications", "audit", "wear_events", "idempotency"]) {
+    for (const name of ["garments", "findings", "signals", "notifications", "audit", "wear_events", "idempotency", "assets", "consents"]) {
       this.write(principalId, name, []);
     }
   }

@@ -51,6 +51,8 @@ export interface Garment {
   /** Analysis provenance for the garment record as a whole. */
   analysisProvider: "model" | "demo" | "seed" | "user";
   imageUrl?: string;
+  /** Opaque server-side asset id (never a provider public_id). */
+  imageRef?: string | null;
   imageAlt: string;
   addedAt: string;
   /** Correction history entries: what changed and who changed it. */

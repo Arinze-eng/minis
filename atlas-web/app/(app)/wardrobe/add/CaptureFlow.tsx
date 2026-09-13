@@ -1,19 +1,26 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Camera, RotateCcw, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { Camera, RotateCcw, ShieldCheck, Upload } from "lucide-react";
+import { motion } from "motion/react";
 import {
   validateUpload,
   UPLOAD_LIMITS,
   type PendingConfirmation,
   type UploadState,
 } from "@/lib/wardrobe";
+import { atlasSpring, useMotionPrefs } from "@/lib/motion";
 
 /**
- * Garment capture flow — frontend projection of the documented server flow:
- * pick → validate → (live: signed upload + consent-gated analysis) →
- * review_required → user confirms → resolved. In demo mode the analysis step
- * is simulated and labelled; no image leaves the device.
+ * Garment capture flow — the real §10 pipeline:
+ * pick → client validate → consent disclosure (server-recorded) →
+ * POST /api/wardrobe/upload (signed Cloudinary, private) → review tags →
+ * PATCH /api/wardrobe (confirm, user-confirmed provenance) → resolved.
+ *
+ * Honesty rules: provider-unavailable is a visible 503 state, never a
+ * simulation; tags entered by the user are labelled user-confirmed (model
+ * suggestions appear only when an analysis provider is configured).
  */
 
 const CATEGORY_OPTIONS = [
@@ -33,48 +40,49 @@ function TagReview({
   onConfirm,
 }: {
   pending: PendingConfirmation;
-  onConfirm: (finalName: string) => void;
+  onConfirm: (values: {
+    name: string;
+    category: string;
+    colors: string;
+    material: string;
+    warmth: string;
+    formality: string;
+  }) => void;
 }) {
   const { garment, suggestedTags } = pending;
-  const [edits, setEdits] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    for (const [field, tag] of Object.entries(suggestedTags)) {
-      initial[field] = tag.value;
-    }
-    return initial;
+  const [values, setValues] = useState({
+    name: suggestedTags["name"]?.value ?? "",
+    category: suggestedTags["category"]?.value ?? "top",
+    colors: garment.colors.join(", "),
+    material: "",
+    warmth: "1",
+    formality: "1",
   });
+  const hasModelSuggestions = Object.keys(suggestedTags).length > 0;
 
-  const confirmedFields = useRef<Set<string>>(new Set());
+  const set = (field: keyof typeof values) => (e: { target: { value: string } }) =>
+    setValues((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const setValue = useCallback((field: string, value: string) => {
-    confirmedFields.current.add(field); // user touched it → user-confirmed provenance
-    setEdits((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const valid = values.name.trim().length > 0;
 
   return (
     <section className="tag-review" aria-labelledby="tag-review-h">
-      <h2 id="tag-review-h">Review suggested tags</h2>
+      <h2 id="tag-review-h">Describe this garment</h2>
       <p className="tag-review-note">
-        Suggestions come from an analysis model. Everything here is editable —
-        your edits override the model and are recorded as user-confirmed.
+        {hasModelSuggestions
+          ? "Suggestions come from an analysis model — your edits are recorded as user-confirmed."
+          : "Your photo is stored privately. Automated tag analysis needs an analysis provider; these details are recorded as user-confirmed, which outfit planning treats as the strongest signal."}
       </p>
 
       <div className="tag-grid">
         <label className="tag-field">
           <span>Name</span>
-          <input
-            type="text"
-            value={edits["name"] ?? garment.name}
-            onChange={(e) => setValue("name", e.target.value)}
-          />
+          <input type="text" value={values.name} onChange={set("name")} required />
         </label>
 
         <label className="tag-field">
           <span>Category</span>
-          <select
-            value={edits["category"] ?? garment.category}
-            onChange={(e) => setValue("category", e.target.value)}
-          >
+          <select value={values.category} onChange={set("category")}>
             {CATEGORY_OPTIONS.map((c) => (
               <option key={c} value={c}>
                 {c.replace("_", " ")}
@@ -85,69 +93,39 @@ function TagReview({
 
         <label className="tag-field">
           <span>Colors (comma-separated)</span>
-          <input
-            type="text"
-            value={edits["colors"] ?? garment.colors.join(", ")}
-            onChange={(e) => setValue("colors", e.target.value)}
-          />
+          <input type="text" value={values.colors} onChange={set("colors")} placeholder="e.g. olive, cream" />
         </label>
 
         <label className="tag-field">
           <span>Material</span>
-          <input
-            type="text"
-            value={edits["material"] ?? ""}
-            onChange={(e) => setValue("material", e.target.value)}
-            placeholder="e.g. cotton twill"
-          />
+          <input type="text" value={values.material} onChange={set("material")} placeholder="e.g. cotton twill" />
         </label>
 
         <label className="tag-field">
           <span>Warmth (0–3)</span>
-          <input
-            type="number"
-            min={0}
-            max={3}
-            value={edits["warmth"] ?? String(garment.warmth)}
-            onChange={(e) => setValue("warmth", e.target.value)}
-          />
+          <input type="number" min={0} max={3} value={values.warmth} onChange={set("warmth")} />
         </label>
 
         <label className="tag-field">
           <span>Formality (0–3)</span>
-          <input
-            type="number"
-            min={0}
-            max={3}
-            value={edits["formality"] ?? String(garment.formality)}
-            onChange={(e) => setValue("formality", e.target.value)}
-          />
+          <input type="number" min={0} max={3} value={values.formality} onChange={set("formality")} />
         </label>
       </div>
 
-      <div className="confidence-list" aria-label="Model confidence per tag">
-        {Object.entries(suggestedTags).map(([field, tag]) => (
-          <span
-            key={field}
-            className="confidence-pill"
-            title={`Model confidence for ${field}`}
-          >
-            {field}: {Math.round(tag.confidence * 100)}%
-          </span>
-        ))}
-      </div>
-
       <div className="tag-review-actions">
-        <button type="button" className="btn-primary" onClick={() => onConfirm(edits["name"] ?? garment.name)}>
-          Confirm garment tags
-        </button>
-        <button type="button" className="btn-secondary" onClick={() => onConfirm("")}>
-          Discard
+        <button
+          type="button"
+          className="btn-primary"
+          disabled={!valid}
+          onClick={() => onConfirm(values)}
+        >
+          Confirm garment
         </button>
       </div>
       <p className="tag-review-footnote">
-        Confirming marks the model-vs-user provenance for each field and makes
-        the piece usable by outfit planning.
+        Confirming stores the garment with your provenance and makes it usable
+        by outfit planning. The photo stays private and deletable from your
+        wardrobe.
       </p>
     </section>
   );
@@ -164,8 +142,29 @@ export function CaptureFlow({
       : { phase: "idle" },
   );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [fileBytes, setFileBytes] = useState<File | null>(null);
   const [inputKey, setInputKey] = useState(0);
+  const [consent, setConsent] = useState<"unknown" | "granted" | "not_granted">("unknown");
+  const [errorNote, setErrorNote] = useState("");
+  const reduced = useMotionPrefs();
+
+  // Load the server-authoritative consent record on mount.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/consent", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { grants?: Array<{ scope: string; granted: boolean }> } | null) => {
+        if (!alive || !data?.grants) return;
+        const g = data.grants.find((x) => x.scope === "garment_image_analysis");
+        setConsent(g?.granted ? "granted" : "not_granted");
+      })
+      .catch(() => {
+        if (alive) setConsent("not_granted");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const onPick = useCallback(
     (file: File | undefined) => {
@@ -177,22 +176,68 @@ export function CaptureFlow({
         return;
       }
       setPreviewUrl(URL.createObjectURL(file));
+      setFileBytes(file);
       setState({ phase: "picked", fileName: file.name, sizeBytes: file.size, mimeType: file.type });
     },
     [],
   );
 
-  const startAnalysis = useCallback(() => {
-    if (state.phase !== "picked") return;
-    setState({ phase: "uploading", fileName: state.fileName, progress: 100 });
-    // Demo mode: simulated analysis, clearly not a live provider call.
-    window.setTimeout(() => setState({ phase: "analyzing", fileName: state.fileName }), 250);
-    window.setTimeout(() => {
+  const grantAndUpload = useCallback(async () => {
+    if (!fileBytes || state.phase !== "picked") return;
+    setErrorNote("");
+    try {
+      const consentRes = await fetch("/api/consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "garment_image_analysis", granted: true }),
+      });
+      if (!consentRes.ok) {
+        setErrorNote("Could not record your consent — nothing was uploaded. Try again.");
+        return;
+      }
+      setConsent("granted");
+
+      setState({ phase: "uploading", fileName: fileBytes.name, progress: 60 });
+      const form = new FormData();
+      form.set("image", fileBytes);
+      form.set("name", "");
+      const res = await fetch("/api/wardrobe/upload", { method: "POST", body: form });
+
+      if (res.status === 503) {
+        setState({ phase: "error_retry", reason: "Image storage is not configured on this deployment — upload is unavailable." });
+        return;
+      }
+      if (res.status === 403) {
+        setConsent("not_granted");
+        setState({ phase: "picked", fileName: fileBytes.name, sizeBytes: fileBytes.size, mimeType: fileBytes.type });
+        setErrorNote("Consent was not active on the server — review the disclosure and continue.");
+        return;
+      }
+      if (res.status === 502) {
+        const data = (await res.json().catch(() => null)) as { reason?: string } | null;
+        setState({ phase: "error_retry", reason: "The image provider rejected the upload — you can retry." });
+        setErrorNote(data?.reason ? `Provider said: ${data.reason}` : "");
+        return;
+      }
+      if (res.status === 400) {
+        const data = (await res.json().catch(() => null)) as { reason?: string } | null;
+        setState({ phase: "error_retry", reason: `That image was rejected server-side (${data?.reason ?? "invalid_image"}).` });
+        return;
+      }
+      if (!res.ok) {
+        setState({ phase: "error_retry", reason: "Upload failed — you can retry." });
+        return;
+      }
+
+      const data = (await res.json()) as {
+        garment: { id: string; name: string; imageRef?: string | null };
+      };
+      setState({ phase: "analyzing", fileName: fileBytes.name });
       setState({
         phase: "review_required",
         pending: {
           garment: {
-            id: `demo-upload-${Date.now()}`,
+            id: data.garment.id,
             name: "New wardrobe piece",
             category: "top",
             colors: [],
@@ -202,23 +247,67 @@ export function CaptureFlow({
             occasions: [],
             wearCount: 0,
             status: "needs_confirmation",
-            analysisProvider: "demo",
+            analysisProvider: "user",
+            imageRef: data.garment.imageRef ?? null,
             imageAlt: "Uploaded garment capture pending review",
             addedAt: new Date().toISOString(),
             correctionHistory: [],
           },
-          suggestedTags: {
-            name: { value: "New wardrobe piece", confidence: 0.4, provenance: "model_suggested" },
-            category: { value: "top", confidence: 0.35, provenance: "model_suggested" },
-          },
+          suggestedTags: {},
         },
       });
-    }, 1100);
-  }, [state]);
+    } catch {
+      setState({ phase: "error_retry", reason: "You appear to be offline — the image was not uploaded." });
+    }
+  }, [fileBytes, state.phase]);
+
+  const confirm = useCallback(
+    async (values: {
+      name: string;
+      category: string;
+      colors: string;
+      material: string;
+      warmth: string;
+      formality: string;
+    }) => {
+      if (state.phase !== "review_required") return;
+      const id = state.pending.garment.id;
+      try {
+        const res = await fetch("/api/wardrobe", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            name: values.name,
+            category: values.category,
+            colors: values.colors.split(",").map((s) => s.trim()).filter(Boolean),
+            material: values.material || null,
+            warmth: Number(values.warmth) || 1,
+            formality: Number(values.formality) || 1,
+            clientConfirmKey: `${id}`,
+          }),
+        });
+        if (!res.ok) {
+          setErrorNote(
+            res.status === 409
+              ? "This garment was already confirmed — check your wardrobe."
+              : "Confirmation failed — the photo is safe; try again.",
+          );
+          return;
+        }
+        setState({ phase: "resolved", garmentId: id });
+      } catch {
+        setErrorNote("You appear to be offline — the garment is not confirmed yet.");
+      }
+    },
+    [state],
+  );
 
   const reset = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
+    setFileBytes(null);
+    setErrorNote("");
     setInputKey((k) => k + 1);
     setState({ phase: "idle" });
   }, [previewUrl]);
@@ -228,15 +317,15 @@ export function CaptureFlow({
       case "idle":
         return "Pick or capture one garment photo to begin.";
       case "picked":
-        return "Ready — start the (simulated) analysis when the preview looks right.";
+        return "Preview looks right? Continue to the consent step and upload.";
       case "uploading":
-        return "Validating and staging locally (demo: no upload happens).";
+        return "Uploading privately to image storage…";
       case "analyzing":
-        return "Analyzing for suggested tags (demo simulation — nothing sent).";
+        return "Image stored. Preparing your review sheet…";
       case "review_required":
-        return "Review the suggested tags below.";
+        return "Describe the garment below to finish adding it.";
       case "resolved":
-        return "Confirmed (demo): the piece would now join outfit planning.";
+        return "Confirmed and saved — the piece is now in your wardrobe.";
       case "error_retry":
         return state.reason;
     }
@@ -253,7 +342,6 @@ export function CaptureFlow({
           <label className="capture-drop">
             <input
               key={inputKey}
-              ref={inputRef}
               type="file"
               accept={[...UPLOAD_LIMITS.allowedMimeTypes].join(",")}
               capture="environment"
@@ -280,41 +368,81 @@ export function CaptureFlow({
 
       {previewUrl && state.phase !== "review_required" && state.phase !== "resolved" ? (
         <div className="capture-preview">
-          {/* Local object URL preview only; never uploaded in demo mode. */}
+          {/* Local object URL preview; the server-side copy is private. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={previewUrl} alt="Local preview of the selected garment" />
           <div className="capture-preview-actions">
             <button type="button" className="btn-secondary" onClick={reset}>
               <RotateCcw size={15} aria-hidden="true" /> Retake
             </button>
-            {state.phase === "picked" ? (
-              <button type="button" className="btn-primary" onClick={startAnalysis}>
-                <Upload size={15} aria-hidden="true" /> Analyze this garment
+            {state.phase === "picked" && consent === "granted" ? (
+              <button type="button" className="btn-primary" onClick={() => void grantAndUpload()}>
+                <Upload size={15} aria-hidden="true" /> Upload privately
               </button>
             ) : null}
           </div>
+
+          {/* Consent disclosure (§10): shown before any upload; the grant is
+              recorded server-side and revocable from the privacy hub. */}
+          {state.phase === "picked" && consent !== "granted" ? (
+            <motion.section
+              className="consent-disclosure"
+              aria-labelledby="consent-h"
+              initial={reduced ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={atlasSpring(reduced)}
+            >
+              <h2 id="consent-h">
+                <ShieldCheck size={16} aria-hidden="true" /> Before your photo leaves this device
+              </h2>
+              <ul>
+                <li>
+                  <strong>Purpose:</strong> storing your garment photo so you can
+                  review it and use it in outfit planning.
+                </li>
+                <li>
+                  <strong>Storage:</strong> Cloudinary, private delivery — only
+                      you can fetch it, and only through Atlas, with expiring
+                      signed links.
+                </li>
+                <li>
+                  <strong>Analysis:</strong> automated tag analysis runs only
+                  with this consent, once an analysis provider is configured.
+                </li>
+                <li>
+                  <strong>Control:</strong> delete the photo any time from your
+                  wardrobe — deletion includes the stored copy, and revoking
+                  consent blocks all future uploads.
+                </li>
+              </ul>
+              <button type="button" className="btn-primary" onClick={() => void grantAndUpload()}>
+                Allow and upload this photo
+              </button>
+              {errorNote ? (
+                <p className="capture-error" role="alert">
+                  {errorNote}
+                </p>
+              ) : null}
+            </motion.section>
+          ) : null}
         </div>
       ) : null}
 
       {state.phase === "review_required" && state.pending ? (
-        <TagReview
-          pending={state.pending}
-          onConfirm={(finalName) => {
-            if (!finalName) {
-              reset();
-              return;
-            }
-            setState({ phase: "resolved", garmentId: state.pending.garment.id });
-          }}
-        />
+        <TagReview pending={state.pending} onConfirm={(v) => void confirm(v)} />
       ) : null}
 
       {state.phase === "resolved" ? (
         <div className="capture-resolved">
-          <p>Tags confirmed. In the connected flow this writes server-side with your provenance recorded.</p>
-          <button type="button" className="btn-secondary" onClick={reset}>
-            Add another
-          </button>
+          <p>Saved. The photo is stored privately and the garment is ready for outfit planning.</p>
+          <div className="capture-preview-actions">
+            <Link className="btn-primary" href="/wardrobe">
+              Open your wardrobe
+            </Link>
+            <button type="button" className="btn-secondary" onClick={reset}>
+              Add another
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

@@ -30,6 +30,13 @@ export function GarmentCard({ garment }: { garment: Garment }) {
         : "cpw-pill cpw-unknown";
 
   const remove = async () => {
+    // Deleting a garment with a photo also deletes the private asset —
+    // provider cleanup included, per the §10 flow.
+    if (garment.imageRef) {
+      await fetch(`/api/assets/${encodeURIComponent(garment.imageRef)}/delete`, {
+        method: "DELETE",
+      }).catch(() => null);
+    }
     const res = await fetch(`/api/wardrobe?id=${encodeURIComponent(garment.id)}`, {
       method: "DELETE",
     });
@@ -48,9 +55,21 @@ export function GarmentCard({ garment }: { garment: Garment }) {
       whileHover={reduced ? undefined : { y: -2 }}
       transition={atlasSpring(reduced)}
     >
-      <div className="garment-media" aria-hidden="true">
-        <span className="garment-media-letter">{garment.name.charAt(0)}</span>
-      </div>
+      {garment.imageRef ? (
+        // Owner-scoped proxy: the server verifies the session before 302 to
+        // a short-lived signed URL. Never caches in the service worker.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="garment-media garment-media-photo"
+          src={`/api/assets/${encodeURIComponent(garment.imageRef)}/image`}
+          alt={garment.imageAlt}
+          loading="lazy"
+        />
+      ) : (
+        <div className="garment-media" aria-hidden="true">
+          <span className="garment-media-letter">{garment.name.charAt(0)}</span>
+        </div>
+      )}
       <div className="garment-body">
         <div className="garment-title-row">
           <h3>{garment.name}</h3>
