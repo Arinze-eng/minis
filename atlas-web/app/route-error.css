@@ -1,0 +1,22 @@
+.route-error {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.route-error h1 {
+  font-size: 1.4rem;
+  margin-bottom: var(--space-3);
+}
+
+.route-error button {
+  font: inherit;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: var(--radius-control);
+  border: 0;
+  background: var(--atlas-lime);
+  color: var(--atlas-graphite);
+  cursor: pointer;
+}

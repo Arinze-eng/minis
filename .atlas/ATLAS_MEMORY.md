@@ -131,6 +131,30 @@ completed step; create a checkpoint commit when a step is stable.
   Gmail read-only evidence summary (send-flag gating for Telegram
   delivery is already implemented in `service.py`).
 
+## Protocol step record — Phase 1 brand + shell (complete)
+
+- New `atlas-web/` Next.js 15 App Router app (bun; port 4300): landing page
+  (value pitch, four questions, security boundaries), `/inbox` with Signal
+  Cards + waypoint motif + source rail, `/signals/[id]` detail with Why panel
+  and "What Atlas did not do", `not-found`, `error` boundary.
+- Real brand assets generated (`scripts/generate_icons.py`, Pillow): 192/512
+  normal + maskable icons, favicon.ico, apple icon — route/waypoint mark with
+  soft-gap uncertainty, per `brand-spec.md`.
+- PWA: `manifest.ts` (standalone, maskable icons), `public/sw.js`
+  (network-first navigations, cache-first static shell only, never caches
+  `/api/*` or private responses, versioned caches + cleanup), browser-only SW
+  registration component.
+- Demo mode: labelled synthetic inbox (`demoData.ts`) pinned by Vitest
+  (`tests/demoLabelling.test.ts`: mode declared, sources labelled, capability
+  ≤ prepare, deterministic ids).
+- Verification: vitest 5/5, `tsc --noEmit` clean, `next build` clean (route
+  table: /, /inbox, /signals/[id], manifest), `next start` smoke: all routes
+  200 + demo banner text rendered.
+- Backend untouched in this phase; policy/consent remain in `nanobot/atlas`.
+- Next unchecked checklist item: §2.5 Communication remainder stays paused;
+  Phase 2 wardrobe integration (uploads + confirmation flow on Atlas
+  contracts) is the next planned phase.
+
 ## Protocol step record — Phase 0 baseline + decision records (complete)
 
 - Team `dripadvisor` application (from `drip.zip`) inspected in full:

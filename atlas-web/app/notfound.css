@@ -1,0 +1,15 @@
+.notfound {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.notfound h1 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.notfound a {
+  color: var(--atlas-lilac-deep);
+}

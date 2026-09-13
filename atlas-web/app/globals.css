@@ -1,0 +1,91 @@
+:root {
+  /* Atlas design tokens — docs/atlas-design-system.md §1 */
+  --atlas-paper: #f5f2ea;
+  --atlas-paper-raised: #fbf9f3;
+  --atlas-graphite: #17191e;
+  --atlas-graphite-raised: #22252c;
+  --atlas-ink: #1c1e24;
+  --atlas-ink-soft: #5c6068;
+  --atlas-line: rgba(28, 30, 36, 0.12);
+  --atlas-lime: #a8d139;
+  --atlas-lime-deep: #7da321;
+  --atlas-lilac: #b9a7e6;
+  --atlas-lilac-deep: #6f5bb5;
+  --atlas-amber: #d9a13b;
+  --atlas-red: #c2503c;
+
+  --font-display: var(--font-space-grotesk), "DM Sans", system-ui, sans-serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+
+  --radius-control: 6px;
+  --radius-card: 12px;
+  --radius-feature: 18px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --dur-fast: 160ms;
+  --dur-move: 240ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --atlas-paper: #17191e;
+    --atlas-paper-raised: #22252c;
+    --atlas-graphite: #101216;
+    --atlas-ink: #ece9e1;
+    --atlas-ink-soft: #a2a49f;
+    --atlas-line: rgba(236, 233, 225, 0.14);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--atlas-paper);
+  color: var(--atlas-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--atlas-lilac-deep);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
