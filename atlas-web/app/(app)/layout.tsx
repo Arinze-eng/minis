@@ -1,6 +1,7 @@
 import { AppNav } from "@/components/AppNav";
 import { AppHeader } from "@/components/AppHeader";
 import { NetworkBanner } from "@/components/NetworkBanner";
+import { clerkConfigured } from "@/lib/server/clerkIdentity";
 import "../shell.css";
 
 export default function AppLayout({
@@ -13,7 +14,7 @@ export default function AppLayout({
       </a>
       <AppNav />
       <div className="app-content">
-        <AppHeader />
+        <AppHeader clerkEnabled={clerkConfigured()} />
         <NetworkBanner />
         {children}
       </div>

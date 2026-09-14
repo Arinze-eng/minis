@@ -9,6 +9,9 @@ import {
   Shirt,
   Sparkles,
   Wallet,
+  Plane,
+  CheckSquare,
+  HelpCircle,
 } from "lucide-react";
 import { RouteMark } from "@/components/RouteMark";
 
@@ -20,9 +23,12 @@ import { RouteMark } from "@/components/RouteMark";
 
 const NAV_ITEMS = [
   { href: "/inbox", label: "Inbox", icon: Sparkles },
+  { href: "/ask", label: "Ask", icon: HelpCircle },
   { href: "/wardrobe", label: "Wardrobe", icon: Shirt },
   { href: "/looks", label: "Looks", icon: Map },
   { href: "/money", label: "Money", icon: Wallet },
+  { href: "/travel", label: "Travel", icon: Plane },
+  { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/sources", label: "Sources", icon: Radio },
   { href: "/settings/privacy", label: "Privacy", icon: Settings },
 ] as const;

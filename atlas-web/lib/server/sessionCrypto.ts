@@ -51,10 +51,17 @@ async function hmacKey(): Promise<CryptoKey> {
   );
 }
 
-/** Sign a principal id into a versioned, MAC-bound cookie value. */
-export async function serializeSession(userId: string): Promise<string> {
+/**
+ * Sign a principal id into a versioned, MAC-bound cookie value.
+ * `source` records who verified the identity: "clerk" (real auth provider)
+ * or "local" (labelled synthetic single-principal dev mode).
+ */
+export async function serializeSession(
+  userId: string,
+  source: "clerk" | "local" = "local",
+): Promise<string> {
   const payload = b64urlEncode(
-    new TextEncoder().encode(JSON.stringify({ v: SESSION_VERSION, uid: userId })),
+    new TextEncoder().encode(JSON.stringify({ v: SESSION_VERSION, uid: userId, sid: source })),
   );
   const mac = await crypto.subtle.sign("HMAC", await hmacKey(), new TextEncoder().encode(payload));
   return `${payload}.${b64urlEncode(new Uint8Array(mac))}`;
@@ -62,6 +69,8 @@ export async function serializeSession(userId: string): Promise<string> {
 
 export interface VerifiedSession {
   userId: string;
+  /** Who verified this identity: the auth provider or local dev mode. */
+  source: "clerk" | "local";
 }
 
 /** Verify a cookie value; returns null for tampered, stale, or junk input. */
@@ -81,11 +90,12 @@ export async function verifySession(raw: string): Promise<VerifiedSession | null
     const parsed = JSON.parse(new TextDecoder().decode(b64urlDecode(payload))) as {
       v?: string;
       uid?: string;
+      sid?: string;
     };
     if (parsed.v !== SESSION_VERSION || typeof parsed.uid !== "string" || !parsed.uid) {
       return null;
     }
-    return { userId: parsed.uid };
+    return { userId: parsed.uid, source: parsed.sid === "clerk" ? "clerk" : "local" };
   } catch {
     return null;
   }

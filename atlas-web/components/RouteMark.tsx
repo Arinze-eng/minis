@@ -15,14 +15,17 @@ const LIME = "#a8d139";
 export function RouteMark({
   size = 28,
   title = "Atlas",
+  className,
 }: {
   size?: number;
   title?: string;
+  className?: string;
 }) {
   return (
     <svg
       width={size}
       height={size}
+      className={className}
       viewBox="0 0 64 64"
       role="img"
       aria-label={title}

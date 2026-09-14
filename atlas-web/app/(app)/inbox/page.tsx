@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { demoInbox } from "@/lib/demo/inbox";
 import type { SignalCard } from "@/lib/atlas";
+import type { SignalRow } from "@/lib/server/store";
+import { principalFromCookies } from "@/lib/server/identity";
+import { getStore } from "@/lib/server/store";
 import { CommandStrip } from "./CommandStrip";
 import { MorningBriefing } from "./MorningBriefing";
 import "./inbox.css";
@@ -26,7 +28,7 @@ function Waypoints({ card }: { card: SignalCard }) {
     <ol className="waypoints" aria-label="Evidence sources">
       {card.sources.map((source, i) => (
         <li
-          key={source.name}
+          key={`${source.name}-${i}`}
           className={`waypoint ${source.freshness !== "fresh" ? "waypoint-stale" : ""} ${
             i === n - 1 ? "waypoint-destination" : ""
           }`}
@@ -73,13 +75,44 @@ function SignalCardView({ card }: { card: SignalCard }) {
   );
 }
 
-export default function InboxPage() {
-  const payload = demoInbox();
+/** Store row → browser card. Evidence items are the waypoints. */
+function toCard(row: SignalRow): SignalCard {
+  const evidence = row.evidence as Array<{ label: string; detail: string }>;
+  return {
+    id: row.id,
+    title: row.title,
+    implication: row.implication,
+    noticed: row.noticed,
+    urgency: row.urgency as SignalCard["urgency"],
+    domains: row.domains as SignalCard["domains"],
+    sources: evidence.slice(0, 3).map((e) => ({
+      name: e.label,
+      retrievedAt: row.createdAt,
+      freshness: "fresh" as const,
+    })),
+    uncertainty: row.uncertainty,
+    primaryAction: { label: row.primaryAction.label, kind: "review" as const },
+    capability: row.capability as SignalCard["capability"],
+    evidence,
+    createdAt: row.createdAt,
+  };
+}
+
+export default async function InboxPage() {
+  const principal = await principalFromCookies();
+  const { store, mode } = getStore();
+  const rows = await store.listSignals(principal.userId);
+  const cards = rows
+    .filter((s) => s.state === "active")
+    .map(toCard);
+
+  const storeLabel =
+    mode === "postgres"
+      ? "Durable Postgres store — your data persists across sessions."
+      : "Local file store (no DATABASE_URL configured) — dev mode, data stays on this machine.";
+
   return (
     <div className="inbox-layout">
-      <div className="inbox-demo-banner" role="note">
-        {payload.demoLabel}
-      </div>
       <main id="main" className="inbox-main">
         <h1 className="inbox-title">Inbox</h1>
         <p className="inbox-sub">
@@ -88,28 +121,56 @@ export default function InboxPage() {
         <CommandStrip />
         <MorningBriefing />
         <div className="signal-list">
-          {payload.cards.map((card) => (
-            <SignalCardView key={card.id} card={card} />
-          ))}
+          {cards.length === 0 ? (
+            <div className="inbox-empty" role="note">
+              <p>
+                No active signals yet. Atlas derives signals from your wardrobe
+                and money evidence — add a garment or run a money review to
+                populate this inbox.
+              </p>
+              <p className="inbox-empty-links">
+                <Link href="/wardrobe/add">Add a garment</Link> ·{" "}
+                <Link href="/money">Money review</Link>
+              </p>
+            </div>
+          ) : (
+            cards.map((card) => <SignalCardView key={card.id} card={card} />)
+          )}
         </div>
       </main>
       <aside className="inbox-rail" aria-label="Source health">
         <h2 className="rail-heading">What Atlas can access</h2>
         <ul className="rail-sources">
-          {payload.sources.map((source) => (
-            <li key={source.name} className="rail-source">
-              <span className="rail-source-name">{source.name}</span>
-              <span className="rail-source-mode">{source.mode}</span>
-              <span className="rail-source-detail">{source.detail}</span>
-            </li>
-          ))}
+          <li className="rail-source">
+            <span className="rail-source-name">Wardrobe</span>
+            <span className="rail-source-mode">your confirmed items</span>
+            <span className="rail-source-detail">
+              Outfits come only from garments you confirmed.
+            </span>
+          </li>
+          <li className="rail-source">
+            <span className="rail-source-name">Money review</span>
+            <span className="rail-source-mode">deterministic findings</span>
+            <span className="rail-source-detail">
+              Recurring charges and price changes you approved for review.
+            </span>
+          </li>
+          <li className="rail-source">
+            <span className="rail-source-name">Gmail</span>
+            <span className="rail-source-mode rail-mode-off">
+              connect on Sources
+            </span>
+            <span className="rail-source-detail">
+              Read-only, consent-gated; disconnected by default.
+            </span>
+          </li>
         </ul>
         <p className="rail-note">
-          Demo mode uses synthetic fixtures. Nothing sends, buys, cancels, or
-          mutates anything.
+          {storeLabel} Identity: {principal.source === "clerk" ? "Clerk-verified account" : "local dev principal (single-user, not a real account)"}. Nothing
+          sends, buys, cancels, or mutates anything without your approval.
         </p>
-        <Link className="rail-link" href="/">
-          About Atlas
+        <Link className="rail-link" href="/sources">
+          Manage sources
         </Link>
       </aside>
     </div>

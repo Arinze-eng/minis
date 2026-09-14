@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationDrawer } from "@/components/NotificationDrawer";
+import { AuthControls } from "@/components/AuthControls";
 import { unreadCount, type AgentNotification } from "@/lib/notifications";
 
 /**
@@ -22,7 +23,7 @@ const TITLES: Array<{ match: RegExp; title: string }> = [
   { match: /^\/settings/, title: "Privacy & data" },
 ];
 
-export function AppHeader() {
+export function AppHeader({ clerkEnabled }: { clerkEnabled: boolean }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notifications, setNotifications] = useState<AgentNotification[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -72,6 +73,7 @@ export function AppHeader() {
           </span>
         </div>
         <div className="app-header-actions">
+          <AuthControls clerkEnabled={clerkEnabled} />
           <ThemeToggle />
           <button
             type="button"

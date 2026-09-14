@@ -28,9 +28,11 @@ the ambient environment.
 | Variable | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | for persistence | Postgres/Neon connection string. Postgres store activates when set; without it the app runs on a labelled local file store (development only). |
-| `SESSION_SECRET` | for stable sessions | HMAC key for signing session cookies. Rotating it invalidates existing sessions. |
+| `ATLAS_SESSION_SECRET` | for stable sessions | HMAC key for signing session cookies. Rotating it invalidates existing sessions. |
 | `CLOUDINARY_URL` (or the three discrete vars) | for image upload | Signed garment image storage. Uploads return an explicit unavailable state when unset — never a simulated success. |
-| `ENCRYPTION_KEY` | planned (Gmail) | Application-layer token encryption for future OAuth connectors. |
+| `ENCRYPTION_KEY` | for Gmail connection | Application-layer AES-256-GCM encryption of stored Gmail refresh tokens. Key-version aware; server-only. |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` | for real accounts | Clerk identity. When both are set, Clerk is the sole identity authority (middleware verifies the session and binds the userId server-side; protected routes enforce sign-in; header shows the account control). When unset, Atlas runs in the labelled local single-principal mode and every surface says so. |
+| `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` | for Gmail read-only scan | Google OAuth client for the `gmail.readonly` authorization-code flow with PKCE and encrypted server-side token storage. Connect surfaces an explicit setup-guidance state when unset. |
 
 Never commit real values; fixtures and examples stay synthetic.
 
@@ -116,11 +118,15 @@ scan results.
 Next.js App Router (atlas-web/)
   ├── Server Components: shell, metadata, store reads
   ├── Client Components: capture, filters, drawer, state controls
-  ├── middleware.ts: session mint/verify (edge)
+  ├── middleware.ts: Clerk session verify + Atlas session bind (edge)
   └── Route Handlers: JSON API over the store
         ↓
+lib/server/clerkIdentity.ts → Clerk auth() (sole authority when configured)
 lib/server/store.ts → Postgres (Neon) | labelled local file store
 lib/server/cloudinary.ts → signed private image storage
+lib/server/secretBox.ts → AES-256-GCM token encryption + OAuth PKCE
+lib/server/gmail.ts → gmail.readonly authorization-code flow
+lib/server/emailExtraction.ts → bounded metadata-only finding rules
 lib/server/signals.ts → deterministic signal + cross-domain derivation
 ```
 

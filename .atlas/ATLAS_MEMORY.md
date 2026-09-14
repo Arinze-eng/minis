@@ -365,3 +365,26 @@ uv run --no-sync python scripts/atlas_diagnose.py
   local runbook added (`docs/atlas-compliance-review.md`,
   `docs/atlas-run-local.md`). Verification: 41 tests, tsc clean, build
   clean, live smoke incl. non-owner 404 and provider cleanup.
+- (this commit) — First-release pass (Clerk + Gmail): `@clerk/nextjs`
+  integrated per the official quickstart (provider inside `<body>`,
+  sign-in/sign-up routes, env-flagged so unconfigured deployments stay in
+  the labelled local mode). Clerk is the sole identity authority when
+  configured: middleware composes `clerkMiddleware` + session bootstrap,
+  verified userId binds server-side into the Atlas session cookie, RSC
+  reads identity read-only. Migration `003_sources_email.sql`
+  (source_connections, oauth_states, email_findings, scan_jobs) with
+  store methods on both backends. Real Gmail `gmail.readonly`
+  authorization-code flow with PKCE + state binding
+  (`lib/server/gmail.ts`, connect/callback/disconnect/status/scan
+  routes), AES-256-GCM encrypted refresh tokens
+  (`lib/server/secretBox.ts`), bounded metadata-only extraction
+  (`lib/server/emailExtraction.ts`, extraction-versioned, pinned by
+  tests), idempotent finding upserts, deterministic promotion into Money
+  Guard findings, disconnect = revoke + token destroy + evidence delete.
+  `/sources` rebuilt with the real Gmail connection panel + explicit
+  Clerk-vs-Gmail consent separation; demo ScanTerminal retired;
+  `/inbox` rewired to real store data. Unconfigured providers show
+  honest setup-guidance states (verified 503s), never simulated
+  success. 49 tests, tsc clean, build clean, production smoke: all
+  routes 200, wear idempotency, cross-domain signal derivation,
+  snooze, export, wipe with confirm gate.

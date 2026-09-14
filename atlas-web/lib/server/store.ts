@@ -85,7 +85,54 @@ export interface NotificationRow {
   createdAt: string;
 }
 
-const MIGRATIONS = ["001_atlas_core", "002_assets_consent"] as const;
+const MIGRATIONS = ["001_atlas_core", "002_assets_consent", "003_sources_email", "004_preferences"] as const;
+
+export interface SourceConnectionRow {
+  principalId: string;
+  provider: string;
+  status: string;
+  scopes: string[];
+  /** AES-256-GCM envelope; never leaves the server, never returned to clients. */
+  encryptedRefreshToken?: string | null;
+  accountEmail?: string | null;
+  connectedAt?: string | null;
+  disconnectedAt?: string | null;
+  lastError?: string | null;
+}
+
+export interface ScanJobRow {
+  id: string;
+  principalId: string;
+  provider: string;
+  status: string;
+  discovered: number;
+  processed: number;
+  skipped: number;
+  deduplicated: number;
+  failed: number;
+  error?: string | null;
+  createdAt: string;
+  finishedAt?: string | null;
+}
+
+export interface EmailFindingRow {
+  id: string;
+  principalId: string;
+  kind: string;
+  merchant: string;
+  productName?: string | null;
+  amount?: number | null;
+  currency?: string | null;
+  cadence?: string | null;
+  nextRenewal?: string | null;
+  messageRef: string;
+  snippet?: string | null;
+  confidence: number;
+  extractionVersion: string;
+  occurredAt?: string | null;
+}
+
+
 
 export interface AssetRow {
   id: string;
@@ -534,13 +581,191 @@ class PgStore {
     };
   }
 
+  async getSourceConnection(principalId: string, provider: string): Promise<SourceConnectionRow | null> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM source_connections WHERE principal_id = $1 AND provider = $2",
+      [principalId, provider],
+    );
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      principalId: String(r.principal_id),
+      provider: String(r.provider),
+      status: String(r.status),
+      scopes: asArray(r.scopes),
+      encryptedRefreshToken: (r.encrypted_refresh_token as string) ?? null,
+      accountEmail: (r.account_email as string) ?? null,
+      connectedAt: r.connected_at ? new Date(r.connected_at as string).toISOString() : null,
+      disconnectedAt: r.disconnected_at ? new Date(r.disconnected_at as string).toISOString() : null,
+      lastError: (r.last_error as string) ?? null,
+    };
+  }
+
+  async upsertSourceConnection(
+    principalId: string,
+    provider: string,
+    patch: Partial<Omit<SourceConnectionRow, "principalId" | "provider">>,
+  ): Promise<SourceConnectionRow> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO source_connections (principal_id, provider, status, scopes, encrypted_refresh_token, account_email, connected_at)
+       VALUES ($1,$2,$3,$4,$5,$6,CASE WHEN $3 = 'connected' THEN now() ELSE NULL END)
+       ON CONFLICT (principal_id, provider) DO UPDATE SET
+         status = EXCLUDED.status,
+         scopes = EXCLUDED.scopes,
+         encrypted_refresh_token = COALESCE(EXCLUDED.encrypted_refresh_token, source_connections.encrypted_refresh_token),
+         account_email = EXCLUDED.account_email,
+         connected_at = COALESCE(source_connections.connected_at, CASE WHEN EXCLUDED.status = 'connected' THEN now() ELSE NULL END),
+         disconnected_at = CASE WHEN EXCLUDED.status = 'disconnected' THEN now() ELSE NULL END,
+         last_error = EXCLUDED.last_error,
+         updated_at = now()
+       RETURNING *`,
+      [principalId, provider, patch.status ?? "connected", patch.scopes ?? [], patch.encryptedRefreshToken ?? null, patch.accountEmail ?? null],
+    );
+    const r = rows[0];
+    return {
+      principalId,
+      provider,
+      status: String(r.status),
+      scopes: asArray(r.scopes),
+      encryptedRefreshToken: (r.encrypted_refresh_token as string) ?? null,
+      accountEmail: (r.account_email as string) ?? null,
+      connectedAt: r.connected_at ? new Date(r.connected_at as string).toISOString() : null,
+      disconnectedAt: r.disconnected_at ? new Date(r.disconnected_at as string).toISOString() : null,
+      lastError: (r.last_error as string) ?? null,
+    };
+  }
+
+  async createOauthState(state: string, principalId: string, action: string, codeVerifier: string, ttlSeconds: number): Promise<void> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    await pool.query(
+      `INSERT INTO oauth_states (state, principal_id, action, code_verifier, expires_at)
+       VALUES ($1,$2,$3,$4, now() + ($5::double precision * interval '1 second'))`,
+      [state, principalId, action, codeVerifier, ttlSeconds],
+    );
+  }
+
+  async consumeOauthState(state: string): Promise<{ principalId: string; action: string; codeVerifier: string } | null> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const { rows } = await client.query(
+        "DELETE FROM oauth_states WHERE state = $1 AND expires_at > now() RETURNING principal_id, action, code_verifier",
+        [state],
+      );
+      await client.query("COMMIT");
+      if (!rows[0]) return null;
+      return {
+        principalId: String(rows[0].principal_id),
+        action: String(rows[0].action),
+        codeVerifier: String(rows[0].code_verifier),
+      };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async recordScanJob(principalId: string, job: Omit<ScanJobRow, "principalId" | "createdAt">): Promise<ScanJobRow> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO scan_jobs (id, principal_id, provider, status, discovered, processed, skipped, deduplicated, failed, error, finished_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [job.id, principalId, job.provider, job.status, job.discovered, job.processed, job.skipped, job.deduplicated, job.failed, job.error ?? null, job.finishedAt ?? null],
+    );
+    const r = rows[0];
+    return mapScanJob(r);
+  }
+
+  async latestScanJob(principalId: string, provider: string): Promise<ScanJobRow | null> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM scan_jobs WHERE principal_id = $1 AND provider = $2 ORDER BY created_at DESC LIMIT 1",
+      [principalId, provider],
+    );
+    return rows[0] ? mapScanJob(rows[0]) : null;
+  }
+
+  async upsertEmailFinding(principalId: string, f: Omit<EmailFindingRow, "principalId">): Promise<{ row: EmailFindingRow; deduplicated: boolean }> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO email_findings (id, principal_id, kind, merchant, product_name, amount, currency, cadence, next_renewal, message_ref, snippet, confidence, extraction_version, occurred_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       ON CONFLICT (principal_id, message_ref, kind, merchant) DO UPDATE SET
+         amount = EXCLUDED.amount,
+         currency = EXCLUDED.currency,
+         cadence = EXCLUDED.cadence,
+         next_renewal = COALESCE(EXCLUDED.next_renewal, email_findings.next_renewal),
+         confidence = EXCLUDED.confidence,
+         extraction_version = EXCLUDED.extraction_version
+       RETURNING (xmax = 0) AS inserted, *`,
+      [f.id, principalId, f.kind, f.merchant, f.productName ?? null, f.amount ?? null, f.currency ?? null, f.cadence ?? null, f.nextRenewal ?? null, f.messageRef, f.snippet ?? null, f.confidence, f.extractionVersion, f.occurredAt ?? null],
+    );
+    const r = rows[0];
+    const row = mapEmailFinding(r);
+    return { row, deduplicated: !r.inserted };
+  }
+
+  async listEmailFindings(principalId: string): Promise<EmailFindingRow[]> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM email_findings WHERE principal_id = $1 ORDER BY occurred_at DESC NULLS LAST LIMIT 500",
+      [principalId],
+    );
+    return rows.map(mapEmailFinding);
+  }
+
+  async deleteSourceData(principalId: string, provider: string): Promise<void> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    await pool.query("DELETE FROM email_findings WHERE principal_id = $1", [principalId]);
+    await pool.query("DELETE FROM scan_jobs WHERE principal_id = $1 AND provider = $2", [principalId, provider]);
+    await pool.query(
+      "UPDATE source_connections SET status = 'disconnected', encrypted_refresh_token = NULL, account_email = NULL, disconnected_at = now(), updated_at = now() WHERE principal_id = $1 AND provider = $2",
+      [principalId, provider],
+   );
+  }
+
+  async getPreferences(principalId: string): Promise<Record<string, unknown>> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT data FROM preferences WHERE principal_id = $1",
+      [principalId],
+    );
+    return ((rows[0]?.data as Record<string, unknown> | undefined) ?? {});
+  }
+
+  async setPreferences(principalId: string, data: Record<string, unknown>): Promise<void> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    await pool.query(
+      `INSERT INTO preferences (principal_id, data, updated_at) VALUES ($1, $2::jsonb, now())
+       ON CONFLICT (principal_id) DO UPDATE SET data = $2::jsonb, updated_at = now()`,
+      [principalId, JSON.stringify(data)],
+    );
+  }
+
   async wipe(principalId: string): Promise<void> {
     await this.ensureMigrated();
     const pool = await this.getPool();
     const tables = [
       "wear_events", "wardrobe_garments", "money_findings", "signals",
       "notifications", "audit_events", "idempotency_keys",
-      "wardrobe_assets", "consent_grants",
+      "wardrobe_assets", "consent_grants", "email_findings", "scan_jobs",
+      "source_connections", "oauth_states", "preferences",
     ];
     for (const t of tables) {
       await pool.query(`DELETE FROM ${t} WHERE principal_id = $1`, [principalId]);
@@ -588,6 +813,42 @@ function mapFinding(r: Record<string, unknown>): FindingRow {
     confidence: Number(r.confidence),
     extractionVersion: String(r.extraction_version),
     sources: asArray(r.sources),
+  };
+}
+
+function mapScanJob(r: Record<string, unknown>): ScanJobRow {
+  return {
+    id: String(r.id),
+    principalId: String(r.principal_id),
+    provider: String(r.provider),
+    status: String(r.status),
+    discovered: Number(r.discovered),
+    processed: Number(r.processed),
+    skipped: Number(r.skipped),
+    deduplicated: Number(r.deduplicated),
+    failed: Number(r.failed),
+    error: (r.error as string) ?? null,
+    createdAt: new Date(r.created_at as string).toISOString(),
+    finishedAt: r.finished_at ? new Date(r.finished_at as string).toISOString() : null,
+  };
+}
+
+function mapEmailFinding(r: Record<string, unknown>): EmailFindingRow {
+  return {
+    id: String(r.id),
+    principalId: String(r.principal_id),
+    kind: String(r.kind),
+    merchant: String(r.merchant),
+    productName: (r.product_name as string) ?? null,
+    amount: r.amount !== null && r.amount !== undefined ? Number(r.amount) : null,
+    currency: (r.currency as string) ?? null,
+    cadence: (r.cadence as string) ?? null,
+    nextRenewal: r.next_renewal ? new Date(r.next_renewal as string).toISOString() : null,
+    messageRef: String(r.message_ref),
+    snippet: (r.snippet as string) ?? null,
+    confidence: Number(r.confidence),
+    extractionVersion: String(r.extraction_version),
+    occurredAt: r.occurred_at ? new Date(r.occurred_at as string).toISOString() : null,
   };
 }
 
@@ -877,12 +1138,121 @@ class LocalFileStore {
     return row;
   }
 
-  async wipe(principalId: string): Promise<void> {
-    for (const name of ["garments", "findings", "signals", "notifications", "audit", "wear_events", "idempotency", "assets", "consents"]) {
-      this.write(principalId, name, []);
+  async getSourceConnection(principalId: string, provider: string): Promise<SourceConnectionRow | null> {
+    const rows = this.read<SourceConnectionRow>(principalId, "sources");
+    return rows.find((s) => s.provider === provider) ?? null;
+  }
+
+  async upsertSourceConnection(
+    principalId: string,
+    provider: string,
+    patch: Partial<Omit<SourceConnectionRow, "principalId" | "provider">>,
+  ): Promise<SourceConnectionRow> {
+    const rows = this.read<SourceConnectionRow>(principalId, "sources");
+    const now = new Date().toISOString();
+    const idx = rows.findIndex((s) => s.provider === provider);
+    const existing = idx >= 0 ? rows[idx] : undefined;
+    const row: SourceConnectionRow = {
+      principalId,
+      provider,
+      status: patch.status ?? existing?.status ?? "connected",
+      scopes: patch.scopes ?? existing?.scopes ?? [],
+      encryptedRefreshToken: patch.encryptedRefreshToken ?? existing?.encryptedRefreshToken ?? null,
+      accountEmail: patch.accountEmail ?? existing?.accountEmail ?? null,
+      connectedAt: existing?.connectedAt ?? (patch.status === "connected" ? now : null),
+      disconnectedAt: patch.status === "disconnected" ? now : existing?.disconnectedAt ?? null,
+      lastError: patch.lastError ?? existing?.lastError ?? null,
+    };
+    if (idx >= 0) rows[idx] = row;
+    else rows.push(row);
+    this.write(principalId, "sources", rows);
+    return row;
+  }
+
+  async createOauthState(state: string, principalId: string, action: string, codeVerifier: string, ttlSeconds: number): Promise<void> {
+    const rows = this.read<{ state: string; principalId: string; action: string; codeVerifier: string; expiresAt: number }>(principalId, "oauthStates");
+    rows.push({ state, principalId, action, codeVerifier, expiresAt: Date.now() + ttlSeconds * 1000 });
+    this.write(principalId, "oauthStates", rows.filter((r) => r.expiresAt > Date.now()));
+  }
+
+  async consumeOauthState(state: string): Promise<{ principalId: string; action: string; codeVerifier: string } | null> {
+    // Local mode: scan every principal directory is not possible here; states
+    // are stored under the creating principal, so the facade keeps a process-
+    // wide index instead. See localOauthStates below.
+    const idx = localOauthStates.findIndex((s) => s.state === state && s.expiresAt > Date.now());
+    if (idx < 0) return null;
+    const [found] = localOauthStates.splice(idx, 1);
+    if (!found) return null;
+    return { principalId: found.principalId, action: found.action, codeVerifier: found.codeVerifier };
+  }
+
+  async recordScanJob(principalId: string, job: Omit<ScanJobRow, "principalId" | "createdAt">): Promise<ScanJobRow> {
+    const rows = this.read<ScanJobRow>(principalId, "scanJobs");
+    const row: ScanJobRow = { ...job, principalId, createdAt: new Date().toISOString(), finishedAt: job.status === "running" ? null : new Date().toISOString() };
+    rows.unshift(row);
+    this.write(principalId, "scanJobs", rows.slice(0, 50));
+    return row;
+  }
+
+  async latestScanJob(principalId: string, provider: string): Promise<ScanJobRow | null> {
+    const rows = this.read<ScanJobRow>(principalId, "scanJobs");
+    return rows.find((j) => j.provider === provider) ?? null;
+  }
+
+  async upsertEmailFinding(principalId: string, f: Omit<EmailFindingRow, "principalId">): Promise<{ row: EmailFindingRow; deduplicated: boolean }> {
+    const rows = this.read<EmailFindingRow>(principalId, "emailFindings");
+    const idx = rows.findIndex((r) => r.messageRef === f.messageRef && r.kind === f.kind && r.merchant === f.merchant);
+    if (idx >= 0) {
+      const merged: EmailFindingRow = { ...rows[idx], ...f, principalId };
+      rows[idx] = merged;
+      this.write(principalId, "emailFindings", rows);
+      return { row: merged, deduplicated: true };
+    }
+    const row: EmailFindingRow = { ...f, principalId };
+    rows.unshift(row);
+    this.write(principalId, "emailFindings", rows);
+    return { row, deduplicated: false };
+  }
+
+  async listEmailFindings(principalId: string): Promise<EmailFindingRow[]> {
+    return this.read<EmailFindingRow>(principalId, "emailFindings").slice(0, 500);
+  }
+
+  async deleteSourceData(principalId: string, provider: string): Promise<void> {
+    this.write(principalId, "emailFindings", []);
+    this.write(principalId, "scanJobs", []);
+    await this.upsertSourceConnection(principalId, provider, { status: "disconnected", encryptedRefreshToken: null, accountEmail: null });
+  }
+
+  async getPreferences(principalId: string): Promise<Record<string, unknown>> {
+    try {
+      const raw = readFileSync(join(this.dir(principalId), "preferences.json"), "utf8");
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return {};
     }
   }
+
+  async setPreferences(principalId: string, data: Record<string, unknown>): Promise<void> {
+    mkdirSync(this.dir(principalId), { recursive: true });
+    writeFileSync(join(this.dir(principalId), "preferences.json"), JSON.stringify(data, null, 2));
+  }
+
+  async wipe(principalId: string): Promise<void> {
+    for (const name of ["garments", "findings", "signals", "notifications", "audit", "wear_events", "idempotency", "assets", "consents", "sources", "oauthStates", "scanJobs", "emailFindings"]) {
+      this.write(principalId, name, []);
+    }
+    this.setPreferences(principalId, {});
+    localOauthStates.length = 0;
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Local OAuth state index: the OAuth callback arrives without a principal
+// context, so local mode keeps states in a process-wide index (mirrors the
+// postgres oauth_states table which is queried by state, not by principal).
+// ---------------------------------------------------------------------------
+const localOauthStates: { state: string; principalId: string; action: string; codeVerifier: string; expiresAt: number }[] = [];
 
 // ---------------------------------------------------------------------------
 // Facade
