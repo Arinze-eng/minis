@@ -6,7 +6,9 @@ application under Atlas contracts). Every claim below is backed by a file or a
 test run in this repository. Status vocabulary: **done**, **partial**,
 **not started**, **intentionally blocked** (the brief itself forbids the item).
 
-Evidence date: 2026-09-13 · HEAD: `5887bc8` + working tree (real image pipeline).
+Evidence date: 2026-09-14 · HEAD: `dbe02a5` (includes `9f045e2` real image
+pipeline, `a3c4271` Clerk identity + Gmail read-only pipeline + honesty
+sweep, merged team handoff docs/CI, `dbe02a5` theme-mode fix).
 
 ---
 
@@ -28,7 +30,7 @@ Evidence date: 2026-09-13 · HEAD: `5887bc8` + working tree (real image pipeline
 | 12 | Remaining risks / deferred work list | **done** | §5 below |
 | 13 | Route map + runtime/deployment notes | **done** | runbook §Route map |
 | 14 | PWA manifest, SW strategy, offline policy, install evidence | **done** | `app/manifest.ts`, `public/sw.js` (never caches `/api/*`), smoke-verified installable |
-| 15 | Neon migration + env-var documentation, no secrets | **done** | `lib/server/migrations/001_atlas_core.sql`, `002_assets_consent.sql`; runbook env table has names only |
+| 15 | Neon migration + env-var documentation, no secrets | **done** | `lib/server/migrations/001_atlas_core.sql` … `004_preferences.sql` (core, assets/consent, sources/email, preferences); runbook env table has names only |
 | 16 | Cloudinary upload/delivery/retention/deletion documentation | **done** | runbook §Cloudinary; behavior verified live (§3) |
 
 ## 2. Must-ship experiences (brief §5)
@@ -38,17 +40,17 @@ Evidence date: 2026-09-13 · HEAD: `5887bc8` + working tree (real image pipeline
 | Welcome/onboarding with security boundaries + PWA affordance | **done** | `app/page.tsx`: hero, Daily Loop timeline, zero-mutation privacy matrix, engine preview |
 | Consent center (what/why/freshness/revoke) | **done** | `/sources` + `app/api/consent/route.ts`; revoke is real and gates uploads (verified 403 after revoke) |
 | Atlas Inbox with Signal Cards | **done** | `/inbox`; cards render derived signals with evidence, confidence, actions |
-| Ask Atlas composer | **partial** | bounded composer exists on `/ask`; it answers from local evidence only until the LLM-provider scenario wiring is completed |
+| Ask Atlas composer | **partial** | `/ask` answers from real evidence: a server route (`app/api/ask`) proposes deterministically from the user's CONFIRMED garments and returns honest no-candidate states — the fabricated fallback was removed. Model-assisted explanation still deferred |
 | Wardrobe inventory (upload, analysis state, tags, confirm, replace, delete) | **done** | `/wardrobe`, `/wardrobe/add`; full lifecycle verified against Cloudinary |
 | Outfit request from confirmed garments only | **done** | `/looks`; planner filters `status === "confirmed"` (pinned by unit tests) |
 | Saved looks with save/reject/tried/correct feedback | **done** | feedback records persist through the store |
 | Weather-aware context with source + timestamp | **done** | labelled demo snapshot chip in the morning briefing; live provider wiring deferred |
 | Money Guard review (recurring, price changes) | **done** | `/money`; deterministic detection, annualized figures always carry cadence assumption |
-| Gmail read-only summary path | **partial** | contracts, scopes, and UI surface exist; live OAuth connector requires Google Cloud credentials — labelled unavailable when unset |
+| Gmail read-only summary path | **done (provider-dependent)** | full pipeline implemented: `gmail.readonly` authorization-code flow with PKCE + state binding (`lib/server/gmail.ts`, connect/callback/disconnect/status/scan routes), AES-256-GCM encrypted refresh tokens (`lib/server/secretBox.ts`), bounded metadata-only extraction pinned by tests, idempotent upserts, promotion into Money Guard, disconnect = revoke + token destroy + evidence delete. Live connection activates when Google credentials are set; surfaces show setup guidance until then |
 | First cross-domain signal (wardrobe × money) | **done** | deterministic rule in `lib/server/signals.ts`; verified live ("rotation membership carries per-wear cost") |
 | Why panel (source, freshness, confidence, boundary) | **done** | `/signals/[id]` |
 | Snooze/dismiss/correct/pause/undo | **done** | state changes verified via API; audit trail records each change |
-| Safe synthetic demo when connectors unconfigured | **done** | labelled fixtures, never presented as private data |
+| Safe synthetic demo when connectors unconfigured | **done** | labelled fixtures, never presented as private data; mock try-on and billing pages that simulated success were found and REMOVED; travel/tasks surfaces state unconfigured capabilities with labelled synthetic illustrations |
 | Responsive desktop + mobile | **done** | adaptive shell (dock ↔ bottom tab bar), safe-area padding |
 | Keyboard + screen-reader interaction | **done** | skip link, aria-live regions, aria-labels on icon-only controls, focus management in drawer |
 | Offline/unit/integration tests + e2e smoke path | **done** | 41 Vitest tests; production smoke exercises every route + API flow |
@@ -59,7 +61,7 @@ Evidence date: 2026-09-13 · HEAD: `5887bc8` + working tree (real image pipeline
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Server-verified identity; client cannot assert user ids | **done** | HMAC-signed session minted in `middleware.ts`; pages consume read-only (the RSC cookie-write bug was found and fixed) |
+| Server-verified identity; client cannot assert user ids | **done** | Two identity sources, one seam: when Clerk is configured it is the SOLE authority — middleware verifies the Clerk session and binds the verified userId server-side (`clerkIdentity.ts`, `clerkMiddleware` in `middleware.ts`); otherwise a labelled local synthetic principal. Session cookie is HMAC-signed; RSC reads identity read-only |
 | Ownership enforced in every store predicate | **done** | all queries scoped by principal id; cross-principal isolation verified live (fresh session sees 0 records) |
 | Image validation before storage/model submission | **done** | `lib/server/imageValidation.ts`: magic bytes, MIME, size cap, dimension cap |
 | Consent gate before image use | **done** | explicit grant per purpose; revoked consent → upload 403 (verified) |
@@ -67,34 +69,50 @@ Evidence date: 2026-09-13 · HEAD: `5887bc8` + working tree (real image pipeline
 | Delete includes ownership in predicate + provider cleanup | **done** | verified `providerCleanup:true` |
 | Idempotency keys on retriable writes | **done** | wear-log repeat returns `duplicate:true`; `consumeIdempotencyKey` enforced |
 | Audit events for state changes | **done** | `AuditEvent` rows written by routes; surfaced in signal timeline |
-| Tokens/secrets never to browser or logs | **done** | `server-only` module for Cloudinary; env vars documented by name only |
+| Tokens/secrets never to browser or logs | **done** | `server-only` modules for Cloudinary and Gmail; OAuth refresh tokens encrypted with AES-256-GCM before persistence (`lib/server/secretBox.ts`, key-version aware, `ENCRYPTION_KEY` server-only); env vars documented by name only |
 | Destructive actions need confirmation | **done** | wipe requires `confirm:true` — refused with 400 otherwise (verified) |
 | No auto-cancel / auto-purchase / email mutation | **done** (blocked by design) | cancellation is a manual checklist; scopes are `gmail.readonly` only |
-| In-memory fallback for real accounts | **done** (avoided) | Postgres when `DATABASE_URL`; local file store only in explicit local mode, labelled |
+| In-memory fallback for real accounts | **done** (avoided) | Postgres when `DATABASE_URL`; local file store only in explicit local mode, labelled. Delivery preferences persist per principal (migration `004_preferences.sql`) with overnight quiet-hours validation |
 
 ## 4. Verification runs
 
-- `bun run test` — **41/41 passing** (6 files): store isolation, idempotency,
+- `bun run test` — **49/49 passing** (7 files): store isolation, idempotency,
   signal rules incl. cross-domain, CPW purity, notification filtering,
-  wear-log invariants.
+  wear-log invariants, bounded email-extraction rules (8 tests).
 - `bunx tsc --noEmit` — clean.
-- `bun run build` — clean, 14+ routes, middleware 34.8 kB.
-- Production smoke — all routes 200; full API workflow exercised live:
-  create garment → signed upload → consent revoke → 403 → re-grant →
-  upload → view redirect → non-owner 404 → confirm → idempotent wear →
-  signals (incl. cross-domain) → snooze → notifications → export →
-  isolation check → wipe (400 without confirm, 200 with) → provider cleanup.
-- Backend suite (`pytest`) — unaffected by frontend work; typing fixes only.
+- `bun run build` — clean; middleware 96.8 kB (carries the Clerk seam);
+  sign-in/sign-up routes compiled.
+- Production smoke — all routes 200 (landing, inbox, wardrobe, money,
+  sources, ask, travel, tasks, preferences, sign-in); full API workflow
+  exercised live against Postgres: create garment → signed upload → consent
+  revoke → 403 → re-grant → upload → view redirect → non-owner 404 →
+  confirm → idempotent wear (replay `duplicate:true`) → ask with empty
+  wardrobe (honest no-candidate) → ask after confirm (deterministic
+  proposal from owned pieces) → signals (incl. cross-domain) → snooze →
+  preferences roundtrip (overnight window persisted) → export → isolation
+  check → wipe (400 without confirm, 200 with) → provider cleanup.
+- Backend suite (`pytest`) — after merging the team handoff branch:
+  18/18 offline connector/Atlas tests pass; the 2 failures are
+  credential-gated live smoke tests (require `ATLAS_*_SMOKE=true` and
+  refresh tokens), not regressions.
+- Unconfigured-provider honesty — verified live: `gmail/status` returns
+  connection:null with scope disclosure; connect/scan return explicit
+  503/setup-guidance states; nothing simulates a connected provider.
 
 ## 5. Remaining risks and deferred work
 
-1. **Identity is a synthetic principal** (signed cookie). Swap-in point for a
-   real auth provider is isolated in `sessionCrypto.ts`/`identity.ts`. Not
-   production multi-tenant until swapped — the brief forbids claiming otherwise.
-2. **Gmail connector is credential-gated.** Contracts, scopes, and UI are real;
-   live OAuth needs Google Cloud setup per the runbook. Labelled unavailable.
+1. **Clerk is integrated but credential-gated.** The identity seam is live:
+   with `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` set, Clerk is
+   the sole authority and protected routes enforce sign-in. Unset deployments
+   run the labelled local single-principal mode — production multi-tenant
+   claims stay blocked until real accounts are active (per the brief).
+2. **Gmail connector is credential-gated.** The full pipeline is real
+   (OAuth + PKCE, encrypted tokens, bounded scan, revocation); it activates
+   with `GOOGLE_CLIENT_ID`/`SECRET` + `ENCRYPTION_KEY`. Labelled unavailable
+   with setup guidance until then.
 3. **Weather is a labelled demo snapshot** until the provider scenario is wired.
-4. **Telegram delivery (Phase 5)** not started.
+4. **Telegram delivery (Phase 5)** not started; the preferences toggle is
+   honest/disabled until the channel is connected.
 5. **Offline queued-write reconciliation** not implemented (shell-only offline).
 6. **Analysis provider for garment tags** not configured → the capture flow
    honestly asks for user-entered tags instead of simulating AI output.
@@ -108,5 +126,22 @@ and product contract. Every primary user journey runs against persistent
 data with ownership checks; no button simulates success. Items that are not
 live are labelled unavailable rather than faked, consistent with the brief's
 honesty requirements. Production-readiness claims remain blocked on the
-synthetic principal and credential-gated connectors (§5), exactly as the
-brief instructs.
+credential-gated identity and Gmail connectors (§5), exactly as the brief
+instructs.
+
+## 7. Honesty audit (2026-09-14)
+
+A dedicated pass removed every simulated-success surface found in the app:
+
+- `/try-on` faked preview generation with a timer and a nonexistent image —
+  removed (virtual try-on remains an intentional architectural rejection).
+- `/billing` duplicated Money Guard with mock data — removed (`/money` is the
+  real surface).
+- `/ask` fabricated an outfit response on API failure — replaced with a real
+  deterministic route (`app/api/ask`) plus honest no-candidate/error states.
+- `/settings/preferences` claimed "saved to your authenticated profile" while
+  persisting nothing — now persists server-side per principal and reflects
+  real request results.
+- `/travel` and `/tasks` presented mock bookings/reminders as user data —
+  rebuilt as capability statements with clearly-labelled synthetic
+  illustrations and no fake actions.
