@@ -228,3 +228,17 @@ button:active:not(:disabled) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Explicit theme choice (ThemeToggle): the persisted data-theme attribute is
+   mapped onto the used color-scheme so every light-dark() token resolves to
+   the chosen mode on every page. No attribute = follow the OS
+   (color-scheme: light dark on :root above).
+   --------------------------------------------------------------------------- */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
