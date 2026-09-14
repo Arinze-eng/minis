@@ -388,3 +388,53 @@ uv run --no-sync python scripts/atlas_diagnose.py
   success. 49 tests, tsc clean, build clean, production smoke: all
   routes 200, wear idempotency, cross-domain signal derivation,
   snooze, export, wipe with confirm gate.
+
+## Product documentation and deployment handoff (2026-09-12)
+
+- Repository synchronized to `15a4af0` from `origin/main`.
+- Preserved the previous nanobot README at `docs/nanobot-original-README.md`.
+- Replaced the root README with an Atlas-focused project README covering product scope, architecture, local setup, real-agent proof, safety, wardrobe-image boundaries, MCP, deployment, and hackathon disclosure.
+- Added `docs/atlas-workflow.md` covering the user workflow across WebUI, Telegram, background Drip Advice, MCP/skills, picture-based Wardrobe Help, and the five-minute demo.
+- Added `docs/atlas-local-quickstart.md` with beginner-friendly local commands for diagnostics, Strands proof, Atlas demo, connector smoke tests, WebUI startup, and memory updates.
+- Added `docs/atlas-vercel.md` documenting the recommended split: keep the Python nanobot/Atlas/Strands/Telegram backend on the existing container path; use Vercel only for a separate frontend or thin proxy if there is a concrete reason.
+- Added `.github/workflows/atlas-ci.yml` for credential-free Atlas tests, Ruff, BasedPyright, compilation, and tracked-secret checks.
+- Picture-based wardrobe advice is documented as a privacy-preserving next extension: private object storage, opaque user-scoped reference, explicit consent, deletion/revocation, and no sensitive attribute inference. Binary image upload is not yet wired into the WebUI.
+
+### Next product implementation priority
+
+1. Wire the existing WebUI chat/API to `AtlasService` through one shared request contract.
+2. Add Atlas Inbox/evidence/recommendation/approval cards using existing WebUI components.
+3. Add Telegram inbound/callback projection using the same Atlas response contract.
+4. Add a user-scoped private image upload path only after the core WebUI/Telegram flow is working.
+5. Re-run Atlas regression and WebUI checks, then create a checkpoint commit.
+
+## Local run and demo handoff (2026-09-12)
+
+- Added `docs/atlas-run-local-demo.md` with the exact bundled WebUI/gateway mode,
+  separate Vite frontend mode, Atlas CLI proof commands, Telegram setup/pairing,
+  local testing sequence, demo-video flow, and troubleshooting.
+- Canonical first demo command: `uv run nanobot webui`, then configure the model
+  in Settings → Models and open `http://127.0.0.1:8765`.
+- Vite development mode: keep `uv run nanobot gateway` running in one terminal;
+  run `NANOBOT_API_URL=http://127.0.0.1:8765 bun run dev` from `webui/` in a
+  second terminal and open `http://127.0.0.1:5173`.
+- Telegram currently runs through the existing nanobot gateway/channel with
+  long polling and pairing-only access. The Atlas-specific service/cards are
+  not yet fully mounted into the Telegram inbound handler; do not claim that
+  direct Atlas Telegram callbacks are complete until that integration lands.
+
+## Next-person rebrand and domain task (2026-09-12)
+
+- Added `docs/atlas-rebrand-handoff.md` as the authoritative next-stage task
+  for making the visible product feel original to Atlas: name, tagline, visual
+  system, browser copy, Atlas Inbox cards, public domain, deployment boundary,
+  Telegram Atlas callbacks, privacy, and demo polish.
+- The next teammate should not block on paid fashion APIs, production banking,
+  Gmail writes, mobile apps, public webhooks, or replacing nanobot. The priority
+  is an original Atlas surface over the verified read-only Strands vertical
+  slice.
+- Pairing approval is an administrative access action, not an LLM turn. A
+  successful `/pairing approve CODE` normally produces no “thinking” response;
+  the user must send a new ordinary message after approval. The code expires
+  after 10 minutes and must be approved from an already trusted local/WebUI
+  surface, not from the still-unapproved Telegram account itself.

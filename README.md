@@ -1,385 +1,243 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./images/readme-cover-dark.svg">
-  <img alt="nanobot README cover" src="./images/readme-cover-light.svg">
-</picture>
+# Atlas
 
-<div align="center">
-  <p>
-    <a href="https://nanobot.wiki/docs/latest/getting-started/nanobot-overview">English</a> |
-    <a href="https://nanobot.wiki/cn/docs/latest/getting-started/nanobot-overview">简体中文</a> |
-    <a href="https://nanobot.wiki/zh-Hant/docs/latest/getting-started/nanobot-overview">繁體中文</a> |
-    <a href="https://nanobot.wiki/es/docs/latest/getting-started/nanobot-overview">Español</a> |
-    <a href="https://nanobot.wiki/fr/docs/latest/getting-started/nanobot-overview">Français</a> |
-    <a href="https://nanobot.wiki/id/docs/latest/getting-started/nanobot-overview">Bahasa Indonesia</a> |
-    <a href="https://nanobot.wiki/ja/docs/latest/getting-started/nanobot-overview">日本語</a> |
-    <a href="https://nanobot.wiki/ko/docs/latest/getting-started/nanobot-overview">한국어</a> |
-    <a href="https://nanobot.wiki/ru/docs/latest/getting-started/nanobot-overview">Русский</a> |
-    <a href="https://nanobot.wiki/vi/docs/latest/getting-started/nanobot-overview">Tiếng Việt</a>
-  </p>
-  <p>
-    <a href="https://github.com/HKUDS/nanobot"><img src="https://img.shields.io/github/stars/HKUDS/nanobot?style=flat&logo=github" alt="GitHub stars"></a>
-    <a href="https://pypi.org/project/nanobot-ai/"><img src="https://img.shields.io/pypi/v/nanobot-ai" alt="PyPI version"></a>
-    <a href="https://pepy.tech/project/nanobot-ai"><img src="https://static.pepy.tech/badge/nanobot-ai" alt="PyPI downloads"></a>
-    <a href="https://github.com/HKUDS/nanobot/actions/workflows/ci.yml"><img src="https://github.com/HKUDS/nanobot/actions/workflows/ci.yml/badge.svg?branch=main" alt="Test Suite"></a>
-    <a href="https://pypi.org/project/nanobot-ai/"><img src="https://img.shields.io/badge/python-%3E%3D3.11-blue" alt="Python 3.11 or newer"></a>
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/HKUDS/nanobot" alt="MIT License"></a>
-    <a href="https://nanobot.wiki/docs/latest/getting-started/nanobot-overview"><img src="https://img.shields.io/badge/docs-nanobot.wiki-blue" alt="nanobot documentation"></a>
-  </p>
-  <p>
-    <a href="https://discord.gg/MnCvHqpUGB">Discord</a> ·
-    <a href="https://x.com/nanobot_project">X</a> ·
-    <a href="./COMMUNICATION.md">WeChat / Feishu</a>
-  </p>
-</div>
+## A consent-based life-admin agent that prepares the next move and asks before it acts
 
-# nanobot
+Atlas is an Everyday Agent built on top of the existing nanobot runtime and the AWS Strands Agents SDK. It watches only sources a user explicitly authorizes, performs safe internal work automatically, and interrupts the user only when a meaningful decision or approval is needed.
 
-🐈 **nanobot** is an ultra-lightweight, open-source, self-hosted personal AI agent framework written in Python. It runs in a WebUI, terminal, or chat apps and combines tools, long-term memory, MCP integrations, model routing, multi-agent delegation, scheduled automation, and an OpenAI-compatible API in a small, readable core.
+> **Atlas notices the work I am avoiding or the money I am losing, prepares the next move, and asks before it acts.**
 
-## Start Here
+Atlas is designed for ordinary users, not developers. A user can ask what to do next, research a product, request a reminder, ask why a recommendation was made, correct the agent, snooze an item, or pause access. The same Atlas case model is intended to power the WebUI, Telegram, CLI, and future integrations.
 
-| You want to... | Go to |
-|---|---|
-| Install nanobot with no terminal/config background | [Start Without Technical Background](./docs/start-without-technical-background.md) |
-| Install quickly and get one CLI reply | [Install](#-install) and [Quick Start](#-quick-start) |
-| Open the bundled browser UI | [WebUI](#-webui) |
-| Connect Telegram, Discord, WeChat, Slack, Email, Mattermost, or another chat app | [Chat Apps](./docs/chat-apps.md) |
-| Configure providers, fallback models, Langfuse, MCP, web tools, or security | [Docs](./docs/README.md) and [Configuration](./docs/configuration.md) |
-| Understand or extend the internals | [Architecture](./docs/architecture.md) and [Development](./docs/development.md) |
-| Deploy to the cloud or keep nanobot running as a service | [Deployment](./docs/deployment.md) |
+## What Atlas does
 
-## What can nanobot do?
+| Capability | What the user receives | Current boundary |
+|---|---|---|
+| **Task Start** | One small next action from pending or overdue tasks | Google Tasks is read-only in the MVP |
+| **Money Guard** | Evidence-backed recurring-charge and price-change review | Plaid Sandbox/read-only; no payments or transfers |
+| **Research** | A bounded source-backed comparison or recommendation | SerpApi/read-only; no purchasing |
+| **Wardrobe Help** | Outfit, care, repair, or packing guidance | Uses user-provided garment records; no identity or body judgments |
+| **Drip Advice** | One contextual suggestion at a time | Quiet hours, cooldown, snooze, dismiss, correction, and deduplication |
+| **Communication** | Recommendation and approval cards | Telegram delivery requires explicit flag and consent |
+| **Cross-domain resolution** | One practical action from at most two domains | Deterministic pair allowlist |
+| **Outcome verification** | Verified, stale, unavailable, or unresolved result | Verification requires refreshed post-attempt evidence |
 
-nanobot is a self-hosted personal AI agent runtime. It can:
+## How a user interacts with Atlas
 
-- run in a browser WebUI or terminal
-- connect to Telegram, Discord, Slack, WeChat, Email, Mattermost, and other chat apps
-- use tools such as files, shell, web search, web fetch, MCP, cron, image generation, and subagents
-- keep session history and long-term memory through Dream
-- run long-horizon goals and scheduled automations
-- expose a Python SDK and OpenAI-compatible API for integrations
-- deploy as a long-running local or server-side agent gateway
+Atlas is not a blank chatbot that expects technical commands. The intended experience is a calm inbox of evidence-backed cases.
 
-## 💡 Why nanobot
+A user can type:
 
-- **Persistent workflows**: goals, memory, tools, and chat context survive long-running work.
-- **Chat-native reach**: WebUI, API, Telegram, Feishu, Slack, Discord, Teams, email, and Mattermost.
-- **Model freedom**: OpenAI-compatible APIs, local LLMs, image generation, search, and fallbacks.
-- **Small core**: readable internals with MCP, memory, deployment, and automation built in.
-- **Own your stack**: inspect, customize, self-host, and extend without a giant platform.
+```text
+What should I do next?
+Find a cheaper reliable alternative to this product.
+Remind me about this on Friday.
+Why are you recommending this?
+I already completed this.
+Pause reminders for this type of advice.
+What can Atlas access?
+```
 
-## 📦 Install
+The system routes the request internally, checks consent, selects a bounded Strands tool bundle, gathers evidence, and returns one clear next action. External side effects remain behind an exact approval boundary.
 
-> [!IMPORTANT]
-> If you want the newest features and experiments, install from source.
->
-> If you want the most stable day-to-day experience, install from PyPI or with `uv`.
+## Architecture
 
-Pick **one** install method:
+```text
+WebUI / Telegram / CLI / scheduled trigger
+                    |
+                    v
+        verified request and user context
+                    |
+                    v
+          consent and capability policy
+                    |
+                    v
+             AtlasService / chain router
+                    |
+                    v
+       one AWS Strands Agent + bounded tools
+                    |
+                    v
+ Google Tasks | SerpApi | Plaid Sandbox | Gmail read-only
+                    |
+                    v
+          normalized evidence and trace
+                    |
+                    v
+ recommendation | draft | approval request | drip advice
+                    |
+                    v
+       WebUI card / Telegram card / outcome state
+```
 
-| Track | Install with | Update with | What runs |
-|---|---|---|---|
-| Stable | installer, `uv`, or pip | the same package tool | one released Python/WebUI/TUI version |
-| Current source | editable Git checkout | `git pull --ff-only` + editable dependency sync | Python, WebUI, and TUI from that checkout |
+The nanobot runtime continues to own the existing channels, sessions, memory, provider routing, MCP support, and gateway. Atlas is an edge product layer; it does not replace the existing `AgentLoop` or `AgentRunner`.
 
-Prerequisites: Python 3.11 or newer. Git and [Bun](https://bun.sh/) are only needed for a source install. Published packages include the WebUI and fetch a checksummed, version-matched TUI archive—with its licenses, notices, corresponding application source, source offer, and relinking instructions—on first use.
+## Real agent proof
 
-If terminals, API keys, or config files are new to you, use the guided zero-background walkthrough in [Start Without Technical Background](./docs/start-without-technical-background.md) instead of this compact README path.
+The strongest local proof is the read-only Task Start path:
 
-**One-command setup**
+```text
+user request
+→ verified identity
+→ stored Google Tasks consent
+→ real Google Tasks read
+→ normalized evidence
+→ real Strands Agent
+→ typed recommendation
+→ console/WebUI card
+```
 
-macOS / Linux:
+The basic Strands proof is also available:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HKUDS/nanobot/main/scripts/install.sh | sh
+uv run --no-sync python scripts/atlas_stage1_smoke.py
 ```
 
-Windows PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/HKUDS/nanobot/main/scripts/install.ps1 | iex
-```
-
-The default command installs or upgrades `nanobot-ai` from PyPI. On a fresh local desktop, it then starts `nanobot webui` so you can configure the first provider and model in **Settings → Models**. SSH, headless, existing-config, and older-release paths keep the terminal setup wizard. The installer avoids system-wide pip installs by using an active virtual environment, `uv`, `pipx`, or a managed venv under `~/.nanobot/venv`. It also prints the exact command it used to run nanobot; reuse that full command below if `nanobot` is not on `PATH`.
-
-To preview the plan without changing your environment, pass `--dry-run`.
+A successful run must report that the real Strands Agent executed and called a tool. The full Atlas demo is:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HKUDS/nanobot/main/scripts/install.sh | sh -s -- --dry-run
+uv run --no-sync python scripts/atlas_demo.py \
+  --scenario task_start \
+  --query "What should I do next?" \
+  --grant-consent
 ```
 
-```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/HKUDS/nanobot/main/scripts/install.ps1))) --dry-run
-```
-
-If you prefer to inspect the script first, open [`scripts/install.sh`](./scripts/install.sh) or [`scripts/install.ps1`](./scripts/install.ps1).
-
-**Install with `uv`**
+For machine-readable output:
 
 ```bash
-uv tool install nanobot-ai
+uv run --no-sync python scripts/atlas_demo.py \
+  --scenario task_start \
+  --query "What should I do next?" \
+  --grant-consent \
+  --json
 ```
 
-**Install from PyPI with pip**
+The demo is read-only and never sends Telegram messages. Delivery requires a separate explicit send path.
 
-```bash
-python -m pip install nanobot-ai
-```
+## Local setup
 
-If pip reports `externally-managed-environment` on macOS or Linux, use the one-command installer, `uv tool install nanobot-ai`, `pipx install nanobot-ai`, or install inside a virtual environment.
+Requirements:
 
-**Install from source**
+- Python 3.11 or newer;
+- `uv`;
+- Git;
+- a Groq or Gemini free-tier model key;
+- Google OAuth credentials and a refresh token for Google Tasks, if using that connector;
+- SerpApi key for product research, if using that connector;
+- Telegram bot token for Telegram health and delivery tests.
 
-Clone the repository and install it in editable mode. Bun is required because the source
-checkout runs the matching TUI directly instead of downloading an older release binary.
-
-```bash
-git clone https://github.com/HKUDS/nanobot.git
-cd nanobot
-python -m venv .venv
-```
-
-Activate it with `source .venv/bin/activate` on macOS/Linux or
-`.venv\Scripts\Activate.ps1` in Windows PowerShell, then run:
-
-```bash
-python -m pip install -e .
-```
-
-After that, the normal commands are identical to a stable install. `nanobot agent` runs the TUI
-from this checkout, and `nanobot webui` rebuilds stale frontend assets automatically. A later
-`git pull --ff-only` updates the Python, TUI, and WebUI source together; rerun
-`python -m pip install -e .` when Python dependencies change. Contributors should also read
-[`CONTRIBUTING.md`](./CONTRIBUTING.md).
-
-Verify the install:
-
-```bash
-nanobot --version
-```
-
-If `nanobot` is not on `PATH`, invoke it through the method that installed it: reuse the recommended installer's command, use `uv tool run --from nanobot-ai nanobot ...` or `pipx run --spec nanobot-ai nanobot ...`, or use the Python executable from the environment where pip installed the package.
-
-## 🚀 Quick Start
-
-**Open nanobot in your browser**
-
-```bash
-nanobot webui
-```
-
-This is the recommended first run. The launcher creates the config and workspace when needed, safely enables the local WebSocket channel after confirmation, starts or joins the shared local gateway, and opens [`http://127.0.0.1:8765`](http://127.0.0.1:8765). A fresh install can open before a model is configured, so setup continues in the browser instead of beginning in a JSON file. The first-run WebUI binds to localhost by default and is not exposed to your LAN.
-
-**Your first three steps**
-
-1. Open **Settings → Models** and choose a provider, credential, and model.
-2. Start a new topic and send `Hello!` to verify the connection.
-3. Before project work, choose the intended workspace and access mode from the composer.
-
-Any normal reply means the provider, model, workspace, and browser gateway are working together.
-
-**Keep nanobot running after you close the terminal**
-
-```bash
-nanobot gateway --background
-```
-
-This is the only command that promotes the shared gateway to persistent background mode. It leaves channels and automations running after every local TUI and WebUI launcher exits. Complete first-time model setup with `nanobot webui` before switching to background mode; open the same localhost WebUI again afterward.
-
-```bash
-nanobot gateway status
-nanobot gateway logs
-nanobot gateway restart
-nanobot gateway stop
-```
-
-**Prefer a gateway-first workflow?**
-
-```bash
-nanobot gateway
-```
-
-This skips WebUI setup and browser opening, then runs the same complete gateway in the current terminal. It is the familiar entry point if you are coming from OpenClaw or already operate agents as long-lived services. The WebUI remains available when its channel is configured; open it manually when needed.
-
-Use `nanobot gateway --background` for the same direct entry point without keeping the terminal attached. For automatic startup and supervision by the operating system, see [Deployment](./docs/deployment.md).
-
-**Prefer to work entirely in the terminal?**
-
-```bash
-nanobot agent
-```
-
-This opens the native terminal client with the configured model and tools, using the launch directory as its workspace. Use `/sessions` to switch saved conversations, `/new-chat` to preserve this conversation and start another one, `/branch` to fork from a completed reply, `/context` to inspect the compacted summary and raw message suffix available to the agent, or `/diff` to review the latest turn's file changes. Type `@` to mention an installed app, configured MCP server, or saved session. While nanobot is working, `Enter` steers the current turn, `Tab` queues a visible follow-up for the next turn, and `Option+Up` on macOS (`Alt+Up` on Windows/Linux) returns the latest queued message for editing. Press `Shift+Enter` to add a newline; `Ctrl+J` is the universal fallback for terminals that cannot distinguish modified Enter keys. Use `PageUp` at the top to load earlier transcript pages. Each launch starts a new session; `--session` selects an existing WebSocket session, while `--workspace` overrides the launch directory. Use `--classic` to resume a session from another channel. The existing nanobot `/new` command keeps its original behavior: it resets the current chat. `nanobot agent` and `nanobot webui` share one on-demand local gateway: either command can start it, each launcher releases only its own client, and the last interactive launcher to exit stops it. Use `/detach` to close the TUI while keeping the gateway and any active agent turn running in the background; after the terminal is restored, nanobot prints the exact `nanobot gateway stop` command for that config and workspace. Use `nanobot gateway --background` to start persistently before opening a client. Type `exit` or press `Ctrl+C` when you are done; after the terminal is restored, nanobot prints a ready-to-run `nanobot agent --session ...` command that resumes the session. Use `nanobot agent --classic` for the legacy Python prompt.
-
-For one request and an immediate exit, use:
-
-```bash
-nanobot agent -m "Hello!"
-```
-
-The one-shot form is useful for a quick provider check, shell scripts, and local automation. If you have not configured a model yet, run `nanobot webui` and open **Settings → Models** first.
-
-Need manual JSON, another device on your LAN, or help with provider/model matching? Continue with [Install and Quick Start](./docs/quick-start.md), [WebUI](./docs/webui.md), or [Troubleshooting](./docs/troubleshooting.md).
-
-If nanobot worked for you, a star on GitHub is the simplest way to support the project.
-
-- Want a pasteable provider setup? See [Provider Cookbook](./docs/provider-cookbook.md)
-- Want to understand provider/model matching? See [Providers and Models](./docs/providers.md)
-- Want web search, MCP, security settings, or more config options? See [Configuration](./docs/configuration.md)
-- Want to run locally? See [Ollama](./docs/providers.md#ollama), [vLLM or another local OpenAI-compatible server](./docs/providers.md#vllm-or-other-local-openai-compatible-server), and the full [provider reference](./docs/configuration.md#providers).
-- Want to run nanobot in chat apps like Telegram, Discord, WeChat or Feishu? See [Chat Apps](./docs/chat-apps.md)
-- Want Docker or Linux service deployment? See [Deployment](./docs/deployment.md)
-
-<a id="run-atlas"></a>
-
-## 🧭 Run Atlas
-
-Atlas is the consent-based everyday-agent layer built on this repository (`nanobot/atlas/`). It uses only free-tier providers (Groq `openai/gpt-oss-120b` by default) and read-only connectors. Nothing is sent externally by the demo path.
-
-**Install the Atlas dependencies**
+Install dependencies:
 
 ```bash
 uv sync --extra atlas --extra dev
 ```
 
-**Check credentials and connector health**
+Create `.env.local` locally. Never commit it:
+
+```dotenv
+GROQ_API_KEY=...
+ATLAS_MODEL_PROVIDER=groq
+ATLAS_MODEL_ID=openai/gpt-oss-120b
+
+ATLAS_GOOGLE_CLIENT_ID=...
+ATLAS_GOOGLE_CLIENT_SECRET=...
+ATLAS_GOOGLE_REFRESH_TOKEN=...
+ATLAS_ENABLE_GOOGLE_TASKS=true
+ATLAS_ENABLE_GOOGLE_OAUTH_PROBE=true
+
+ATLAS_SERPAPI_API_KEY=...
+ATLAS_ENABLE_SERPAPI=true
+
+TELEGRAM_BOT_TOKEN=...
+ATLAS_ENABLE_TELEGRAM_DELIVERY=false
+```
+
+Load the file without printing secrets:
+
+```bash
+set -a
+source .env.local
+set +a
+```
+
+On Windows Git Bash, use the same commands. In PowerShell, use the equivalent `$env:NAME = "value"` assignments or the repository's local environment loader.
+
+Run secret-safe diagnostics:
 
 ```bash
 uv run --no-sync python scripts/atlas_diagnose.py
+uv run --no-sync python scripts/atlas_diagnose.py --health
 ```
 
-Atlas reads credentials only from the process environment or an ignored `.env.local` file at the repository root — never paste secrets into chat, logs, or config files. Diagnostics report presence only, as `set` / `missing` / `placeholder`. The Groq key is `GROQ_API_KEY`; Google Tasks uses `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` (the `ATLAS_`-prefixed variants work too); SerpApi uses `SERPAPI_API_KEY`.
+The diagnostics report only `set`, `missing`, or `placeholder` states.
 
-**Run the live demo (read-only)**
+## Tests
 
-```bash
-uv run --no-sync python scripts/atlas_demo.py --grant-consent
-uv run --no-sync python scripts/atlas_demo.py --scenario task_start
-uv run --no-sync python scripts/atlas_demo.py --scenario shopping_research --json
-```
-
-The demo drives the full edge-service flow: server-verified identity → stored consent → policy gate → Strands chain (Groq) → real connector read → evidence-backed recommendation. `--grant-consent` records your local read consent for the demo user (you are the consenting user). It never sends messages anywhere; delivery requires an explicit send flag plus Telegram consent and is not part of the demo path.
-
-When a prerequisite is missing, the demo prints an explicit `FALLBACK` hint and exits non-zero instead of failing silently: `connector_disabled` (enable the `ATLAS_ENABLE_*` flag and set non-placeholder credentials), `consent_missing` (rerun with `--grant-consent`), or `model_unconfigured` (set `GROQ_API_KEY`). Atlas never falls back to a paid provider.
-
-**Run the Atlas test suite**
+Offline Atlas tests:
 
 ```bash
 uv run --no-sync pytest tests/atlas -q
-uv run --no-sync ruff check nanobot/atlas tests/atlas
 ```
 
-A live Strands smoke test (real agent + real tool call through Groq) is env-gated: set `ATLAS_ENABLE_GROQ_SMOKE=true` alongside `GROQ_API_KEY` to enable it.
+Runtime and MCP regression checks:
 
-<a id="deploy-to-render"></a>
+```bash
+uv run --no-sync pytest tests/agent/test_model_runtime_resolver.py -q
+uv run --no-sync pytest tests/agent/test_mcp_reconnect_crash.py -q
+```
 
-## ☁️ Deploy
+Static checks:
 
-**Render — one click**
+```bash
+uv run --no-sync ruff check nanobot/atlas scripts tests/atlas
+uv run --no-sync basedpyright nanobot/atlas
+uv run --no-sync python -m compileall -q nanobot scripts tests
+```
 
-Deploy nanobot's gateway and bundled WebUI from the repository's ready-to-use Blueprint:
+Credential-gated read-only smoke checks:
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/HKUDS/nanobot)
+```bash
+uv run --no-sync pytest tests/atlas/test_connector_smoke.py -m atlas_smoke -v
+```
 
-Render will ask for `ANTHROPIC_API_KEY` and a private `NANOBOT_WEB_TOKEN`, then provision persistent storage for sessions, memory, and WebUI history. Persistent disks require a paid Render service.
+A smoke test may skip when its explicit feature flag or credential is absent. It must never silently use a fixture for the real-provider demo.
 
-**Self-host**
+## Safety model
 
-Prefer your own infrastructure? Follow the [deployment guide](./docs/deployment.md) for Docker, Docker Compose, Linux services, and macOS LaunchAgent setup.
+Atlas enforces policy in deterministic code rather than relying on prompts. Identity comes from verified request/session context. Every connector call re-checks consent immediately before access. Tools declare capabilities. Approval requests bind an exact payload hash, nonce, expiry, identity, and action type. External side effects carry idempotency keys and redacted audit metadata. The model cannot authorize itself.
 
-## 🌐 WebUI
+The MVP does not make purchases, payments, transfers, disputes, subscription cancellations, destructive Gmail operations, arbitrary browser mutations, or arbitrary MCP mutations. Wardrobe guidance uses only user-provided attributes and does not infer sensitive characteristics.
 
-The WebUI ships **inside the published wheel** with no separate frontend build. It is the browser workbench for persistent topics, temporary chats, visible agent activity, workspace controls, Apps, Skills, Automations, and settings.
+## Wardrobe and picture-based drip advice
 
-<p align="center">
-  <img src="images/nanobot_webui.png" alt="nanobot webui preview" width="900">
-</p>
+The initial Wardrobe Help path uses explicit garment records because it is deterministic, cheap, and safe for the hackathon. A future image intake path may let a user photograph a garment or outfit and store an opaque object reference plus user-provided description. The image should be stored in private object storage, scoped to the authenticated user, encrypted or access-controlled, and represented in Atlas state by a non-sensitive reference rather than raw image bytes.
 
-Use it to:
+The agent must not infer identity, attractiveness, body value, age, ethnicity, health, or gender from a photograph. It may use an image only for an explicitly requested clothing task, and the user must be able to delete the image and revoke image access. The implementation workflow for this extension is documented in [`docs/atlas-workflow.md`](docs/atlas-workflow.md).
 
-- keep separate topics for different tasks and projects;
-- use temporary chats when a conversation should not be saved to history or memory;
-- inspect reasoning, tool calls, file edits, diffs, command output, and generated artifacts;
-- switch models and workspaces without leaving the conversation;
-- configure providers and chat channels, connect Apps, discover Skills, and manage Automations from one place.
+## MCP and skills
 
-See the [WebUI guide](./docs/webui.md) for LAN access, background operation, workspace controls, and the full feature tour. Working on the frontend itself? Use [`webui/README.md`](./webui/README.md).
+Atlas reuses nanobot's MCP and skills surfaces. MCP servers are not discovered or enabled arbitrarily by the model. Each scenario has an allowlist of servers and tools, explicit consent requirements, timeouts, and audit metadata. Research tools must return source references and timestamps. Shell, filesystem mutation, payments, purchases, and account/security changes are not available to Atlas MVP chains.
 
-## 🏗️ Architecture
+## Deployment choice
 
-<p align="center">
-  <img src="images/nanobot_arch.png" alt="nanobot architecture" width="800">
-</p>
+The existing repository has a Docker and Render-oriented deployment surface. The recommended first deployment is the existing container path because Atlas includes Python, Strands, the nanobot gateway, Telegram, and background/runtime behavior.
 
-🐈 nanobot stays lightweight by centering everything around a small agent loop: messages come in from chat apps, the LLM decides when tools are needed, and memory or skills are pulled in only as context instead of becoming a heavy orchestration layer. That keeps the core path readable and easy to extend, while still letting you add channels, tools, memory, and deployment options without turning the system into a monolith.
+Vercel can be useful for a separate frontend or thin HTTPS proxy, but it is not the natural host for the complete Python nanobot process or a continuously running Telegram polling/gateway worker. If Vercel is used, keep the Atlas backend and Telegram worker on the existing Python host and use Vercel only for a frontend or carefully bounded serverless endpoint. See [`docs/atlas-vercel.md`](docs/atlas-vercel.md).
 
-## 📚 Docs
+## Hackathon disclosure
 
-Browse the [repo docs](./docs/README.md) for the latest features and GitHub development version, or visit [nanobot.wiki](https://nanobot.wiki/docs/latest/getting-started/nanobot-overview) for the stable release documentation.
+Atlas is submitted to the Everyday Agents track of the Agents for Humans Hackathon. It uses the AWS Strands Agents SDK as the real orchestration layer. The repository is an extension of the `Arinze-eng/minis` nanobot starter framework; this pre-existing template and incorporated open-source components should be disclosed in the submission.
 
-- Use task-oriented guides: [Guides](./docs/guides/README.md)
-- Start with no technical background: [Start Without Technical Background](./docs/start-without-technical-background.md)
-- Start from zero with developer basics: [Install and Quick Start](./docs/quick-start.md)
-- Understand the runtime model: [Concepts](./docs/concepts.md)
-- Read the source-level map: [Architecture](./docs/architecture.md)
-- Choose a provider/model: [Providers and Models](./docs/providers.md)
-- Copy provider setup recipes: [Provider Cookbook](./docs/provider-cookbook.md)
-- Debug setup and runtime failures: [Troubleshooting](./docs/troubleshooting.md)
-- Talk to your nanobot with familiar chat apps: [Chat App AI Agent](./docs/guides/chat-app-ai-agent.md) · [Chat Apps](./docs/chat-apps.md)
-- Schedule or trigger agent work: [Automations](./docs/automations.md)
-- Configure providers, web search, MCP, and runtime behavior: [Configuration](./docs/configuration.md)
-- Integrate nanobot with local tools and automations: [OpenAI-Compatible API](./docs/openai-api.md) · [Python SDK](./docs/python-sdk.md)
-- Run nanobot with Docker or as a Linux service: [Deployment](./docs/deployment.md)
+The submission requires a public repository, README, MIT or Apache license, architecture diagram, and a public video of no more than five minutes showing the working project and explaining the problem, audience, and importance. AWS Builder ID is required in the submission; it is a personal identity separate from an AWS account. Amazon Bedrock AgentCore is encouraged but not required.
 
-## Releases
+## Project files
 
-**Latest release: [v0.3.0 - The Agency Release](https://github.com/HKUDS/nanobot/releases/tag/v0.3.0)**
-
-The Agency Release turns nanobot from a durable workbench into an agent runtime that can coordinate helpers, switch models per session, and carry authorized work through to completion.
-
-- Consult inline subagents without leaving the current task
-- Switch model presets per session directly from the composer
-- Start from a guided WebUI setup with clearer execution controls
-- Apply configuration changes live across a more reliable provider, channel, and tool runtime
-
-[Read the v0.3.0 release notes](https://github.com/HKUDS/nanobot/releases/tag/v0.3.0)
-
-## Recent Updates
-
-- **2026-07-24** Guided first-run setup, inline subagents, and model switching from the composer.
-- **2026-07-23** Grok OAuth with hosted X Search, live image settings, and clearer fallback models.
-- **2026-07-22** Parallel Search, live configuration reloads, richer app discovery, and a smoother mobile WebUI.
-- **2026-07-21** Codex fast mode, visible skill references, safer configuration saves, and sturdier task cleanup.
-- **2026-07-20** Cleaner code blocks and copy actions, self-contained channels, and steadier QQ reconnects.
-
-For older updates, see the [release archive](./docs/release-archive.md) or [GitHub releases](https://github.com/HKUDS/nanobot/releases).
-
-## Open Source Partners
-
-<p align="center">
-  <a href="https://platform.kimi.com?aff=nanobot"><picture><source media="(prefers-color-scheme: dark)" srcset="https://kimi-file.moonshot.cn/prod-chat-kimi/kfs/4/1/2026-06-05/1d8h69mt3v89kkekg24gg"><img alt="Kimi Open Source Friends" height="44" src="https://kimi-file.moonshot.cn/prod-chat-kimi/kfs/4/1/2026-06-05/1d8h69fudcmosb3pipls0"></picture></a>
-  <a href="https://platform.minimaxi.com/subscribe/token-plan?code=GILTJpMTqZ&source=link"><img alt="MiniMax" height="40" src="https://mintcdn.com/minimax-zh/1UjvBcdoC6r0UeyA/logo/light.svg?fit=max&auto=format&n=1UjvBcdoC6r0UeyA&q=85&s=672d724b639b2d88d0702fae329ea4f8"></a>
-</p>
-
-## 🤝 Contribute
-
-Use nanobot for a real task, report what broke, and then pick a focused improvement.
-
-- Read [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow.
-- Browse [open issues](https://github.com/HKUDS/nanobot/issues) for problems to investigate.
-- Open a [pull request](https://github.com/HKUDS/nanobot/pulls) for a focused fix or integration.
-
-## Contact
-
-Nanobot was started by [Xubin Ren](https://github.com/re-bin) as a personal open-source project and is now maintained collaboratively with contributors from the open-source community. Feel free to contact [xubinrencs@gmail.com](mailto:xubinrencs@gmail.com) for questions, ideas, or collaboration.
-
-### Contributors
-
-<a href="https://github.com/HKUDS/nanobot/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=HKUDS/nanobot&max=100&columns=12&updated=20260210" alt="Contributors" />
-</a>
-
-<p align="center">
-  <em> Thanks for visiting ✨ nanobot!</em><br><br>
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=HKUDS.nanobot&style=for-the-badge&color=00d4ff" alt="Views">
-</p>
+- [`docs/nanobot-original-README.md`](docs/nanobot-original-README.md) — preserved original upstream README;
+- [`docs/atlas-local-quickstart.md`](docs/atlas-local-quickstart.md) — beginner-friendly local walkthrough;
+- [`docs/atlas-run-local-demo.md`](docs/atlas-run-local-demo.md) — frontend/backend, Vite, Telegram, testing, and presentation runbook;
+- [`docs/atlas-team-onboarding.md`](docs/atlas-team-onboarding.md) — zero-to-demo teammate setup, credentials, OAuth, providers, MCP, and Telegram;
+- [`docs/atlas-rebrand-handoff.md`](docs/atlas-rebrand-handoff.md) — Atlas visual identity, domain, WebUI/Telegram integration, and next-person task list;
+- [`docs/atlas-workflow.md`](docs/atlas-workflow.md) — user workflow, background behavior, image privacy, MCP, and demo plan;
+- [`docs/atlas-vercel.md`](docs/atlas-vercel.md) — Vercel tradeoffs and deployment topology;
+- [`.atlas/ATLAS_MEMORY.md`](.atlas/ATLAS_MEMORY.md) — persistent implementation checklist;
+- [`scripts/atlas_demo.py`](scripts/atlas_demo.py) — read-only Atlas service demo;
+- [`scripts/atlas_stage1_smoke.py`](scripts/atlas_stage1_smoke.py) — real Strands/tool-call proof.

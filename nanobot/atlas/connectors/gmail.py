@@ -143,7 +143,7 @@ class GmailConnector:
                 await client.aclose()
         if response.status_code != 200:
             return None
-        payload = response.json()
+        payload = cast("dict[str, Any]", response.json())
         token = payload.get("access_token")
         if not token:
             return None
@@ -278,7 +278,7 @@ class GmailConnector:
             if status_result is not None:
                 return status_result
             try:
-                body = response.json()
+                body = cast("dict[str, Any]", response.json())
             except ValueError:
                 return ConnectorResult(
                     connector=self.name, status=ConnectorStatus.MALFORMED,

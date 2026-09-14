@@ -213,6 +213,11 @@ async def test_google_tasks_not_configured(monkeypatch: pytest.MonkeyPatch) -> N
 
 @pytest.mark.asyncio
 async def test_serpapi_success_products(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "nanobot.atlas.connectors.serpapi.read_secret",
+        lambda *_names: "test-serpapi-key",
+    )
+
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"shopping_results": [
             {"title": "Winter jacket", "price": "$129.99", "extracted_price": 129.99,

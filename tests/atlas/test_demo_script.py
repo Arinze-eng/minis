@@ -111,10 +111,21 @@ async def test_run_returns_zero_on_success(tmp_path: Any, monkeypatch: Any) -> N
     demo = _load_demo()
     store = _isolated_store(tmp_path)
     store.save_consent(USER, _consent("wardrobe_store"))
-    monkeypatch.setattr(
-        "nanobot.atlas.model_factory.create_atlas_model",
-        lambda **_: _fake_handle(),
-    )
+    from types import SimpleNamespace
+
+    from nanobot.atlas.contracts import ConnectorStatus
+
+    async def stub_chain(*_args: Any, **_kwargs: Any) -> Any:
+        return SimpleNamespace(
+            status=ConnectorStatus.OK,
+            reason_code="ok",
+            evidence=[object()],
+            recommendation=SimpleNamespace(title="Plan outfit", rationale="use available garments"),
+            provider_info={"provider": "groq", "model": "stub"},
+        )
+
+    monkeypatch.setattr("nanobot.atlas.service.create_atlas_model", lambda **_: _fake_handle())
+    monkeypatch.setattr("nanobot.atlas.service.AtlasChain.run", stub_chain)
     code = await demo.run(
         "wardrobe_research", USER, "casual outfit", as_json=False, store=store
     )
