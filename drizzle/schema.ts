@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, decimal, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,92 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export const atlasTasks = mysqlTable("atlas_tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  source: varchar("source", { length: 80 }).notNull().default("Drip Advice"),
+  meta: text("meta"),
+  status: mysqlEnum("status", ["open", "completed", "snoozed"]).notNull().default("open"),
+  dueAt: timestamp("dueAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_tasks_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasSignals = mysqlTable("atlas_signals", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  implication: text("implication").notNull(),
+  urgency: mysqlEnum("urgency", ["urgent", "review", "info"]).notNull().default("review"),
+  state: mysqlEnum("state", ["active", "dismissed", "completed"]).notNull().default("active"),
+  domains: text("domains"),
+  actionLabel: varchar("actionLabel", { length: 120 }),
+  actionHref: varchar("actionHref", { length: 255 }),
+  evidence: text("evidence"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_signals_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasWardrobe = mysqlTable("atlas_wardrobe", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  name: varchar("name", { length: 160 }).notNull(),
+  category: varchar("category", { length: 80 }).notNull(),
+  colors: text("colors"),
+  status: mysqlEnum("status", ["pending", "confirmed", "rejected"]).notNull().default("pending"),
+  wearCount: int("wearCount").notNull().default(0),
+  price: decimal("price", { precision: 12, scale: 2 }),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  imageRef: varchar("imageRef", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_wardrobe_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasMoneyFindings = mysqlTable("atlas_money_findings", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  merchant: varchar("merchant", { length: 160 }).notNull(),
+  productName: varchar("productName", { length: 255 }),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  cadence: varchar("cadence", { length: 40 }).notNull().default("monthly"),
+  annualized: decimal("annualized", { precision: 12, scale: 2 }),
+  nextRenewal: timestamp("nextRenewal"),
+  state: mysqlEnum("state", ["open", "reviewed", "dismissed"]).notNull().default("open"),
+  confidence: int("confidence").notNull().default(80),
+  evidence: text("evidence"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_money_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasSources = mysqlTable("atlas_sources", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  name: varchar("name", { length: 120 }).notNull(),
+  provider: varchar("provider", { length: 80 }).notNull(),
+  status: mysqlEnum("status", ["connected", "disconnected", "safe_mode", "error"]).notNull().default("disconnected"),
+  detail: text("detail"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_sources_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasPreferences = mysqlTable("atlas_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull().unique(),
+  quietHoursEnabled: boolean("quietHoursEnabled").notNull().default(true),
+  quietStart: varchar("quietStart", { length: 5 }).notNull().default("22:00"),
+  quietEnd: varchar("quietEnd", { length: 5 }).notNull().default("07:30"),
+  webuiNotifications: boolean("webuiNotifications").notNull().default(true),
+  telegramDelivery: boolean("telegramDelivery").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const atlasChatMessages = mysqlTable("atlas_chat_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_chat_owner_idx").on(table.ownerOpenId) }));

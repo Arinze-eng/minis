@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Bell, ChevronRight, CircleDollarSign, Compass, LayoutDashboard, ListChecks, Menu, MessageCircle, Shirt, Settings2, Sparkles, Target, TrainFront, UploadCloud } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import DripChatWidget from "./DripChatWidget";
 
 const navigation = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
@@ -33,6 +34,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         <header className="sticky top-0 z-10 border-b border-[#e3e8f0]/80 bg-[#f7f9fc]/90 px-5 py-4 backdrop-blur-xl sm:px-8 lg:px-12"><div className="mx-auto flex max-w-6xl items-center justify-between gap-4"><div className="flex items-center gap-3"><button aria-label="Open navigation" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen(true)} className="rounded-lg p-2 text-slate-500 hover:bg-white lg:hidden"><Menu size={20} /></button><div><p className="text-xs font-medium uppercase tracking-[.18em] text-slate-400">Monday · September 15, 2026</p><h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">Good morning, there.</h1></div></div><div className="flex items-center gap-2"><button aria-label="Notifications" className="relative rounded-xl border border-[#e1e7f0] bg-white p-2.5 text-slate-500"><Bell size={17} /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#f97362]" /></button><div className="hidden h-9 w-9 items-center justify-center rounded-full bg-[#dce7ff] text-sm font-semibold text-[#1e4ed8] sm:flex">A</div></div></div></header>
         {children}
       </main>
+      <DripChatWidget />
     </div>
   );
 }
