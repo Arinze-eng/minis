@@ -438,3 +438,15 @@ uv run --no-sync python scripts/atlas_diagnose.py
   the user must send a new ordinary message after approval. The code expires
   after 10 minutes and must be approved from an already trusted local/WebUI
   surface, not from the still-unapproved Telegram account itself.
+- 2026-09-15 atlas-web authentication review (post-7995bbb): Clerk Core 3
+  contract verified in source and by tests/authContract.test.ts — no removed
+  <SignedIn>/<SignedOut>/<Protect>, no createRouteMatcher(), Clerk imported
+  lazily only after clerkConfigured(), ClerkProvider inside <body>. Middleware
+  mode split verified live: with Clerk keys unset and NODE_ENV=production the
+  server returns 503 on /, /inbox and /api/* and mints no session cookie
+  (fail-closed); development mints the labelled atlas_session local principal.
+  All 17 API route handlers guard data with requirePrincipal(). Gates: 60/60
+  vitest, tsc clean, production build clean. Note for teammates: run a fresh
+  `bun run build` before auditing auth behavior — a stale .next start can
+  serve an older middleware. Backend API operations (listing users etc.)
+  still require CLERK_SECRET_KEY in the environment; none is configured here.
