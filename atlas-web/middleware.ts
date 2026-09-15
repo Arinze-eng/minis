@@ -39,6 +39,11 @@ function isApiPath(pathname: string): boolean {
   return pathname === "/api" || pathname.startsWith("/api/");
 }
 
+/** Public surfaces must remain reachable before a visitor signs in. */
+function isPublicPath(pathname: string): boolean {
+  return pathname === "/" || pathname === "/sign-in" || pathname.startsWith("/sign-in/") || pathname === "/sign-up" || pathname.startsWith("/sign-up/");
+}
+
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: "lax" as const,
@@ -51,6 +56,8 @@ export default async function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ): Promise<Response | null | undefined | void> {
+  if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
+
   if (!clerkKeysPresent()) {
     // Production must never fall back to a forgeable or synthetic principal.
     if (process.env.NODE_ENV === "production") {

@@ -1,13 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Eye,
-  Lock,
-  RefreshCw,
-  Shirt,
-  Wallet,
-} from "lucide-react";
+import { ArrowRight, Check, Eye, Lock, RefreshCw, Shirt, Sparkles, Wallet, Zap, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RouteMark } from "@/components/RouteMark";
 import { Reveal } from "@/components/Reveal";
@@ -15,448 +7,58 @@ import { AuthControls } from "@/components/AuthControls";
 import { LandingPreviewCarousel } from "@/components/LandingPreviewCarousel";
 
 const FEATURES = [
-  {
-    icon: Shirt,
-    title: "Wardrobe Intelligence",
-    detail:
-      "Track cost-per-wear across every item you own. Plan outfits from confirmed pieces, not invented ones. Every suggestion is grounded in your real wardrobe.",
-    iconBg: "bg-[var(--color-accent-soft)]",
-    iconColor: "text-[var(--color-accent-deep)]",
-  },
-  {
-    icon: Wallet,
-    title: "Money Guard",
-    detail:
-      "Surface subscription renewals, trial end dates, and price changes before they hit your account. Read-only receipt checks with ephemeral extraction.",
-    iconBg: "bg-[var(--color-alert-soft)]",
-    iconColor: "text-[var(--color-alert-deep)]",
-  },
-  {
-    icon: Lock,
-    title: "Privacy First",
-    detail:
-      "Read-only access only. Ephemeral extraction keeps bounded fields — merchant, amount, cadence, date. Full message bodies are never stored. One-click wipe removes everything.",
-    iconBg: "bg-[var(--color-good-soft)]",
-    iconColor: "text-[var(--color-good-deep)]",
-  },
-  {
-    icon: Check,
-    title: "Always Waiting",
-    detail:
-      "Atlas prepares the next move and surfaces the evidence. Nothing is sent, bought, cancelled, or mutated until you approve. The model never authorizes itself.",
-    iconBg: "bg-[var(--color-lavender-soft)]",
-    iconColor: "text-[var(--color-lavender)]",
-  },
+  { icon: Shirt, eyebrow: "Wardrobe", title: "Know what you own.", detail: "Capture your pieces, track cost-per-wear, and build looks from the wardrobe you actually confirmed.", tone: "blue" },
+  { icon: Wallet, eyebrow: "Money", title: "Catch the quiet leaks.", detail: "Surface renewals, trials, and price changes before they become another forgotten charge.", tone: "amber" },
+  { icon: Eye, eyebrow: "Evidence", title: "See why it matters.", detail: "Every signal arrives with context, source boundaries, and a clear next move—not a black-box score.", tone: "violet" },
+  { icon: Lock, eyebrow: "Control", title: "You stay the operator.", detail: "Atlas prepares. You approve. Nothing is sent, bought, cancelled, or mutated without you.", tone: "green" },
 ];
-
 const STEPS = [
-  {
-    number: "01",
-    title: "Connect your sources",
-    detail:
-      "Grant read-only access to the signals you choose. Every connector is consent-gated and revocable at any time from your settings.",
-  },
-  {
-    number: "02",
-    title: "Atlas analyses and surfaces insights",
-    detail:
-      "Two intelligence engines run on your behalf — wardrobe cost-per-wear and financial subscription review — producing evidence-backed findings.",
-  },
-  {
-    number: "03",
-    title: "You approve every action",
-    detail:
-      "Every recommendation arrives as a bounded approval card. Nothing moves without your explicit confirmation. Full audit trail retained.",
-  },
+  ["01", "Connect what matters", "Choose read-only sources and revoke them whenever you want."],
+  ["02", "Atlas finds the signal", "Your real records become a calm queue of useful, explainable opportunities."],
+  ["03", "You decide the move", "Approve, ignore, or keep the insight. Your control is the final step."],
 ];
-
-const PRIVACY_MATRIX = [
-  {
-    icon: Lock,
-    title: "gmail.readonly, nothing more",
-    detail:
-      "The only mailbox scope requested is read-only. No send, no delete, no archive — enforced in server policy code, not promises.",
-  },
-  {
-    icon: Eye,
-    title: "Zero raw storage",
-    detail:
-      "Ephemeral extraction keeps bounded fields — merchant, amount, cadence, dates. Full message bodies are never stored.",
-  },
-  {
-    icon: RefreshCw,
-    title: "One-click export",
-    detail:
-      "Your wardrobe records, findings, signals, and audit trail export to a machine-readable copy at any time.",
-  },
-  {
-    icon: Check,
-    title: "One-click wipe",
-    detail:
-      "Assets, metadata, evidence, findings, jobs, drafts, and indexes — a complete, confirmed, irreversible deletion.",
-  },
+const TRUST = [
+  [Lock, "Read-only by default", "The model never authorizes itself."],
+  [RefreshCw, "Portable by design", "Export your records whenever you need."],
+  [Check, "Private by construction", "Account-scoped data and revocable connections."],
 ];
+const SITE_NAV: Array<[string, string]> = [["#features", "Product"], ["#how-it-works", "How it works"], ["#pricing", "Pricing"], ["/settings/privacy", "Privacy"]];
+const TRUST_ITEMS: Array<[LucideIcon, string, string]> = TRUST as Array<[LucideIcon, string, string]>;
 
 export default function LandingPage() {
-  return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-bg)]">
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-[var(--color-bg)]/80 border-b border-[var(--color-line)]">
-        <div className="max-w-[1120px] mx-auto px-6 h-[60px] flex items-center gap-4">
-          {/* Brand */}
-          <Link
-            href="/"
-            className="inline-flex items-center gap-[10px] no-underline flex-none"
-            aria-label="Atlas home"
-          >
-            <RouteMark size={28} />
-            <strong className="font-bold text-[1.05rem] tracking-[0.01em] text-[var(--color-ink)]">
-              Atlas
-            </strong>
-          </Link>
+  return <div className="min-h-screen overflow-hidden bg-[var(--color-bg)] text-[var(--color-ink)]">
+    <header className="sticky top-0 z-40 border-b border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-bg)_78%,transparent)] backdrop-blur-2xl">
+      <div className="mx-auto flex h-[72px] w-[min(100%_-_32px,1180px)] items-center gap-4">
+        <Link href="/" className="flex items-center gap-3 no-underline" aria-label="Atlas home"><RouteMark size={34} /><span><strong className="block font-display text-[1.08rem] tracking-[-.03em]">Atlas</strong><span className="hidden text-[.6rem] font-bold uppercase tracking-[.18em] text-[var(--color-ink-muted)] sm:block">Life, with clarity</span></span></Link>
+        <nav className="hidden flex-1 items-center justify-center gap-1 md:flex" aria-label="Site navigation">
+          {SITE_NAV.map(([href,label]) => href.startsWith('#') ? <a key={href} href={href} className="rounded-xl px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] no-underline transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-ink)]">{label}</a> : <Link key={href} href={href} className="rounded-xl px-3 py-2 text-sm font-semibold text-[var(--color-ink-muted)] no-underline transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-ink)]">{label}</Link>)}
+        </nav>
+        <div className="ml-auto flex items-center gap-2"><AuthControls /><ThemeToggle /><Link href="/inbox" className="hidden items-center gap-2 rounded-xl bg-[var(--color-ink)] px-4 py-2.5 text-sm font-bold text-white no-underline shadow-lg transition hover:-translate-y-0.5 sm:inline-flex">Open Atlas <ArrowRight size={15} /></Link></div>
+      </div>
+    </header>
 
-          {/* Nav — hidden on mobile, shown md+ */}
-          <nav
-            className="hidden md:flex items-center gap-1 flex-1 justify-center"
-            aria-label="Site navigation"
-          >
-            <a
-              href="#features"
-              className="text-sm font-medium text-[var(--color-ink-muted)] no-underline px-3 py-1.5 rounded-[var(--radius-control)] hover:text-[var(--color-ink)] hover:bg-[var(--color-accent-soft)] transition-colors duration-150"
-            >
-              Features
-            </a>
-            <Link
-              href="/sources"
-              className="text-sm font-medium text-[var(--color-ink-muted)] no-underline px-3 py-1.5 rounded-[var(--radius-control)] hover:text-[var(--color-ink)] hover:bg-[var(--color-accent-soft)] transition-colors duration-150"
-            >
-              Sources
-            </Link>
-            <Link
-              href="/settings/privacy"
-              className="text-sm font-medium text-[var(--color-ink-muted)] no-underline px-3 py-1.5 rounded-[var(--radius-control)] hover:text-[var(--color-ink)] hover:bg-[var(--color-accent-soft)] transition-colors duration-150"
-            >
-              Privacy
-            </Link>
-          </nav>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 ml-auto flex-none">
-            <AuthControls />
-            <ThemeToggle />
-            <Link
-              className="hidden sm:inline-flex items-center gap-[8px] text-sm font-bold px-[22px] py-3 rounded-[var(--radius-control)] bg-[var(--color-accent)] text-[var(--color-on-accent)] no-underline hover:bg-[var(--color-accent-deep)] active:scale-95 transition-all duration-150"
-              href="/inbox"
-            >
-              Open Atlas
-              <ArrowRight size={14} aria-hidden="true" />
-            </Link>
-          </div>
+    <main id="main">
+      <section className="relative isolate overflow-hidden bg-[var(--color-hero)] text-[var(--color-on-hero)]" aria-labelledby="hero-h">
+        <div className="absolute -right-40 -top-40 size-[620px] rounded-full bg-cyan-300/20 blur-3xl" /><div className="absolute -bottom-60 left-1/4 size-[540px] rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="relative mx-auto grid w-[min(100%_-_32px,1180px)] items-center gap-14 px-0 py-20 sm:py-28 lg:grid-cols-[1.02fr_.98fr] lg:py-32">
+          <div><p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.08] px-3 py-1.5 text-[.68rem] font-bold uppercase tracking-[.16em] text-cyan-100"><Sparkles size={13} /> A calmer operating system for life admin</p><h1 id="hero-h" className="max-w-[11ch] font-display text-5xl font-semibold leading-[.98] tracking-[-.065em] sm:text-7xl">Your life, with a next move.</h1><p className="mt-7 max-w-[52ch] text-base leading-8 text-[var(--color-on-hero-muted)] sm:text-lg">Atlas brings your wardrobe, money, and everyday signals into one private surface—then asks before it acts.</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/inbox" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-[var(--color-hero-deep)] no-underline shadow-xl transition hover:-translate-y-0.5">Start with Atlas <ArrowRight size={16} /></Link><a href="#how-it-works" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/[.07] px-5 py-3.5 text-sm font-bold text-white no-underline backdrop-blur transition hover:bg-white/[.14]">See the loop</a></div><div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-white/55"><span className="inline-flex items-center gap-2"><Check size={14} className="text-emerald-300" /> Read-only first</span><span className="inline-flex items-center gap-2"><Check size={14} className="text-emerald-300" /> No surprise actions</span><span className="inline-flex items-center gap-2"><Check size={14} className="text-emerald-300" /> Export anytime</span></div></div>
+          <div className="relative mx-auto w-full max-w-[500px]"><div className="absolute -inset-5 rounded-[36px] bg-gradient-to-br from-cyan-300/20 via-violet-300/10 to-transparent blur-2xl" /><div className="relative rounded-[30px] border border-white/15 bg-white/[.08] p-3 shadow-[0_30px_100px_rgba(0,0,0,.28)] backdrop-blur-2xl"><div className="overflow-hidden rounded-[22px] border border-white/10 bg-[#101a2c]/90 p-5 sm:p-7"><div className="flex items-center justify-between border-b border-white/10 pb-5"><div className="flex items-center gap-2 text-sm font-bold"><span className="grid size-8 place-items-center rounded-xl bg-cyan-200/15 text-cyan-200"><Zap size={15} /></span> Atlas overview</div><span className="inline-flex items-center gap-2 rounded-full bg-emerald-300/10 px-2.5 py-1 text-[.62rem] font-bold uppercase tracking-[.12em] text-emerald-200"><span className="size-1.5 rounded-full bg-emerald-300" /> Ready</span></div><p className="mt-8 text-[.65rem] font-bold uppercase tracking-[.16em] text-cyan-200/65">Today’s useful signals</p><h2 className="mt-2 max-w-[10ch] font-display text-4xl font-semibold leading-[.98] tracking-[-.05em] text-white">Three things worth your attention.</h2><div className="mt-8 grid gap-3"><div className="rounded-2xl border border-white/10 bg-white/[.06] p-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">Renewal in 4 days</span><span className="text-xs text-amber-200">Review</span></div><p className="mt-2 text-xs leading-relaxed text-white/45">A subscription is about to renew at a higher price.</p></div><div className="rounded-2xl border border-cyan-200/15 bg-cyan-200/[.07] p-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">Your wardrobe is ready</span><span className="text-xs text-cyan-200">Prepare</span></div><p className="mt-2 text-xs leading-relaxed text-white/45">12 confirmed pieces. 3 low-wear opportunities.</p></div></div><div className="mt-5 flex items-center justify-between border-t border-white/10 pt-5 text-xs text-white/40"><span>Atlas prepares</span><span className="font-bold text-cyan-200">You approve →</span></div></div></div></div>
         </div>
-      </header>
+      </section>
 
-      <main id="main">
-        {/* ── Hero ── */}
-        <section
-          className="relative isolate overflow-hidden bg-gradient-to-br from-[var(--color-hero)] to-[var(--color-hero-deep)] text-[var(--color-on-hero)]"
-          aria-labelledby="hero-h"
-        >
-          {/* Decorative orbs */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-60 -right-44 w-[560px] h-[560px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.13),transparent_64%)] -z-10"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-48 -left-24 w-[380px] h-[380px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.08),transparent_68%)] -z-10"
-          />
+      <Reveal delay={.05}><LandingPreviewCarousel /></Reveal>
 
-          <div className="max-w-[1120px] mx-auto px-6 py-20 md:py-24">
-            <div className="max-w-[44rem]">
-              <h1
-                id="hero-h"
-                className="text-4xl md:text-5xl font-bold leading-[1.08] tracking-[-0.02em] text-[var(--color-on-hero)] max-w-[20ch] m-0"
-              >
-                The life-admin assistant that asks before it acts.
-              </h1>
-              <p className="mt-6 max-w-[54ch] text-[1.05rem] leading-relaxed text-[var(--color-on-hero-muted)]">
-                Atlas watches your wardrobe and finances, prepares the next smart
-                move, and waits for your approval before doing anything.
-              </p>
-              <div className="flex items-center gap-3 flex-wrap mt-8">
-                <Link
-                  className="inline-flex items-center gap-2 text-[0.95rem] font-bold px-[22px] py-3 rounded-[var(--radius-control)] bg-[var(--color-on-hero)] text-[var(--color-hero-deep)] no-underline hover:bg-white active:scale-95 transition-all duration-150"
-                  href="/inbox"
-                >
-                  Open Atlas
-                  <ArrowRight size={16} aria-hidden="true" />
-                </Link>
-                <a
-                  className="inline-flex items-center gap-2 text-[0.95rem] font-semibold px-[22px] py-3 rounded-[var(--radius-control)] border border-[var(--color-hero-line)] bg-white/[0.06] text-[var(--color-on-hero)] no-underline hover:bg-white/[0.13] active:scale-95 transition-all duration-150"
-                  href="#features"
-                >
-                  See how it works
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
+      <section className="mx-auto grid w-[min(100%_-_32px,1180px)] grid-cols-1 gap-3 py-10 sm:grid-cols-3"><div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5"><p className="font-display text-3xl font-semibold tracking-[-.05em]">0</p><p className="mt-1 text-sm text-[var(--color-ink-muted)]">actions without approval</p></div><div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5"><p className="font-display text-3xl font-semibold tracking-[-.05em]">2</p><p className="mt-1 text-sm text-[var(--color-ink-muted)]">life engines working together</p></div><div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5"><p className="font-display text-3xl font-semibold tracking-[-.05em]">100%</p><p className="mt-1 text-sm text-[var(--color-ink-muted)]">read-only source access</p></div></section>
 
-        <LandingPreviewCarousel />
+      <section id="features" className="mx-auto w-[min(100%_-_32px,1180px)] py-20 sm:py-28" aria-labelledby="features-h"><p className="eyebrow"><Sparkles size={14} /> What Atlas unlocks</p><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><h2 id="features-h" className="max-w-[12ch] text-4xl font-semibold sm:text-5xl">Less life admin. More signal.</h2><p className="mt-4 max-w-[55ch] text-base leading-7 text-[var(--color-ink-muted)]">Atlas turns scattered details into a small number of useful decisions. That is the offer: a private command center that feels lighter than the work it removes.</p></div><Link href="/inbox" className="inline-flex w-fit items-center gap-2 text-sm font-bold text-[var(--color-accent-deep)] no-underline">Explore the app <ArrowRight size={15} /></Link></div><div className="mt-10 grid gap-4 sm:grid-cols-2">{FEATURES.map(({icon:Icon,eyebrow,title,detail,tone}) => <article key={title} className={`group rounded-[26px] border border-[var(--color-line)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-pop)] sm:p-7`}><div className={`mb-8 grid size-11 place-items-center rounded-2xl ${tone==='blue'?'bg-blue-500/10 text-blue-600':tone==='amber'?'bg-amber-500/10 text-amber-600':tone==='violet'?'bg-violet-500/10 text-violet-600':'bg-emerald-500/10 text-emerald-600'}`}><Icon size={20} /></div><p className="text-[.66rem] font-bold uppercase tracking-[.16em] text-[var(--color-ink-muted)]">{eyebrow}</p><h3 className="mt-2 text-2xl font-semibold">{title}</h3><p className="mt-3 max-w-[38ch] text-sm leading-7 text-[var(--color-ink-muted)]">{detail}</p></article>)}</div></section>
 
-        {/* ── Proof strip ── */}
-        <Reveal delay={0.05}>
-          <section
-            className="max-w-[1120px] mx-auto px-6 py-12 flex items-center justify-center flex-wrap border-b border-[var(--color-line)]"
-            aria-label="Atlas by the numbers"
-          >
-            <article className="flex flex-col items-center gap-1 px-8 py-4 text-center flex-1 min-w-[160px]">
-              <span className="text-5xl font-bold tabular-nums leading-none tracking-[-0.02em] text-[var(--color-ink)]">
-                0
-              </span>
-              <span className="text-[0.85rem] text-[var(--color-ink-muted)] font-medium max-w-[16ch] leading-snug">
-                actions without approval
-              </span>
-            </article>
+      <section id="how-it-works" className="border-y border-[var(--color-line)] bg-[var(--color-surface)]" aria-labelledby="how-h"><div className="mx-auto w-[min(100%_-_32px,1180px)] py-20 sm:py-28"><p className="eyebrow"><RefreshCw size={14} /> The Atlas loop</p><h2 id="how-h" className="max-w-[13ch] text-4xl font-semibold sm:text-5xl">A better default for decisions.</h2><div className="mt-12 grid gap-4 lg:grid-cols-3">{STEPS.map(([n,t,d]) => <article key={n} className="relative rounded-[26px] border border-[var(--color-line)] bg-[var(--color-bg)] p-6 sm:p-8"><span className="font-display text-5xl font-semibold tracking-[-.08em] text-[var(--color-accent)]/35">{n}</span><h3 className="mt-7 text-xl font-semibold">{t}</h3><p className="mt-3 text-sm leading-7 text-[var(--color-ink-muted)]">{d}</p></article>)}</div></div></section>
 
-            <span
-              aria-hidden="true"
-              className="hidden sm:block w-px h-12 bg-[var(--color-line-strong)] self-center flex-none"
-            />
+      <section id="pricing" className="mx-auto w-[min(100%_-_32px,1180px)] py-20 sm:py-28" aria-labelledby="pricing-h"><div className="mx-auto max-w-2xl text-center"><p className="eyebrow justify-center"><Wallet size={14} /> Simple pricing</p><h2 id="pricing-h" className="text-4xl font-semibold sm:text-5xl">Start private. Grow when ready.</h2><p className="mt-4 text-base leading-7 text-[var(--color-ink-muted)]">Atlas is designed to prove value before it asks for commitment. The current product experience is available as a focused personal command center.</p></div><div className="mx-auto mt-10 max-w-[620px] rounded-[30px] border border-blue-300/35 bg-gradient-to-br from-blue-500/[.13] via-[var(--color-surface)] to-violet-500/[.12] p-1 shadow-[var(--shadow-pop)]"><div className="rounded-[26px] bg-[var(--color-surface-solid)] p-7 sm:p-9"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-bold text-[var(--color-accent-deep)]">Atlas Personal</p><h3 className="mt-3 font-display text-5xl font-semibold tracking-[-.06em]">Free<span className="ml-2 text-base font-medium tracking-normal text-[var(--color-ink-muted)]">while you build your rhythm</span></h3></div><span className="rounded-full bg-[var(--color-good-soft)] px-3 py-1.5 text-xs font-bold text-[var(--color-good-deep)]">No card required</span></div><ul className="mt-8 grid gap-3 text-sm text-[var(--color-ink-2)] sm:grid-cols-2">{['Wardrobe intelligence','Money signal review','Private account data','Export and delete controls','Approval-first recommendations','Responsive web app'].map(x => <li key={x} className="flex items-center gap-2"><Check size={16} className="text-[var(--color-good)]" /> {x}</li>)}</ul><Link href="/inbox" className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-ink)] px-5 py-3.5 text-sm font-bold text-white no-underline transition hover:-translate-y-0.5">Open Atlas <ArrowRight size={16} /></Link><p className="mt-4 text-center text-xs text-[var(--color-ink-muted)]">Pricing can evolve with your usage. Your data stays portable.</p></div></div></section>
 
-            <article className="flex flex-col items-center gap-1 px-8 py-4 text-center flex-1 min-w-[160px]">
-              <span className="text-5xl font-bold tabular-nums leading-none tracking-[-0.02em] text-[var(--color-ink)]">
-                2
-              </span>
-              <span className="text-[0.85rem] text-[var(--color-ink-muted)] font-medium max-w-[16ch] leading-snug">
-                intelligence engines
-              </span>
-            </article>
+      <section className="bg-[var(--color-hero)] text-[var(--color-on-hero)]"><div className="mx-auto grid w-[min(100%_-_32px,1180px)] gap-10 py-20 sm:py-24 lg:grid-cols-[1fr_.9fr] lg:items-end"><div><p className="eyebrow text-cyan-200"><Lock size={14} /> Trust boundary</p><h2 className="max-w-[12ch] text-4xl font-semibold sm:text-5xl">Useful enough to return to. Safe enough to trust.</h2><p className="mt-5 max-w-[52ch] leading-7 text-[var(--color-on-hero-muted)]">Atlas gives you context without taking control away. Read-only access, visible evidence, and a clear off switch are part of the product—not a footnote.</p></div><div className="grid gap-3">{TRUST_ITEMS.map(([Icon,title,detail]) => <div key={title} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.06] p-4"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-cyan-200/10 text-cyan-200"><Icon size={18} /></span><span><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs text-white/50">{detail}</span></span></div>)}</div></div></section>
+    </main>
 
-            <span
-              aria-hidden="true"
-              className="hidden sm:block w-px h-12 bg-[var(--color-line-strong)] self-center flex-none"
-            />
-
-            <article className="flex flex-col items-center gap-1 px-8 py-4 text-center flex-1 min-w-[160px]">
-              <span className="text-5xl font-bold tabular-nums leading-none tracking-[-0.02em] text-[var(--color-ink)]">
-                100%
-              </span>
-              <span className="text-[0.85rem] text-[var(--color-ink-muted)] font-medium max-w-[16ch] leading-snug">
-                read-only access
-              </span>
-            </article>
-          </section>
-        </Reveal>
-
-        {/* ── Features grid ── */}
-        <Reveal delay={0.05}>
-          <section
-            id="features"
-            className="max-w-[1120px] mx-auto px-6 py-16"
-            aria-labelledby="features-h"
-          >
-            <div className="inline-flex items-center gap-2 mb-3 text-[0.72rem] font-extrabold tracking-[0.13em] uppercase text-[var(--color-accent-deep)]">
-              What Atlas does
-            </div>
-            <h2
-              id="features-h"
-              className="text-3xl font-bold tracking-[-0.015em] leading-[1.15] m-0 text-[var(--color-ink)]"
-            >
-              Two engines. One calm surface.
-            </h2>
-            <p className="mt-3 text-[var(--color-ink-muted)] text-base max-w-[58ch] leading-relaxed">
-              Wardrobe intelligence and financial oversight running side by side,
-              both waiting on your word before anything changes.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-              {FEATURES.map(({ icon: Icon, title, detail, iconBg, iconColor }) => (
-                <article
-                  key={title}
-                  className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl p-7 hover:-translate-y-1 hover:shadow-[var(--shadow-pop)] transition-all duration-150"
-                >
-                  <div
-                    className={`inline-flex items-center justify-center w-10 h-10 rounded-[10px] mb-4 ${iconBg} ${iconColor}`}
-                  >
-                    <Icon size={20} aria-hidden="true" />
-                  </div>
-                  <h3 className="text-[1.05rem] font-bold mb-3 m-0 text-[var(--color-ink)]">
-                    {title}
-                  </h3>
-                  <p className="m-0 text-[0.92rem] text-[var(--color-ink-muted)] leading-relaxed">
-                    {detail}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ── How it works ── */}
-        <Reveal delay={0.05}>
-          <section
-            className="max-w-[1120px] mx-auto px-6 py-16 border-t border-[var(--color-line)]"
-            aria-labelledby="how-h"
-          >
-            <div className="inline-flex items-center gap-2 mb-3 text-[0.72rem] font-extrabold tracking-[0.13em] uppercase text-[var(--color-accent-deep)]">
-              How it works
-            </div>
-            <h2
-              id="how-h"
-              className="text-3xl font-bold tracking-[-0.015em] leading-[1.15] m-0 text-[var(--color-ink)]"
-            >
-              Ready in three steps
-            </h2>
-
-            <ol
-              className="relative list-none m-0 mt-8 p-0 grid gap-0 md:max-w-[680px]"
-              role="list"
-            >
-              {/* Connecting line */}
-              <span
-                aria-hidden="true"
-                className="absolute top-7 left-7 w-0.5 h-[calc(100%-56px)] bg-gradient-to-b from-[var(--color-accent)] to-[var(--color-good)] opacity-30 pointer-events-none"
-              />
-
-              {STEPS.map((step, i) => (
-                <li
-                  key={step.number}
-                  className={`relative grid grid-cols-[56px_1fr] gap-6 ${
-                    i < STEPS.length - 1 ? "pb-8" : ""
-                  }`}
-                >
-                  <div
-                    aria-hidden="true"
-                    className="relative z-10 w-14 h-14 rounded-full bg-[var(--color-accent-soft)] border-2 border-[var(--color-accent)]/35 flex items-center justify-center text-[0.85rem] font-extrabold tabular-nums text-[var(--color-accent-deep)] flex-none"
-                  >
-                    {step.number}
-                  </div>
-                  <div className="pt-3">
-                    <h3 className="text-[1.05rem] font-bold mb-2 m-0 text-[var(--color-ink)]">
-                      {step.title}
-                    </h3>
-                    <p className="m-0 text-[0.92rem] text-[var(--color-ink-muted)] max-w-[52ch] leading-[1.65]">
-                      {step.detail}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        </Reveal>
-
-        {/* ── Privacy matrix ── */}
-        <Reveal delay={0.05}>
-          <section
-            className="max-w-[1120px] mx-auto px-6 py-16 border-t border-[var(--color-line)]"
-            aria-labelledby="privacy-h"
-          >
-            <div className="inline-flex items-center gap-2 mb-3 text-[0.72rem] font-extrabold tracking-[0.13em] uppercase text-[var(--color-accent-deep)]">
-              Privacy
-            </div>
-            <h2
-              id="privacy-h"
-              className="text-3xl font-bold tracking-[-0.015em] leading-[1.15] m-0 text-[var(--color-ink)]"
-            >
-              The zero-mutation guarantee
-            </h2>
-            <p className="mt-3 text-[var(--color-ink-muted)] text-base max-w-[58ch] leading-relaxed">
-              Deterministic policy code enforces every boundary below — the model
-              never authorizes anything on your behalf.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-              {PRIVACY_MATRIX.map(({ icon: Icon, title, detail }) => (
-                <article
-                  key={title}
-                  className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl p-6 hover:-translate-y-0.5 hover:border-[var(--color-good)]/45 transition-all duration-150"
-                >
-                  <Icon
-                    size={18}
-                    aria-hidden="true"
-                    className="text-[var(--color-good)] mb-3 block"
-                  />
-                  <h3 className="text-[0.98rem] font-bold mb-2 m-0 text-[var(--color-ink)]">
-                    {title}
-                  </h3>
-                  <p className="m-0 text-[0.88rem] text-[var(--color-ink-muted)] leading-relaxed">
-                    {detail}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ── Final CTA ── */}
-        <section
-          className="text-center px-6 py-16 border-t border-[var(--color-line)] bg-gradient-to-br from-[var(--color-hero)] to-[var(--color-hero-deep)] text-[var(--color-on-hero)]"
-          aria-labelledby="final-h"
-        >
-          <h2
-            id="final-h"
-            className="text-3xl md:text-4xl font-bold tracking-[-0.018em] text-[var(--color-on-hero)] m-0 mb-3"
-          >
-            Start with zero risk
-          </h2>
-          <p className="text-[var(--color-on-hero-muted)] text-base max-w-[48ch] mx-auto mb-8 leading-relaxed">
-            Read-only access. No purchases, no transfers, no mutations. You stay
-            in control at every step.
-          </p>
-          <Link
-            className="inline-flex items-center gap-2 text-base font-bold px-7 py-3.5 rounded-[var(--radius-control)] bg-[var(--color-on-hero)] text-[var(--color-hero-deep)] no-underline hover:bg-white active:scale-95 transition-all duration-150"
-            href="/inbox"
-          >
-            Open Atlas
-            <ArrowRight size={17} aria-hidden="true" />
-          </Link>
-        </section>
-      </main>
-
-      {/* ── Footer ── */}
-      <footer className="border-t border-[var(--color-line)] bg-[var(--color-surface)]">
-        <div className="max-w-[1120px] mx-auto px-6 py-6 flex items-center gap-6 flex-wrap">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-[10px] no-underline flex-none"
-            aria-label="Atlas home"
-          >
-            <RouteMark size={22} />
-            <strong className="font-bold text-[1.05rem] tracking-[0.01em] text-[var(--color-ink)]">
-              Atlas
-            </strong>
-          </Link>
-
-          <nav
-            className="flex items-center gap-1 flex-wrap"
-            aria-label="Footer navigation"
-          >
-            <Link
-              href="/sources"
-              className="text-[0.85rem] text-[var(--color-ink-muted)] no-underline px-[10px] py-1 rounded-[var(--radius-control)] hover:text-[var(--color-accent-deep)] hover:bg-[var(--color-accent-soft)] transition-colors duration-150"
-            >
-              Sources
-            </Link>
-            <Link
-              href="/settings/privacy"
-              className="text-[0.85rem] text-[var(--color-ink-muted)] no-underline px-[10px] py-1 rounded-[var(--radius-control)] hover:text-[var(--color-accent-deep)] hover:bg-[var(--color-accent-soft)] transition-colors duration-150"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/settings"
-              className="text-[0.85rem] text-[var(--color-ink-muted)] no-underline px-[10px] py-1 rounded-[var(--radius-control)] hover:text-[var(--color-accent-deep)] hover:bg-[var(--color-accent-soft)] transition-colors duration-150"
-            >
-              Settings
-            </Link>
-          </nav>
-
-          <p className="m-0 text-[0.82rem] text-[var(--color-ink-muted)] ml-auto">
-            Atlas prepares the next move. You decide.
-          </p>
-        </div>
-      </footer>
-    </div>
-  );
+    <footer className="border-t border-[var(--color-line)] bg-[var(--color-surface)]"><div className="mx-auto flex w-[min(100%_-_32px,1180px)] flex-wrap items-center gap-5 py-7"><Link href="/" className="flex items-center gap-2.5 no-underline"><RouteMark size={24} /><strong>Atlas</strong></Link><nav className="flex flex-wrap gap-1 text-sm text-[var(--color-ink-muted)]" aria-label="Footer navigation"><a href="#features" className="rounded-lg px-2 py-1 no-underline hover:bg-[var(--color-accent-soft)]">Product</a><a href="#pricing" className="rounded-lg px-2 py-1 no-underline hover:bg-[var(--color-accent-soft)]">Pricing</a><Link href="/settings/privacy" className="rounded-lg px-2 py-1 no-underline hover:bg-[var(--color-accent-soft)]">Privacy</Link></nav><p className="m-0 text-xs text-[var(--color-ink-muted)] sm:ml-auto">Atlas prepares the next move. You decide.</p></div></footer>
+  </div>;
 }
