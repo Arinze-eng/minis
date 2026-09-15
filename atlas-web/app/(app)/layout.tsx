@@ -8,21 +8,28 @@ import "../shell.css";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Keep the shell itself behind authentication. Pages and route handlers
-  // still verify identity where they read data (Clerk: layouts do not re-run
-  // on client-side navigation).
   await assertSignedIn();
 
   return (
-    <div className="app-shell">
-      <a href="#main" className="skip-link">
+    <div className="min-h-screen bg-[var(--color-bg)]">
+      <a
+        href="#main"
+        className="absolute -top-14 left-4 z-[200] bg-[var(--color-accent)] text-white
+                   px-4 py-2 rounded-lg font-semibold text-sm focus-visible:top-2
+                   transition-[top] duration-150 no-underline"
+      >
         Skip to content
       </a>
+
       <AppNav />
-      <div className="app-content">
+
+      {/* Content area — shifted right on desktop for sidebar */}
+      <div className="lg:ml-[260px] flex flex-col min-h-screen pb-[72px] lg:pb-0">
         <AppHeader authControls={<AuthControls />} />
         <NetworkBanner />
-        {children}
+        <main id="main" className="flex-1">
+          {children}
+        </main>
       </div>
     </div>
   );

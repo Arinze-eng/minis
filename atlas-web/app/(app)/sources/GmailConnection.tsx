@@ -64,7 +64,13 @@ export function GmailConnection() {
       const res = await fetch("/api/gmail/scan", { method: "POST" });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
-        counts?: { discovered: number; processed: number; skipped: number; deduplicated: number; failed: number };
+        counts?: {
+          discovered: number;
+          processed: number;
+          skipped: number;
+          deduplicated: number;
+          failed: number;
+        };
       };
       if (res.ok && data.counts) {
         const c = data.counts;
@@ -75,15 +81,21 @@ export function GmailConnection() {
         ]);
         void load();
       } else if (res.status === 503 && data.error === "gmail_not_configured") {
-        setError("Gmail connection is not configured on this deployment. Atlas will not simulate a scan.");
+        setError(
+          "Gmail connection is not configured on this deployment. Atlas will not simulate a scan.",
+        );
       } else if (res.status === 503) {
-        setError("Token encryption (ENCRYPTION_KEY) is not configured. Tokens are never stored unencrypted.");
+        setError(
+          "Token encryption (ENCRYPTION_KEY) is not configured. Tokens are never stored unencrypted.",
+        );
       } else if (res.status === 409 && data.error === "gmail_not_connected") {
         setError("Connect Gmail first — there is no connection to scan.");
       } else if (res.status === 409 && data.error === "scan_already_running") {
         setError("A scan is already running. Wait for it to finish.");
       } else if (res.status === 409 && data.error === "token_invalid") {
-        setError("The stored token could not be used (expired or undecryptable). Reconnect Gmail to restore scanning.");
+        setError(
+          "The stored token could not be used (expired or undecryptable). Reconnect Gmail to restore scanning.",
+        );
         void load();
       } else {
         setError("Scan failed. The attempt was recorded in the audit trail.");
@@ -120,14 +132,33 @@ export function GmailConnection() {
     void load();
   }, [load]);
 
+  /* ── Loading state ───────────────────────────────────────────────────── */
   if (!status) {
     return (
-      <section className="gmail-panel" aria-labelledby="gmail-h">
-        <h2 id="gmail-h">Gmail (read-only)</h2>
-        <p className="gmail-loading" role="status">
+      <section
+        className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl shadow-[var(--shadow-card)] px-6 py-5 mb-6"
+        aria-labelledby="gmail-h"
+      >
+        <h2
+          id="gmail-h"
+          className="text-[1.05rem] font-bold text-[var(--color-ink)] mb-3"
+        >
+          Gmail (read-only)
+        </h2>
+        <p
+          className="text-[0.9rem] text-[var(--color-ink-muted)] animate-pulse"
+          role="status"
+        >
           Loading connection status…
         </p>
-        {error ? <p className="gmail-error" role="alert">{error}</p> : null}
+        {error ? (
+          <p
+            className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--color-danger)_40%,transparent)] bg-[var(--color-danger-soft)] text-[var(--color-danger)] text-[0.88rem] px-4 py-3"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
       </section>
     );
   }
@@ -137,13 +168,25 @@ export function GmailConnection() {
   const connected = c?.status === "connected";
 
   return (
-    <section className="gmail-panel" aria-labelledby="gmail-h">
-      <h2 id="gmail-h">Gmail (read-only)</h2>
+    <section
+      className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl shadow-[var(--shadow-card)] px-6 py-5 mb-6"
+      aria-labelledby="gmail-h"
+    >
+      <h2
+        id="gmail-h"
+        className="text-[1.05rem] font-bold text-[var(--color-ink)] mb-3"
+      >
+        Gmail (read-only)
+      </h2>
 
-      <ul className="gmail-boundaries">
+      {/* ── Boundaries ────────────────────────────────────────────────── */}
+      <ul className="list-disc pl-5 grid gap-1.5 text-[0.88rem] text-[var(--color-ink-muted)] mb-4">
         <li>
-          Scope: <code>{status.scope}</code> — never send, delete, archive, or
-          change labels.
+          Scope:{" "}
+          <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] rounded px-1.5 py-px">
+            {status.scope}
+          </code>{" "}
+          — never send, delete, archive, or change labels.
         </li>
         <li>
           Extraction is server-side and metadata-only: bounded fields (merchant,
@@ -155,35 +198,74 @@ export function GmailConnection() {
         </li>
       </ul>
 
+      {/* ── Unconfigured notices ──────────────────────────────────────── */}
       {!status.gmailConfigured ? (
-        <div className="gmail-unconfigured" role="note">
-          <p>
+        <div
+          className="rounded-xl border border-[color-mix(in_srgb,var(--color-alert)_40%,transparent)] bg-[var(--color-alert-soft)] px-4 py-3 mb-4 text-[0.9rem] text-[var(--color-ink)]"
+          role="note"
+        >
+          <p className="m-0">
             <strong>Gmail connection is not configured on this deployment.</strong>{" "}
             Atlas will not simulate a connection. Server setup: create an OAuth
             client in Google Cloud Console, enable the Gmail API, request only{" "}
-            <code>gmail.readonly</code>, register{" "}
-            <code>&lt;origin&gt;/api/gmail/callback</code> as an authorized
-            redirect URI, and set <code>GOOGLE_CLIENT_ID</code>,{" "}
-            <code>GOOGLE_CLIENT_SECRET</code>, and <code>ENCRYPTION_KEY</code>.
+            <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-alert)_20%,transparent)] rounded px-1 py-px">
+              gmail.readonly
+            </code>
+            , register{" "}
+            <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-alert)_20%,transparent)] rounded px-1 py-px">
+              &lt;origin&gt;/api/gmail/callback
+            </code>{" "}
+            as an authorized redirect URI, and set{" "}
+            <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-alert)_20%,transparent)] rounded px-1 py-px">
+              GOOGLE_CLIENT_ID
+            </code>
+            ,{" "}
+            <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-alert)_20%,transparent)] rounded px-1 py-px">
+              GOOGLE_CLIENT_SECRET
+            </code>
+            , and{" "}
+            <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-alert)_20%,transparent)] rounded px-1 py-px">
+              ENCRYPTION_KEY
+            </code>
+            .
           </p>
         </div>
       ) : null}
 
       {status.gmailConfigured && !status.encryptionConfigured ? (
-        <div className="gmail-unconfigured" role="note">
-          <p>
+        <div
+          className="rounded-xl border border-[color-mix(in_srgb,var(--color-alert)_40%,transparent)] bg-[var(--color-alert-soft)] px-4 py-3 mb-4 text-[0.9rem] text-[var(--color-ink)]"
+          role="note"
+        >
+          <p className="m-0">
             <strong>Token encryption is not configured.</strong> Atlas will not
             store a Gmail refresh token without application-layer encryption.
-            Set <code>ENCRYPTION_KEY</code> on the server.
+            Set{" "}
+            <code className="text-[0.82rem] bg-[color-mix(in_srgb,var(--color-alert)_20%,transparent)] rounded px-1 py-px">
+              ENCRYPTION_KEY
+            </code>{" "}
+            on the server.
           </p>
         </div>
       ) : null}
 
-      <div className="gmail-connection-state">
+      {/* ── Connection state + actions ────────────────────────────────── */}
+      <div className="mb-4">
         {c === null ? (
-          <p>Not connected.</p>
+          <p className="flex items-center gap-2 text-[0.9rem] text-[var(--color-ink-muted)] mb-3">
+            <span className="w-2 h-2 rounded-full bg-[var(--color-ink-muted)] shrink-0" />
+            Not connected.
+          </p>
         ) : (
-          <p>
+          <p className="flex items-center gap-2 text-[0.9rem] text-[var(--color-ink)] mb-3">
+            <span
+              className={[
+                "w-2 h-2 rounded-full shrink-0",
+                connected
+                  ? "bg-[var(--color-good)]"
+                  : "bg-[var(--color-danger)]",
+              ].join(" ")}
+            />
             {connected
               ? "Connected"
               : c.status === "error"
@@ -198,10 +280,10 @@ export function GmailConnection() {
 
         {status.gmailConfigured && status.encryptionConfigured ? (
           connected ? (
-            <div className="gmail-actions">
+            <div className="flex flex-wrap gap-3">
               <motion.button
                 type="button"
-                className="btn-primary"
+                className="inline-flex items-center gap-2 text-[0.9rem] font-semibold px-4 py-2 rounded-lg bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-deep)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 onClick={scan}
                 disabled={busy}
                 whileTap={reduceMotion ? undefined : { scale: 0.98 }}
@@ -210,7 +292,7 @@ export function GmailConnection() {
               </motion.button>
               <button
                 type="button"
-                className="btn-secondary"
+                className="inline-flex items-center gap-2 text-[0.9rem] font-semibold px-4 py-2 rounded-lg border border-[var(--color-danger)] text-[var(--color-danger)] bg-transparent hover:bg-[var(--color-danger-soft)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 onClick={disconnect}
                 disabled={busy}
               >
@@ -218,33 +300,54 @@ export function GmailConnection() {
               </button>
             </div>
           ) : (
-            <button type="button" className="btn-primary" onClick={connect}>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 text-[0.9rem] font-semibold px-4 py-2 rounded-lg bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-deep)] transition-colors cursor-pointer"
+              onClick={connect}
+            >
               Connect Gmail
             </button>
           )
         ) : null}
       </div>
 
+      {/* ── Last scan summary ─────────────────────────────────────────── */}
       {lastScan ? (
-        <p className="gmail-last-scan">
+        <p className="text-[0.82rem] text-[var(--color-ink-muted)] font-[tabular-nums] mb-3">
           Last scan: {lastScan.status} · {lastScan.discovered} discovered,{" "}
           {lastScan.processed} processed, {lastScan.skipped} skipped,{" "}
           {lastScan.deduplicated} deduplicated, {lastScan.failed} failed
         </p>
       ) : null}
 
+      {/* ── Scan log ─────────────────────────────────────────────────── */}
       {scanLog.length > 0 ? (
-        <div className="scan-log" role="log" aria-live="polite">
+        <div
+          className="font-mono text-[0.8rem] bg-[color-mix(in_srgb,var(--color-chrome)_6%,transparent)] border border-[var(--color-line)] rounded-lg px-4 py-3 max-h-48 overflow-y-auto mb-3"
+          role="log"
+          aria-live="polite"
+        >
           {scanLog.map((line, i) => (
-            <p key={i}>{line}</p>
+            <p key={i} className="m-0 mb-1 last:mb-0 text-[var(--color-ink)]">
+              {line}
+            </p>
           ))}
         </div>
       ) : null}
 
-      {error ? <p className="gmail-error" role="alert">{error}</p> : null}
+      {/* ── Error ────────────────────────────────────────────────────── */}
+      {error ? (
+        <p
+          className="rounded-lg border border-[color-mix(in_srgb,var(--color-danger)_40%,transparent)] bg-[var(--color-danger-soft)] text-[var(--color-danger)] text-[0.88rem] px-4 py-3 mt-2"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
 
+      {/* ── Identity note ────────────────────────────────────────────── */}
       {status.identity.mode !== "clerk" ? (
-        <p className="gmail-identity-note">
+        <p className="mt-3 text-[0.8rem] text-[var(--color-ink-muted)]">
           Identity: {status.identity.label}. Connections are bound to this
           browser session until a real auth provider is configured.
         </p>

@@ -33,6 +33,11 @@ export const metadata: Metadata = {
   description:
     "Atlas notices the work you are avoiding, prepares the next move, and asks before it acts.",
   applicationName: "Atlas",
+  appleWebApp: {
+    capable: true,
+    title: "Atlas",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {

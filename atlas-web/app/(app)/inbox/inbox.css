@@ -1,39 +1,75 @@
 /* ============================================================================
-   Atlas Inbox — command center layout.
+   Atlas Inbox — dashboard layout.
+   Two-column on wide screens, single column on mobile.
+   ============================================================================ */
 
-   Two columns on wide screens: the ranked queue and the morning briefing on the
-   left, the source pulse and identity card on the right. Primitives (cards,
-   rows, badges, buttons, stats) come from globals.css.
-   ========================================================================== */
+/* ---------- Page grid ------------------------------------------------------ */
 
 .inbox-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: var(--space-6);
-  max-width: 1120px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--space-6) var(--space-12);
+  padding: var(--space-6) var(--space-6) var(--space-12);
   align-items: start;
 }
 
 .inbox-main {
-  display: grid;
-  gap: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
   min-width: 0;
 }
 
-.inbox-head h1 {
-  font-size: clamp(1.7rem, 3vw, 2.15rem);
+/* ---------- Page header ---------------------------------------------------- */
+
+.inbox-head {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .inbox-head .eyebrow {
-  margin-bottom: var(--space-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  display: block;
+  margin: 0 0 var(--space-2);
 }
 
-/* ---------- Command strip ---------- */
+.inbox-head h1 {
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.inbox-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Command strip (dashboard stats) -------------------------------- */
 
 .command-strip {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
 }
 
@@ -41,160 +77,313 @@
   margin: 0;
 }
 
+.stat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--dur-fast) ease-in-out, border-color var(--dur-fast) ease-in-out;
+}
+
+.stat:hover {
+  box-shadow: var(--shadow-pop);
+  border-color: var(--color-line-strong);
+}
+
+.stat-icon-muted {
+  color: var(--color-ink-muted);
+  opacity: 0.5;
+}
+
+/* Urgent ribbon */
+
 .urgent-ribbon {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
 }
 
 .urgent-item {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  align-items: baseline;
+  align-items: center;
+  gap: var(--space-3);
   text-decoration: none;
   color: inherit;
-  border: 1px solid color-mix(in srgb, var(--color-alert) 40%, transparent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
   border-left: 3px solid var(--color-alert);
-  background: color-mix(in srgb, var(--color-alert) 8%, transparent);
-  border-radius: var(--radius-control);
-  padding: var(--space-2) var(--space-4);
-  transition: background-color var(--dur-fast) var(--ease-out);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  padding: var(--space-3) var(--space-4);
+  transition: background var(--dur-fast) ease-in-out, box-shadow var(--dur-fast) ease-in-out;
+  box-shadow: var(--shadow-card);
 }
 
 .urgent-item:hover {
-  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  background: color-mix(in srgb, var(--color-alert) 5%, var(--color-surface));
+  box-shadow: var(--shadow-pop);
 }
 
-.urgent-item.urgent-review {
-  border-left-color: var(--color-alert);
+.urgent-item.urgency-urgent {
+  border-left-color: var(--color-danger);
+}
+
+.urgent-item.urgency-urgent:hover {
+  background: color-mix(in srgb, var(--color-danger) 5%, var(--color-surface));
+}
+
+.urgent-icon {
+  flex: none;
+  color: var(--color-alert);
+}
+
+.urgency-urgent .urgent-icon {
+  color: var(--color-danger);
 }
 
 .urgent-title {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .urgent-detail {
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Priority queue ---------- */
-
-.inbox-queue {
-  overflow: hidden;
-}
-
-.queue-row {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-}
-
-.queue-row .queue-dot {
-  margin-top: 6px;
-}
-
-.queue-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--color-ink-muted);
   flex: none;
 }
 
-.queue-dot-urgent {
-  background: var(--color-danger);
+.strip-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color var(--dur-fast) ease-in-out;
+  align-self: flex-start;
 }
 
-.queue-dot-review {
-  background: var(--color-alert);
+.strip-refresh:hover {
+  color: var(--color-accent-deep);
 }
+
+/* ---------- Signal queue --------------------------------------------------- */
+
+.inbox-queue {
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.queue-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-line);
+  border-left: 3px solid var(--color-accent);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--dur-fast) ease-in-out;
+}
+
+.queue-row:first-child {
+  border-top: none;
+}
+
+.queue-row:hover {
+  background: color-mix(in srgb, var(--color-accent) 4%, transparent);
+}
+
+.urgency-urgent {
+  border-left-color: var(--color-danger);
+}
+.urgency-urgent:hover {
+  background: color-mix(in srgb, var(--color-danger) 4%, transparent);
+}
+
+.urgency-review {
+  border-left-color: var(--color-alert);
+}
+.urgency-review:hover {
+  background: color-mix(in srgb, var(--color-alert) 4%, transparent);
+}
+
+.queue-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex: none;
+  margin-top: 6px;
+}
+
+.queue-dot-urgent { background: var(--color-danger); }
+.queue-dot-review { background: var(--color-alert); }
 
 .queue-body {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 3px;
   min-width: 0;
 }
 
 .queue-link {
   text-decoration: none;
+  color: var(--color-ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.3;
 }
 
 .queue-link:hover {
   color: var(--color-accent-deep);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+}
+
+.row-detail {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+  line-height: 1.4;
 }
 
 .queue-evidence {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
+  opacity: 0.8;
 }
 
 .queue-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: var(--space-2);
-  white-space: nowrap;
+  flex: none;
 }
 
 .queue-why {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--color-accent-deep);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.queue-why:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
+/* Empty state */
+
 .inbox-empty {
-  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  gap: var(--space-3);
+}
+
+.inbox-empty-icon {
   color: var(--color-ink-muted);
+  opacity: 0.35;
+  margin-bottom: var(--space-2);
 }
 
-.inbox-empty p {
-  margin: 0 0 var(--space-4);
+.inbox-empty-heading {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
 }
 
-/* ---------- Right rail ---------- */
+.inbox-empty-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-ink-muted);
+  max-width: 34ch;
+  line-height: 1.5;
+}
+
+.inbox-empty-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+
+/* ---------- Right rail ----------------------------------------------------- */
 
 .inbox-rail {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
   position: sticky;
-  top: var(--space-6);
+  top: 80px; /* below header */
 }
 
 .pulse-row {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  padding-inline: var(--space-5);
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--color-line);
 }
 
-.pulse-row .source-dot {
-  margin-top: 6px;
+.pulse-row:first-child {
+  border-top: none;
+}
+
+.pulse-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 .source-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex: none;
 }
 
 .source-dot-on {
   background: var(--color-good);
+  box-shadow: 0 0 0 2px var(--color-good-soft);
 }
 
 .source-dot-off {
   background: transparent;
-  border: 1px dashed var(--color-line-strong);
+  border: 1.5px dashed var(--color-line-strong);
 }
 
 .rail-link {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--color-accent-deep);
   text-decoration: none;
@@ -202,48 +391,49 @@
 
 .rail-link:hover {
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.identity-card h2 {
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.settings-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-ink-muted);
-  margin-bottom: var(--space-2);
 }
 
-.identity-line {
-  margin: 0 0 var(--space-2);
-  font-weight: 600;
-  font-size: 0.95rem;
+.settings-card-meta {
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+  margin: 0;
 }
 
-.identity-meta {
-  margin: 0 0 var(--space-2);
-  font-size: 0.8rem;
-  line-height: 1.5;
+.store-note {
+  font-size: 0.7rem;
+  color: var(--color-ink-muted);
+  opacity: 0.55;
+  margin: 0;
 }
 
-@media (max-width: 980px) {
-  .inbox-layout {
-    grid-template-columns: minmax(0, 1fr);
-    padding-inline: var(--space-4);
-  }
-
-  .inbox-rail {
-    position: static;
-  }
-}
-
-/* ---------- Morning briefing ---------- */
+/* ---------- Morning briefing ----------------------------------------------- */
 
 .briefing {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  padding: var(--space-6);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  overflow: hidden;
 }
 
 .briefing-weather {
@@ -251,7 +441,7 @@
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   color: var(--color-ink-muted);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--color-line);
@@ -269,55 +459,103 @@
 }
 
 .weather-source {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
+  opacity: 0.7;
 }
 
 .briefing h2 {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-ink-muted);
-  margin-bottom: var(--space-1);
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
 }
 
 .briefing-outfit {
   font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin: 0 0 var(--space-2);
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
 }
 
 .briefing-reason {
   margin: 0 0 var(--space-4);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   color: var(--color-ink-muted);
-  max-width: 60ch;
+  max-width: 58ch;
+  line-height: 1.5;
 }
 
 .briefing-cpw {
-  display: grid;
-  gap: var(--space-1);
-  margin-bottom: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-3);
+  background: var(--color-good-soft);
+  border-radius: var(--radius-control);
+  border: 1px solid color-mix(in srgb, var(--color-good) 25%, transparent);
 }
 
 .briefing-cpw-item {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .briefing-cpw-item strong {
   color: var(--color-good-deep);
+  font-weight: 700;
 }
 
 .briefing-actions {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .briefing-status {
-  margin: var(--space-4) 0 0;
-  font-size: 0.85rem;
+  margin: var(--space-3) 0 0;
+  font-size: 0.8rem;
   color: var(--color-good-deep);
+  font-weight: 500;
+}
+
+/* ---------- Responsive ----------------------------------------------------- */
+
+@media (max-width: 1040px) {
+  .inbox-layout {
+    grid-template-columns: 1fr;
+    padding-inline: var(--space-4);
+  }
+
+  .inbox-rail {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .inbox-layout {
+    padding-inline: var(--space-3);
+    gap: var(--space-4);
+  }
+
+  .inbox-head h1 {
+    font-size: 1.5rem;
+  }
+
+  .queue-actions {
+    display: none;
+  }
+
+  .urgent-detail {
+    display: none;
+  }
+
+  .inbox-empty {
+    padding: var(--space-8) var(--space-4);
+  }
 }

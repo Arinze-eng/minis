@@ -1,26 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, Clock, Info, MapPin, Plane, ShieldCheck } from "lucide-react";
-import "../panels.css";
+import { Info, Plane, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Travel",
-};
-
-/**
- * Travel timeline (Operations Engine). No travel connector is configured in
- * this release, so this surface states its scope and shows one clearly labelled
- * synthetic illustration — it never presents fabricated bookings as user data
- * (product contract §7: fixtures are labelled, never disguised).
- */
-
-const SAMPLE = {
-  provider: "Sample Air",
-  route: "LHR → JFK",
-  departure: "2026-09-18 11:15 UTC",
-  checkIn: "T-24h",
-  boarding: "T-45m",
-  evidence: "Synthetic illustration — no booking exists in your account.",
 };
 
 const PLANNED_BEHAVIOUR = [
@@ -32,88 +15,127 @@ const PLANNED_BEHAVIOUR = [
 
 export default function TravelPage() {
   return (
-    <main id="main" className="page page-narrow">
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">
-            <Plane size={14} aria-hidden="true" />
-            Operations engine · travel timeline
-          </p>
-          <h1>Travel obligations, prepared not chased</h1>
-          <p className="page-sub">
-            When a travel source is connected, Atlas builds booking and boarding
-            timelines from authorized evidence — with check-in and boarding
-            deadlines surfaced before they pass.
-          </p>
-        </div>
+    <main id="main" className="max-w-[720px] mx-auto px-6 py-10 w-full">
+      {/* Page header */}
+      <div className="mb-8">
+        <p className="inline-flex items-center gap-1.5 mb-3 text-[0.72rem] font-extrabold tracking-[0.13em] uppercase text-[var(--color-accent-deep)]">
+          <Plane size={14} aria-hidden="true" />
+          Operations engine · travel timeline
+        </p>
+        <h1 className="text-3xl font-bold tracking-[-0.015em] leading-[1.15] m-0 mb-3 text-[var(--color-ink)]">
+          Travel obligations, prepared not chased
+        </h1>
+        <p className="m-0 text-base text-[var(--color-ink-muted)] leading-relaxed max-w-[56ch]">
+          When a travel source is connected, Atlas builds booking and boarding
+          timelines from authorized evidence — with check-in and boarding
+          deadlines surfaced before they pass.
+        </p>
       </div>
 
-      <div className="stack-md">
-        <div className="notice notice-warn" role="note">
-          <Info size={18} aria-hidden="true" />
+      <div className="flex flex-col gap-4">
+        {/* Notice */}
+        <div
+          role="note"
+          className="flex items-start gap-3 px-4 py-3 rounded-xl border border-[var(--color-alert-soft)] bg-[var(--color-alert-soft)] text-[var(--color-ink)]"
+        >
+          <Info
+            size={18}
+            aria-hidden="true"
+            className="text-[var(--color-alert-deep)] mt-0.5 flex-none"
+          />
           <div>
-            <p>
-              <strong>No travel source is connected yet.</strong>
+            <p className="m-0 font-semibold text-sm">
+              No travel source is connected yet.
             </p>
-            <p className="muted">
+            <p className="m-0 mt-1 text-[0.88rem] text-[var(--color-ink-muted)]">
               This capability activates when a connector is configured and you
-              grant consent on <Link href="/sources">Sources</Link>. Nothing
-              below is your data.
+              grant consent on{" "}
+              <Link
+                href="/sources"
+                className="text-[var(--color-accent-deep)] underline underline-offset-2"
+              >
+                Sources
+              </Link>
+              .
             </p>
           </div>
         </div>
 
-        <section className="card" aria-labelledby="connected-h">
-          <div className="card-head">
-            <h2 id="connected-h">
-              <ShieldCheck size={15} aria-hidden="true" /> What Atlas will do when
-              connected
+        {/* Planned behaviour card */}
+        <section
+          className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl overflow-hidden"
+          aria-labelledby="connected-h"
+        >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-line)]">
+            <h2
+              id="connected-h"
+              className="m-0 text-[0.95rem] font-semibold text-[var(--color-ink)] flex items-center gap-1.5"
+            >
+              <ShieldCheck size={15} aria-hidden="true" />
+              What Atlas will do when connected
             </h2>
-            <span className="badge">Not active</span>
+            <span className="text-[0.72rem] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-[var(--color-line)] text-[var(--color-ink-muted)]">
+              Not active
+            </span>
           </div>
-          <div className="card-pad">
-            <ul className="prose-list">
+          <div className="px-6 py-5">
+            <ul className="m-0 p-0 list-none flex flex-col gap-2.5">
               {PLANNED_BEHAVIOUR.map((item) => (
-                <li key={item}>{item}</li>
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-[0.92rem] text-[var(--color-ink-muted)] leading-relaxed"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] flex-none"
+                  />
+                  {item}
+                </li>
               ))}
             </ul>
           </div>
         </section>
 
-        <section className="card" aria-labelledby="shape-h">
-          <div className="card-head">
-            <h2 id="shape-h">Timeline shape — synthetic illustration</h2>
-            <span className="badge badge-warn">Sample</span>
+        {/* Upcoming detail card */}
+        <section
+          className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl overflow-hidden"
+          aria-labelledby="coming-soon-h"
+        >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-line)]">
+            <h2
+              id="coming-soon-h"
+              className="m-0 text-[0.95rem] font-semibold text-[var(--color-ink)] flex items-center gap-1.5"
+            >
+              <Plane size={15} aria-hidden="true" />
+              Coming soon
+            </h2>
+            <span className="text-[0.72rem] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-[var(--color-alert-soft)] text-[var(--color-alert-deep)]">
+              In progress
+            </span>
           </div>
-          <div className="card-pad stack-md">
-            <p className="sample-row">
-              <Plane size={16} aria-hidden="true" />
-              <span className="sample-title">{SAMPLE.provider}</span>
-              <span className="muted">{SAMPLE.route}</span>
+          <div className="px-6 py-5 flex flex-col gap-3">
+            <p className="m-0 text-[0.92rem] text-[var(--color-ink)] leading-relaxed">
+              The travel timeline is under development. Once a travel source is
+              connected, you will see a live view of your upcoming bookings —
+              flights, trains, hotels, and car rentals — with deadlines surfaced
+              before they matter.
             </p>
-            <div className="timeline-grid">
-              <div className="timeline-cell">
-                <span className="timeline-cell-label">
-                  <Calendar size={13} aria-hidden="true" /> Departs
-                </span>
-                <span className="timeline-cell-value">{SAMPLE.departure}</span>
-              </div>
-              <div className="timeline-cell">
-                <span className="timeline-cell-label">
-                  <Clock size={13} aria-hidden="true" /> Check-in
-                </span>
-                <span className="timeline-cell-value">{SAMPLE.checkIn}</span>
-              </div>
-              <div className="timeline-cell">
-                <span className="timeline-cell-label">
-                  <MapPin size={13} aria-hidden="true" /> Boarding
-                </span>
-                <span className="timeline-cell-value">{SAMPLE.boarding}</span>
-              </div>
-            </div>
-            <p className="sample-source">{SAMPLE.evidence}</p>
+            <p className="m-0 text-[0.88rem] text-[var(--color-ink-muted)] leading-relaxed">
+              Atlas reads only. It never modifies, cancels, or rebooks anything
+              without your explicit approval.
+            </p>
           </div>
         </section>
+
+        {/* CTA */}
+        <div className="flex justify-center pt-2">
+          <Link
+            className="inline-flex items-center gap-2 text-sm font-bold px-6 py-3 rounded-[var(--radius-control)] bg-[var(--color-accent)] text-[var(--color-on-accent)] no-underline hover:bg-[var(--color-accent-deep)] active:scale-95 transition-all duration-150"
+            href="/sources"
+          >
+            Connect a travel source
+          </Link>
+        </div>
       </div>
     </main>
   );
