@@ -11,17 +11,14 @@ export const SESSION_COOKIE = "atlas_session";
 const SESSION_VERSION = "v1";
 
 /**
- * Server-only secret. Set ATLAS_SESSION_SECRET in production. The dev
- * fallback is a fixed, documented constant — adequate for the labelled
- * single-principal dev mode, never for a deployed instance.
+ * Server-only secret. Set ATLAS_SESSION_SECRET in production. Development
+ * uses a fixed documented secret; production fails closed without one.
  */
 export function sessionSecret(): string {
   const explicit = process.env.ATLAS_SESSION_SECRET?.trim();
   if (explicit) return explicit;
   if (process.env.NODE_ENV === "production") {
-    console.warn(
-      "ATLAS_SESSION_SECRET is not set — using the documented dev secret. Sessions are forgeable until this is configured.",
-    );
+    throw new Error("session_secret_not_configured: production requires ATLAS_SESSION_SECRET");
   }
   return "atlas-dev-session-secret-do-not-deploy";
 }

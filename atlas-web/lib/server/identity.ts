@@ -56,11 +56,14 @@ export async function requirePrincipal(): Promise<Principal> {
   if (clerkConfigured()) {
     throw new Error("no_session: authentication required.");
   }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("auth_not_configured: production requires Clerk authentication.");
+  }
   const userId = crypto.randomUUID();
   jar.set(SESSION_COOKIE, await serializeSession(userId, "local"), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV !== "development",
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
   });

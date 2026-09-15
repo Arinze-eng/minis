@@ -1265,6 +1265,9 @@ export function getStore(): { mode: StoreMode; store: PgStore | LocalFileStore }
   if (process.env.DATABASE_URL?.trim()) {
     cached = { mode: "postgres", store: new PgStore() };
   } else {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("database_not_configured: production requires DATABASE_URL");
+    }
     cached = { mode: "local_file", store: new LocalFileStore() };
   }
   return cached;

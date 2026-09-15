@@ -1,21 +1,25 @@
 # Atlas Web (Next.js App Router)
 
+This directory is the sole production WebUI destination. The former Vite/Express runtime is quarantined under `legacy/atlas-runtime/` and is not included in the deployment image.
+
 The Atlas presentation layer. The existing nanobot runtime + `nanobot/atlas/*`
 remain the source of truth for identity, consent, capability policy,
 connectors, deterministic domain logic, and the bounded Strands chain. This
 app never duplicates policy in the browser.
 
-## Commands (bun)
+## Commands (npm)
 
 ```bash
 cd atlas-web
-bun install
-bun run dev        # http://localhost:4300
-bun run build
-bun run start
-bun run typecheck
-bun run test
+npm ci
+npm run dev
+npm run build
+npm run start
+npm run typecheck
+npm run test
 ```
+
+Production requires `DATABASE_URL`, `ATLAS_SESSION_SECRET`, and both Clerk credentials. Without Clerk, the app fails closed rather than minting a local principal; local single-principal mode is development/test only.
 
 ## Routes (Phase 1)
 

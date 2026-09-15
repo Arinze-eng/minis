@@ -20,6 +20,13 @@ import { SESSION_COOKIE, serializeSession, verifySession } from "@/lib/server/se
  * Dynamic imports keep Clerk out of the bundle when unconfigured.
  */
 export default async function middleware(request: NextRequest, event: NextFetchEvent) {
+  // Production must never fall back to a forgeable or synthetic principal.
+  if (
+    process.env.NODE_ENV === "production" &&
+    !(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY)
+  ) {
+    return new NextResponse("Authentication is not configured.", { status: 503 });
+  }
   // --- Clerk path: real auth provider is the sole identity authority --------
   if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY) {
     try {
