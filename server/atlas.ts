@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
-import { atlasChatMessages, atlasLooks, atlasMoneyFindings, atlasPreferences, atlasSignals, atlasSources, atlasTasks, atlasTryOns, atlasWardrobe } from "../drizzle/schema";
+import { atlasChatMessages, atlasLooks, atlasMoneyFindings, atlasPreferences, atlasSignals, atlasSources, atlasTasks, atlasTravelPlans, atlasTryOns, atlasWardrobe } from "../drizzle/schema";
 import { storageGetSignedUrl, storagePut } from "./storage";
 import { generateImage } from "./_core/imageGeneration";
 
@@ -58,7 +58,7 @@ export async function getDashboard(ownerOpenId: string) {
   if (!db) return null;
   try {
     await seedAtlasOwner(ownerOpenId);
-    const [tasks, signals, wardrobe, money, sources, preferences, looks] = await Promise.all([
+    const [tasks, signals, wardrobe, money, sources, preferences, looks, travelPlans] = await Promise.all([
       db.select().from(atlasTasks).where(eq(atlasTasks.ownerOpenId, ownerOpenId)).orderBy(desc(atlasTasks.createdAt)),
       db.select().from(atlasSignals).where(eq(atlasSignals.ownerOpenId, ownerOpenId)).orderBy(desc(atlasSignals.createdAt)),
       db.select().from(atlasWardrobe).where(eq(atlasWardrobe.ownerOpenId, ownerOpenId)).orderBy(desc(atlasWardrobe.createdAt)),
@@ -66,8 +66,9 @@ export async function getDashboard(ownerOpenId: string) {
       db.select().from(atlasSources).where(eq(atlasSources.ownerOpenId, ownerOpenId)).orderBy(atlasSources.name),
       db.select().from(atlasPreferences).where(eq(atlasPreferences.ownerOpenId, ownerOpenId)).limit(1),
       db.select().from(atlasLooks).where(eq(atlasLooks.ownerOpenId, ownerOpenId)).orderBy(desc(atlasLooks.createdAt)),
+      db.select().from(atlasTravelPlans).where(eq(atlasTravelPlans.ownerOpenId, ownerOpenId)).orderBy(desc(atlasTravelPlans.createdAt)),
     ]);
-    return { tasks, signals, wardrobe, money, sources, preferences: preferences[0] ?? null, looks };
+    return { tasks, signals, wardrobe, money, sources, preferences: preferences[0] ?? null, looks, travelPlans };
   } catch (error) {
     console.warn("[Atlas] Dashboard unavailable:", error);
     return null;
@@ -85,6 +86,40 @@ export async function updateSignal(ownerOpenId: string, id: number, state: "acti
   const db = await getDb();
   if (!db) return false;
   const result = await db.update(atlasSignals).set({ state }).where(and(eq(atlasSignals.id, id), eq(atlasSignals.ownerOpenId, ownerOpenId)));
+  return result[0].affectedRows > 0;
+}
+
+export async function reviewMoneyFinding(ownerOpenId: string, id: number, state: "open" | "reviewed" | "dismissed") {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.update(atlasMoneyFindings).set({ state }).where(and(eq(atlasMoneyFindings.id, id), eq(atlasMoneyFindings.ownerOpenId, ownerOpenId)));
+  return result[0].affectedRows > 0;
+}
+
+export async function refreshSourceHealth(ownerOpenId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(atlasSources).where(eq(atlasSources.ownerOpenId, ownerOpenId));
+  const serpReady = Boolean(process.env.ATLAS_SERPAPI_API_KEY || process.env.SERPAPI_API_KEY) && (process.env.ATLAS_ENABLE_SERPAPI === "true" || process.env.ATLAS_ENABLE_SERPAPI === "1");
+  for (const row of rows) {
+    const status = row.provider === "serpapi" ? (serpReady ? "connected" : "safe_mode") : row.status;
+    if (status !== row.status) await db.update(atlasSources).set({ status, detail: status === "connected" ? "Research connector is configured and ready." : "Connector is available in safe fallback mode." }).where(and(eq(atlasSources.id, row.id), eq(atlasSources.ownerOpenId, ownerOpenId)));
+  }
+  return await db.select().from(atlasSources).where(eq(atlasSources.ownerOpenId, ownerOpenId)).orderBy(atlasSources.name);
+}
+
+export async function createTravelPlan(ownerOpenId: string, input: { destination: string; startDate: string; endDate: string; notes?: string }) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(atlasTravelPlans).values({ ownerOpenId, destination: input.destination, startDate: input.startDate, endDate: input.endDate, notes: input.notes ?? null });
+  const rows = await db.select().from(atlasTravelPlans).where(and(eq(atlasTravelPlans.id, Number(result[0].insertId)), eq(atlasTravelPlans.ownerOpenId, ownerOpenId))).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateTravelPlan(ownerOpenId: string, id: number, status: "planned" | "completed") {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.update(atlasTravelPlans).set({ status }).where(and(eq(atlasTravelPlans.id, id), eq(atlasTravelPlans.ownerOpenId, ownerOpenId)));
   return result[0].affectedRows > 0;
 }
 

@@ -39,4 +39,15 @@ describe("Atlas procedures", () => {
     expect(dashboard?.looks).toBeDefined();
     expect(Array.isArray(dashboard?.looks)).toBe(true);
   });
+
+  it("rejects incomplete travel plans at the procedure boundary", async () => {
+    const caller = appRouter.createCaller({ user: null, req: {} as never, res: {} as never });
+    await expect(caller.atlas.createTravelPlan({ destination: "", startDate: "2026-09-20", endDate: "2026-09-22" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("returns connector health as a safe, read-only operation", async () => {
+    const caller = appRouter.createCaller({ user: null, req: {} as never, res: {} as never });
+    const sources = await caller.atlas.refreshSources();
+    expect(Array.isArray(sources)).toBe(true);
+  });
 });

@@ -136,3 +136,14 @@ export const atlasLooks = mysqlTable("atlas_looks", {
   resultImageRef: varchar("resultImageRef", { length: 512 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ ownerIndex: index("atlas_looks_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasTravelPlans = mysqlTable("atlas_travel_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  destination: varchar("destination", { length: 160 }).notNull(),
+  startDate: varchar("startDate", { length: 32 }).notNull(),
+  endDate: varchar("endDate", { length: 32 }).notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["planned", "completed"]).notNull().default("planned"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_travel_owner_idx").on(table.ownerOpenId) }));

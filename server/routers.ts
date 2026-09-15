@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { completeTask, createVirtualTryOn, getChatHistory, getDashboard, ownerId, savePreferences, searchResearch, sendChat, updateSignal, uploadAtlasImage } from "./atlas";
+import { completeTask, createTravelPlan, createVirtualTryOn, getChatHistory, getDashboard, ownerId, refreshSourceHealth, reviewMoneyFinding, savePreferences, searchResearch, sendChat, updateSignal, updateTravelPlan, uploadAtlasImage } from "./atlas";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -34,6 +34,17 @@ export const appRouter = router({
     signalStatus: publicProcedure
       .input(z.object({ id: z.number().int().positive(), state: z.enum(["active", "dismissed", "completed"]) }))
       .mutation(({ ctx, input }) => updateSignal(ownerId(ctx.user?.openId), input.id, input.state)),
+    moneyStatus: publicProcedure
+      .input(z.object({ id: z.number().int().positive(), state: z.enum(["open", "reviewed", "dismissed"]) }))
+      .mutation(({ ctx, input }) => reviewMoneyFinding(ownerId(ctx.user?.openId), input.id, input.state)),
+    refreshSources: publicProcedure
+      .mutation(({ ctx }) => refreshSourceHealth(ownerId(ctx.user?.openId))),
+    createTravelPlan: publicProcedure
+      .input(z.object({ destination: z.string().trim().min(2).max(160), startDate: z.string().min(4).max(32), endDate: z.string().min(4).max(32), notes: z.string().max(1000).optional() }))
+      .mutation(({ ctx, input }) => createTravelPlan(ownerId(ctx.user?.openId), input)),
+    travelStatus: publicProcedure
+      .input(z.object({ id: z.number().int().positive(), status: z.enum(["planned", "completed"]) }))
+      .mutation(({ ctx, input }) => updateTravelPlan(ownerId(ctx.user?.openId), input.id, input.status)),
     preferences: publicProcedure
       .input(z.object({
         quietHoursEnabled: z.boolean(),
