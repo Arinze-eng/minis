@@ -1,0 +1,50 @@
+.auth-page {
+  min-height: 100svh;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: clamp(28px, 7vw, 72px) var(--space-6) 56px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  align-content: center;
+  align-items: center;
+  gap: clamp(36px, 8vw, 112px);
+  position: relative;
+}
+.auth-page::before {
+  content: "";
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  top: 8%;
+  left: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-accent-soft), transparent 68%);
+  pointer-events: none;
+}
+.auth-brand {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.auth-copy { position: relative; }
+.auth-copy h1 { font-size: clamp(2.4rem, 5vw, 4.5rem); max-width: 9ch; }
+.auth-copy > p:last-child { max-width: 38ch; color: var(--color-ink-muted); font-size: 1.05rem; margin-top: var(--space-5); }
+.auth-kicker { color: var(--color-accent-deep); font-size: .76rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 var(--space-4); }
+.auth-card { position: relative; padding: clamp(18px, 3vw, 28px); border: 1px solid var(--color-line-strong); border-radius: 24px; background: color-mix(in srgb, var(--color-surface) 92%, transparent); box-shadow: var(--shadow-pop); backdrop-filter: blur(18px); }
+.auth-card > * { width: 100%; }
+.auth-back { grid-column: 1 / -1; color: var(--color-ink-muted); font-size: .9rem; text-decoration: none; }
+.auth-back:hover { color: var(--color-accent-deep); }
+.auth-page > h1 { font-size: 2rem; }
+.auth-unconfigured { grid-column: 1 / -1; max-width: 56ch; padding: var(--space-5); border: 1px solid color-mix(in srgb, var(--color-alert) 36%, transparent); border-radius: var(--radius-card); background: var(--color-alert-soft); }
+@media (max-width: 720px) {
+  .auth-page { grid-template-columns: 1fr; align-content: start; gap: var(--space-6); padding-top: 32px; }
+  .auth-brand, .auth-back { grid-column: auto; }
+  .auth-copy h1 { max-width: 12ch; font-size: clamp(2.2rem, 12vw, 3.4rem); }
+  .auth-card { order: 3; }
+  .auth-back { order: 4; }
+}

@@ -5,6 +5,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { ThemeScript } from "@/components/ThemeScript";
 import { clerkProviderEnabled } from "@/lib/server/clerkIdentity";
 import "./globals.css";
+import "./auth.css";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],

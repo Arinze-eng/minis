@@ -96,9 +96,9 @@ export default function LandingPage() {
           subscription leaks before they renew. Both ask before anything moves.
         </p>
         <div className="hero-cta">
-          <Link className="btn-primary" href="/inbox">
-            Enter Atlas — no account needed
-          </Link>
+          <Link className="btn-primary" href="/sign-in">
+            Sign in to Atlas
+            </Link>
           <Link className="btn-ghost" href="/sources">
             See what data touches
           </Link>

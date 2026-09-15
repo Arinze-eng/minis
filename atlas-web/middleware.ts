@@ -56,9 +56,17 @@ export default async function middleware(request: NextRequest, event: NextFetchE
       return clerkMiddleware(
         async (auth0, req, evt) => {
           if (isProtected(req)) await auth0.protect();
-          return sessionBootstrap(req, evt);
+          // Reuse the userId resolved by this Clerk middleware invocation.
+          // Calling auth() again while constructing a second NextResponse can
+          // lose Clerk's handshake headers and cause repeated re-auth redirects.
+          const clerkAuth = await auth0();
+          return sessionBootstrap(req, evt, clerkAuth.userId ?? null);
         },
-        authorizedParties?.length ? { authorizedParties } : undefined,
+        {
+          authorizedParties: authorizedParties?.length ? authorizedParties : undefined,
+          signInUrl: "/sign-in",
+          signUpUrl: "/sign-up",
+        },
       )(request, event);
     } catch (e) {
       // Never let auth-provider failures produce a 500 — fail honestly.
@@ -72,14 +80,16 @@ export default async function middleware(request: NextRequest, event: NextFetchE
 }
 
 /** Mint/verify the Atlas session cookie bound to the verified principal. */
-async function sessionBootstrap(request: NextRequest, _event?: NextFetchEvent) {
+async function sessionBootstrap(
+  request: NextRequest,
+  _event?: NextFetchEvent,
+  clerkUserId: string | null = null,
+) {
   const existing = request.cookies.get(SESSION_COOKIE)?.value;
   const verified = existing ? await verifySession(existing) : null;
 
   if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY) {
     // Clerk configured: the cookie must mirror the Clerk-verified identity.
-    const { clerkUserIdFromAuth } = await import("@/lib/server/clerkIdentity");
-    const clerkUserId = await clerkUserIdFromAuth();
     if (clerkUserId) {
       if (verified?.source === "clerk" && verified.userId === clerkUserId) {
         return NextResponse.next();
