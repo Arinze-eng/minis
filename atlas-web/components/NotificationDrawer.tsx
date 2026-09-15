@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { X } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import {
   filterNotifications,
   NOTIFICATION_TABS,
@@ -26,11 +26,15 @@ export function NotificationDrawer({
   notifications,
   onClose,
   onDismiss,
+  refreshing,
+  onRefresh,
 }: {
   open: boolean;
   notifications: AgentNotification[];
   onClose: () => void;
   onDismiss: (id: string) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   const [tab, setTab] = useState<TabId>("all");
   const panelRef = useRef<HTMLElement>(null);
@@ -88,6 +92,8 @@ export function NotificationDrawer({
           >
             <header className="drawer-head">
               <h2>Notifications</h2>
+              <div className="drawer-head-actions">
+              {onRefresh ? <button type="button" className="drawer-refresh" onClick={onRefresh} disabled={refreshing} aria-label="Refresh notifications" title="Refresh notifications"><RefreshCw size={16} className={refreshing ? "spin" : undefined} /></button> : null}
               <button
                 type="button"
                 className="drawer-close"
@@ -96,6 +102,7 @@ export function NotificationDrawer({
               >
                 <X size={18} aria-hidden="true" />
               </button>
+              </div>
             </header>
 
             <div className="drawer-tabs" role="tablist" aria-label="Notification filters">
@@ -138,7 +145,7 @@ export function NotificationDrawer({
                       <Link
                         className="btn-primary notif-action"
                         href={n.action.href}
-                        onClick={onClose}
+                        onClick={() => { if (!n.read) onDismiss(n.id); onClose(); }}
                       >
                         {n.action.label}
                       </Link>

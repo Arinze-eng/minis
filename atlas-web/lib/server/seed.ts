@@ -16,9 +16,10 @@ export async function syncSignalsAndNotifications(principalId: string): Promise<
     store.listFindings(principalId),
   ]);
 
-  // Seed synthetic findings once (labelled demo merchants) so derivation has
-  // both domains on first run. No mailbox or bank is ever contacted.
-  if (findings.length === 0) {
+  // Synthetic fixtures are opt-in for local demos only. Production
+  // notifications must come from actual connected sources or user data.
+  const allowDemoData = process.env.NODE_ENV !== "production" && process.env.ATLAS_ALLOW_DEMO_DATA === "true";
+  if (allowDemoData && findings.length === 0) {
     const now = new Date();
     const inDays = (d: number) => new Date(now.getTime() + d * 86_400_000).toISOString();
     await store.upsertFinding(principalId, {

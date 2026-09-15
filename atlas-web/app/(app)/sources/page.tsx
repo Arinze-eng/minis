@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Radio, Mail, CheckSquare, DollarSign } from "lucide-react";
+import { Radio, Mail, CheckSquare, DollarSign, Plane, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { principalFromCookies } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
@@ -87,6 +87,17 @@ export default async function SourcesPage() {
           </div>
         </div>
 
+        {/* Google Flights handoff — Google does not expose a supported public
+            Flights data API, so this opens the real Google Flights surface. */}
+        <div role="listitem" className="flex flex-col gap-3 bg-[var(--color-surface)] border border-dashed border-[var(--color-line)] rounded-2xl p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 shrink-0 rounded-[10px] flex items-center justify-center bg-sky-500/10 text-sky-600" aria-hidden="true"><Plane size={20} strokeWidth={1.8} /></div>
+            <div className="flex flex-col gap-0.5 min-w-0"><span className="font-semibold text-[0.97rem] leading-tight text-[var(--color-ink)]">Google Flights</span><span className="inline-flex items-center text-[0.73rem] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full w-fit border border-[var(--color-line)] text-[var(--color-ink-muted)]">Open search</span></div>
+          </div>
+          <p className="text-[0.87rem] text-[var(--color-ink-muted)] leading-relaxed m-0">Search live fares on Google Flights. Atlas does not scrape or fabricate flight data; use this handoff until an approved travel data connector is configured.</p>
+          <a href="https://www.google.com/travel/flights" target="_blank" rel="noreferrer" className="inline-flex w-fit items-center justify-center gap-2 text-[0.87rem] font-semibold px-4 py-2 rounded-lg border border-[var(--color-line-strong)] bg-[var(--color-surface)] text-[var(--color-ink-2)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] no-underline transition-colors">Open Google Flights <ExternalLink size={14} /></a>
+        </div>
+
         {/* Google Tasks — coming soon */}
         <div
           role="listitem"
@@ -168,7 +179,7 @@ export default async function SourcesPage() {
           <ul className="mt-3 pl-6 grid gap-2 text-[0.92rem] text-[var(--color-ink-muted)] list-disc">
             <li>
               Scope:{" "}
-              <code className="text-[0.84rem] bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] rounded px-1.5 py-px">
+              <code className="source-code text-[0.84rem] bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] rounded px-1.5 py-px">
                 https://www.googleapis.com/auth/gmail.readonly
               </code>{" "}
               — read-only. Never send, delete, archive, or change labels.

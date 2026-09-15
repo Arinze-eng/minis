@@ -1,0 +1,26 @@
+/* Cross-surface fixes for live notifications, sources, themes, and PWA chrome. */
+.theme-toggle { display:grid; place-items:center; width:40px; height:40px; flex:none; border:1px solid var(--color-line-strong); border-radius:13px; background:var(--color-surface); color:var(--color-ink-2); box-shadow:0 4px 14px rgba(31,52,88,.07); transition:background .18s,border-color .18s,color .18s,transform .18s; }
+.theme-toggle:hover { border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent-deep); transform:translateY(-1px); }
+.drawer-root { position:fixed; inset:0; z-index:90; pointer-events:none; }
+.drawer-overlay { position:absolute; inset:0; width:100%; height:100%; border:0; background:rgba(8,18,40,.42); backdrop-filter:blur(4px); pointer-events:auto; }
+.drawer-panel { position:absolute; inset:12px 12px 12px auto; display:flex; width:min(460px,calc(100vw - 24px)); flex-direction:column; overflow:hidden; border:1px solid var(--color-line-strong); border-radius:28px; background:color-mix(in srgb,var(--color-surface-solid) 92%,transparent); color:var(--color-ink); box-shadow:var(--shadow-pop); backdrop-filter:blur(28px); pointer-events:auto; }
+.drawer-head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 22px 16px; border-bottom:1px solid var(--color-line); }
+.drawer-head h2 { font-size:1.25rem; } .drawer-head-actions { display:flex; align-items:center; gap:8px; }
+.drawer-close,.drawer-refresh { display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--color-line); border-radius:12px; background:var(--color-surface); color:var(--color-ink-muted); }
+.drawer-close:hover,.drawer-refresh:hover { border-color:var(--color-accent); color:var(--color-accent-deep); background:var(--color-accent-soft); }
+.drawer-refresh:disabled { opacity:.55; cursor:wait; }
+.drawer-tabs { display:flex; gap:6px; overflow-x:auto; padding:14px 22px 12px; border-bottom:1px solid var(--color-line); scrollbar-width:none; }
+.drawer-tab { flex:none; border:1px solid var(--color-line); border-radius:999px; background:var(--color-surface); color:var(--color-ink-muted); padding:7px 12px; font-size:.74rem; font-weight:800; }
+.drawer-tab-active { border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent-deep); }
+.drawer-list { min-height:0; flex:1; overflow-y:auto; display:grid; align-content:start; gap:12px; padding:16px 22px 22px; }
+.drawer-empty { margin:auto; color:var(--color-ink-muted); font-size:.9rem; }
+.notif-card { border:1px solid var(--color-line); border-left:3px solid var(--color-accent); border-radius:18px; background:var(--color-surface); padding:16px; box-shadow:var(--shadow-card); }
+.notif-card.urgency-urgent { border-left-color:var(--color-danger); } .notif-card.urgency-review { border-left-color:var(--color-alert); } .notif-card.notif-read { opacity:.72; }
+.notif-head { display:flex; justify-content:space-between; gap:12px; color:var(--color-ink-muted); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+.notif-card h3 { margin:9px 0 5px; font-size:1rem; letter-spacing:-.015em; } .notif-card p { margin:0; color:var(--color-ink-muted); font-size:.84rem; line-height:1.6; }
+.notif-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; } .notif-action { min-height:38px; padding:8px 12px; font-size:.76rem; }
+.drawer-footnote { margin:0; padding:14px 22px 18px; border-top:1px solid var(--color-line); color:var(--color-ink-muted); font-size:.72rem; line-height:1.5; }
+.source-code { display:inline-block; max-width:100%; overflow-wrap:anywhere; word-break:break-word; white-space:normal; }
+code { overflow-wrap:anywhere; word-break:break-word; white-space:normal; }
+@media (max-width:640px) { .drawer-panel { inset:8px 8px 82px; width:auto; border-radius:24px; } .drawer-head,.drawer-tabs,.drawer-list { padding-left:16px; padding-right:16px; } .drawer-footnote { padding-left:16px; padding-right:16px; } }
+@media (prefers-color-scheme:dark) { .theme-toggle { box-shadow:0 4px 18px rgba(0,0,0,.26); } }

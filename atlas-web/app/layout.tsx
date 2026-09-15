@@ -11,6 +11,7 @@ import {
   clerkSignUpUrl,
 } from "@/lib/server/clerkIdentity";
 import "./globals.css";
+import "./ui-fixes.css";
 import "./auth.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -38,12 +39,13 @@ export const metadata: Metadata = {
     title: "Atlas",
     statusBarStyle: "default",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f9f9fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#141311" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f6fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c1220" },
   ],
 };
 
