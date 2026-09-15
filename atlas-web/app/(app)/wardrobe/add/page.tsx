@@ -49,12 +49,14 @@ export default async function AddGarmentPage({
   }
 
   return (
-    <main id="main" className="add-page">
+    <main id="main" className="page page-narrow">
       <p className="crumb">
         <Link href="/wardrobe">← Wardrobe</Link>
       </p>
-      <h1>Add a garment</h1>
-      <p className="add-sub">
+      <div className="page-head">
+        <h1>Add a garment</h1>
+      </div>
+      <p className="page-sub add-sub">
         One piece at a time. Your photo is stored privately, access is
         consent-gated, and you can delete it at any time.
       </p>

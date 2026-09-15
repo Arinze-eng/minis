@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Radio } from "lucide-react";
 import { principalFromCookies, principalSummary } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
 import { GmailConnection } from "./GmailConnection";
@@ -23,12 +24,20 @@ export default async function SourcesPage() {
       : "Local file store — dev mode, data stays on this machine";
 
   return (
-    <main id="main" className="sources-page">
-      <h1>Sources</h1>
-      <p className="sources-sub">
-        What Atlas can access, why, and how fresh it is. Access is consented,
-        read-only, and revocable here.
-      </p>
+    <main id="main" className="page page-narrow">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">
+            <Radio size={14} aria-hidden="true" />
+            Sources · consented and revocable
+          </p>
+          <h1>Sources</h1>
+          <p className="page-sub">
+            What Atlas can access, why, and how fresh it is. Access is
+            consented, read-only, and revocable here.
+          </p>
+        </div>
+      </div>
       <p className="demo-note" role="note">
         Identity: {summary.label} · Store: {storeLabel}
         {scanJob ? ` · Last Gmail scan: ${scanJob.status}` : " · No Gmail scan yet"}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Shirt } from "lucide-react";
 import { principalFromCookies } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
 import { syncSignalsAndNotifications } from "@/lib/server/seed";
@@ -102,19 +103,29 @@ export default async function WardrobePage({
   const occasions = availableOccasions(garments);
 
   return (
-    <main id="main" className="wardrobe-page">
+    <main id="main" className="page">
       {mode === "local_file" ? (
         <p className="demo-note" role="note">
           Local store — records stay on this device under your session.
           Set DATABASE_URL for the shared Postgres store.
         </p>
       ) : null}
-      <header className="wardrobe-head">
-        <h1>Wardrobe</h1>
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">
+            <Shirt size={14} aria-hidden="true" />
+            Wardrobe · cost per wear
+          </p>
+          <h1>Wardrobe</h1>
+          <p className="page-sub">
+            Every piece carries the price and wears you entered — Atlas only
+            composes outfits from garments you confirmed.
+          </p>
+        </div>
         <Link className="btn-primary" href="/wardrobe/add">
           Add garment
         </Link>
-      </header>
+      </div>
 
       {pending.length > 0 ? (
         <section className="confirm-queue" aria-labelledby="queue-h">

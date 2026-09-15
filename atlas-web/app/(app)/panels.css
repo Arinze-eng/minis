@@ -1,0 +1,85 @@
+/* ============================================================================
+   Shared panel details for the operations surfaces (Tasks, Travel).
+
+   Layout and colour come from the primitives in globals.css; these classes only
+   describe the shape of a guarantee list and a synthetic timeline sample.
+   ========================================================================== */
+
+.guarantee-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.guarantee-list li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.guarantee-list li svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--color-accent);
+}
+
+.sample-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sample-source {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+}
+
+.sample-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+}
+
+.sample-row svg {
+  color: var(--color-accent);
+}
+
+.timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.timeline-cell {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  padding: var(--space-3);
+}
+
+.timeline-cell-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.timeline-cell-value {
+  margin-top: var(--space-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.footnote svg {
+  vertical-align: -2px;
+  margin-right: 4px;
+}

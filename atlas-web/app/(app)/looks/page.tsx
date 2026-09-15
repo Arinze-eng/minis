@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Shirt } from "lucide-react";
 import { demoWardrobe } from "@/lib/demo/wardrobe";
 import { costPerWear, type Garment } from "@/lib/wardrobe";
 import { formatMoney } from "@/lib/format";
@@ -53,12 +54,21 @@ export default async function LooksPage({
   const totalCPWBasis = picks.reduce((sum, g) => sum + (g.price ?? 0), 0);
 
   return (
-    <main id="main" className="looks-page">
-      <h1>Looks</h1>
-      <p className="looks-sub">
-        Outfits are composed only from garments you confirmed. Atlas can rank
-        and explain candidates — it never invents pieces you do not own.
-      </p>
+    <main id="main" className="page">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">
+            <Shirt size={14} aria-hidden="true" />
+            Looks · composed from confirmed pieces
+          </p>
+          <h1>Looks</h1>
+          <p className="page-sub">
+            Outfits are composed only from garments you confirmed. Atlas can
+            rank and explain candidates — it never invents pieces you do not
+            own.
+          </p>
+        </div>
+      </div>
       <p className="demo-note" role="note">
         {snapshot.demoLabel}
       </p>

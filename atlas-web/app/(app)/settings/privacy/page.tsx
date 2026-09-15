@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShieldCheck } from "lucide-react";
 import { PrivacyControls } from "./PrivacyControls";
 import "./privacy.css";
 
@@ -8,13 +9,21 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main id="main" className="privacy-page">
-      <h1>Privacy &amp; data</h1>
-      <p className="privacy-sub">
-        Every control here is yours. Each action is enforced server-side,
-        scoped to your account, logged in the audit trail, and confirmed
-        before it runs.
-      </p>
+    <main id="main" className="page page-narrow">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">
+            <ShieldCheck size={14} aria-hidden="true" />
+            Settings · privacy &amp; data
+          </p>
+          <h1>Privacy &amp; data</h1>
+          <p className="page-sub">
+            Every control here is yours. Each action is enforced server-side,
+            scoped to your account, logged in the audit trail, and confirmed
+            before it runs.
+          </p>
+        </div>
+      </div>
 
       <PrivacyControls />
 

@@ -1,29 +1,4 @@
-/* Looks / outfit board. */
-
-.looks-page {
-  max-width: 780px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-6) var(--space-12);
-}
-
-.looks-page h1 {
-  font-size: 1.8rem;
-}
-
-.looks-sub {
-  color: var(--color-ink-muted);
-  margin: var(--space-2) 0 var(--space-4);
-  max-width: 60ch;
-}
-
-.demo-note {
-  margin: 0 0 var(--space-6);
-  padding: var(--space-2) var(--space-3);
-  font-size: 0.85rem;
-  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
-  border-radius: var(--radius-control);
-}
+/* Looks / outfit board. Primitives come from globals.css. */
 
 .vibe-row {
   display: flex;
@@ -32,26 +7,11 @@
   margin-bottom: var(--space-6);
 }
 
-.pill {
-  font-size: 0.88rem;
-  padding: 7px 15px;
-  border-radius: 999px;
-  border: 1px solid var(--color-line);
-  color: var(--color-ink);
-  text-decoration: none;
-  background: var(--color-surface-raised);
-}
-
-.pill-active {
-  background: var(--color-chrome);
-  color: var(--color-on-good);
-  border-color: var(--color-good);
-}
-
 .outfit-board {
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-feature);
+  box-shadow: var(--shadow-card);
   padding: var(--space-6);
 }
 
@@ -103,19 +63,6 @@
   font-size: 0.88rem;
   color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--space-8);
-}
-
-.empty-state h2 {
-  font-size: 1.05rem;
-}
-
-.empty-state p {
-  color: var(--color-ink-muted);
 }
 
 .looks-footnote {

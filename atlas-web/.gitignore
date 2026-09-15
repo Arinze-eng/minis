@@ -6,4 +6,5 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+.atlas-local-store/
 atlas-web/.atlas-dev-session-secret

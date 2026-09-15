@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { RouteMark } from "@/components/RouteMark";
-import { CheckSquare, Bell, Moon, ShieldCheck, Info, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { Bell, CheckSquare, ExternalLink, Info, Moon, ShieldCheck } from "lucide-react";
+import "../panels.css";
 
 export const metadata: Metadata = {
   title: "Tasks",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
  * Task reminders (Operations Engine). This release ships the reminder
  * mechanism behind the existing notification infrastructure (quiet hours,
  * dedup, snooze) but no task-source connector is configured, so this surface
- * states scope honestly and shows a labelled synthetic illustration.
+ * states its scope honestly and shows a labelled synthetic illustration.
  */
 
 const SAMPLE = {
@@ -19,66 +20,95 @@ const SAMPLE = {
   source: "Synthetic illustration — not a real reminder in your account.",
 };
 
+const GUARANTEES = [
+  {
+    icon: Bell,
+    text: "Delivered through your notification centre with deduplication keys.",
+  },
+  {
+    icon: Moon,
+    text: "Quiet hours respected — nothing pings you at night.",
+  },
+  {
+    icon: CheckSquare,
+    text: "Snooze, dismiss, and correct — every state change is auditable.",
+  },
+];
+
 export default function TasksPage() {
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--atlas-lilac)]">
-          <RouteMark className="w-4 h-4" />
-          <span>Operations Engine · Task Reminders</span>
-        </div>
-        <h1 className="text-3xl font-display font-semibold tracking-tight text-[var(--atlas-ink)]">
-          Reminders that respect your attention
-        </h1>
-        <p className="text-sm text-[var(--atlas-ink)]/70 max-w-xl">
-          Obligations Atlas notices — renewals, deadlines, follow-ups — become
-          quiet, deduplicated reminders you can snooze or dismiss.
-        </p>
-      </div>
-
-      <div className="border border-[var(--atlas-amber)]/40 bg-[var(--atlas-amber)]/10 rounded-xl p-5 flex gap-3" role="note">
-        <Info className="w-5 h-5 text-[var(--atlas-amber)] shrink-0" />
+    <main id="main" className="page page-narrow">
+      <div className="page-head">
         <div>
-          <p className="text-sm font-medium text-[var(--atlas-ink)]">No task source is connected yet.</p>
-          <p className="text-xs text-[var(--atlas-ink)]/70 mt-1">
-            Renewal-derived reminders from Money Guard already appear in your{" "}
-            <a href="/inbox" className="underline hover:text-[var(--atlas-ink)]">Inbox</a>. A
-            dedicated task connector (e.g. read-only Google Tasks) activates
-            here once configured and consented.
+          <p className="eyebrow">
+            <CheckSquare size={14} aria-hidden="true" />
+            Operations engine · task reminders
+          </p>
+          <h1>Reminders that respect your attention</h1>
+          <p className="page-sub">
+            Obligations Atlas notices — renewals, deadlines, follow-ups — become
+            quiet, deduplicated reminders you can snooze or dismiss.
           </p>
         </div>
       </div>
 
-      <div className="bg-[var(--atlas-paper)] border border-[var(--atlas-line)] rounded-xl p-6 space-y-4">
-        <div className="flex items-center gap-2 text-xs font-mono uppercase text-[var(--atlas-ink)]/60">
-          <ShieldCheck className="w-4 h-4 text-[var(--atlas-lime)]" />
-          Reminder guarantees (already active for Inbox signals)
+      <div className="stack-md">
+        <div className="notice notice-warn" role="note">
+          <Info size={18} aria-hidden="true" />
+          <div>
+            <p>
+              <strong>No task source is connected yet.</strong>
+            </p>
+            <p className="muted">
+              Renewal-derived reminders from the money engine already appear in
+              your <Link href="/inbox">Inbox</Link>. A dedicated task connector
+              (for example read-only Google Tasks) activates here once configured
+              and consented.
+            </p>
+          </div>
         </div>
-        <ul className="text-sm text-[var(--atlas-ink)]/80 space-y-2">
-          <li className="flex gap-2"><Bell className="w-4 h-4 text-[var(--atlas-lilac)] shrink-0 mt-0.5" /> Delivered through your notification center with deduplication keys.</li>
-          <li className="flex gap-2"><Moon className="w-4 h-4 text-[var(--atlas-lilac)] shrink-0 mt-0.5" /> Quiet hours respected — nothing pings you at night.</li>
-          <li className="flex gap-2"><CheckSquare className="w-4 h-4 text-[var(--atlas-lilac)] shrink-0 mt-0.5" /> Snooze, dismiss, and correct — every state change is auditable.</li>
-        </ul>
-      </div>
 
-      <div className="bg-[var(--atlas-paper)] border border-[var(--atlas-line)] rounded-xl p-6 space-y-3" aria-hidden="true">
-        <div className="flex items-center justify-between border-b border-[var(--atlas-line)] pb-3">
-          <h2 className="text-sm font-display font-semibold text-[var(--atlas-ink)]">
-            Reminder shape — synthetic illustration
-          </h2>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[var(--atlas-amber)]/15 text-[var(--atlas-ink)] font-semibold">
-            sample
-          </span>
-        </div>
-        <p className="text-sm text-[var(--atlas-ink)]">{SAMPLE.title}</p>
-        <p className="text-xs font-mono text-[var(--atlas-ink)]/60 tabular-nums">due {SAMPLE.due}</p>
-        <p className="text-[11px] font-mono text-[var(--atlas-ink)]/50">{SAMPLE.source}</p>
-      </div>
+        <section className="card" aria-labelledby="guarantees-h">
+          <div className="card-head">
+            <h2 id="guarantees-h">
+              <ShieldCheck size={15} aria-hidden="true" /> Reminder guarantees
+            </h2>
+            <span className="badge badge-good">Active</span>
+          </div>
+          <div className="card-pad">
+            <ul className="guarantee-list">
+              {GUARANTEES.map(({ icon: Icon, text }) => (
+                <li key={text}>
+                  <Icon size={15} aria-hidden="true" />
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="card-foot">
+            The same mechanism already powers Inbox signals: deduplicated
+            delivery, quiet hours, and an auditable state change for every
+            action.
+          </p>
+        </section>
 
-      <p className="text-xs text-[var(--atlas-ink)]/60 flex items-center gap-1.5">
-        <ExternalLink className="w-3.5 h-3.5" />
-        Task sources will be read-only; Atlas never completes or edits tasks on your behalf.
-      </p>
-    </div>
+        <section className="card" aria-labelledby="shape-h">
+          <div className="card-head">
+            <h2 id="shape-h">Reminder shape — synthetic illustration</h2>
+            <span className="badge badge-warn">Sample</span>
+          </div>
+          <div className="card-pad stack-sm">
+            <p className="sample-title">{SAMPLE.title}</p>
+            <p className="tabular muted">due {SAMPLE.due}</p>
+            <p className="sample-source">{SAMPLE.source}</p>
+          </div>
+        </section>
+
+        <p className="footnote">
+          <ExternalLink size={13} aria-hidden="true" /> Task sources will be
+          read-only; Atlas never completes or edits tasks on your behalf.
+        </p>
+      </div>
+    </main>
   );
 }

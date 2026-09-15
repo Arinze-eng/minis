@@ -3,7 +3,13 @@ import { DM_Sans, Space_Grotesk } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { ThemeScript } from "@/components/ThemeScript";
-import { clerkProviderEnabled } from "@/lib/server/clerkIdentity";
+import {
+  clerkConfigured,
+  clerkSignInFallbackRedirectUrl,
+  clerkSignInUrl,
+  clerkSignUpFallbackRedirectUrl,
+  clerkSignUpUrl,
+} from "@/lib/server/clerkIdentity";
 import "./globals.css";
 import "./auth.css";
 
@@ -39,12 +45,15 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // ClerkProvider mounts only when the auth provider is configured, and sits
-  // INSIDE <body> per the Clerk Next.js quickstart. Unconfigured deployments
-  // run in the labelled local mode and surfaces say so honestly — nothing
-  // pretends a signed-in user exists.
-  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
-  const withClerk = clerkProviderEnabled() && Boolean(clerkKey);
+  // <ClerkProvider> mounts only when the auth provider is configured, and sits
+  // INSIDE <body> (required in Clerk Core 3). Unconfigured deployments run in
+  // the labelled local mode and surfaces say so honestly — nothing pretends a
+  // signed-in user exists.
+  //
+  // Redirect behaviour follows the documented props/env vars: a signed-in user
+  // lands on the Inbox unless Clerk's own `redirect_url` already aimed them at
+  // a specific page, and signing out returns to the landing page.
+  const withClerk = clerkConfigured();
 
   return (
     <html
@@ -56,7 +65,19 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body>
-        {withClerk ? <ClerkProvider>{children}</ClerkProvider> : children}
+        {withClerk ? (
+          <ClerkProvider
+            signInUrl={clerkSignInUrl()}
+            signUpUrl={clerkSignUpUrl()}
+            signInFallbackRedirectUrl={clerkSignInFallbackRedirectUrl()}
+            signUpFallbackRedirectUrl={clerkSignUpFallbackRedirectUrl()}
+            afterSignOutUrl="/"
+          >
+            {children}
+          </ClerkProvider>
+        ) : (
+          children
+        )}
         <ServiceWorkerRegistration />
       </body>
     </html>

@@ -122,7 +122,7 @@ export function FindingCard({ finding }: { finding: SubscriptionFinding }) {
         >
           Ignore
         </button>
-        <a className="btn-secondary finding-cancel-link" href="#cancel-guide">
+        <a className="btn-secondary" href="#cancel-guide">
           Manual cancel guide
         </a>
       </div>

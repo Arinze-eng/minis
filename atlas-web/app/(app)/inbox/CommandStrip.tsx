@@ -71,34 +71,51 @@ export function CommandStrip() {
 
   return (
     <section className="command-strip" aria-label="Overview">
-      <div className="strip-metrics">
-        <div className="strip-metric">
-          <span className="strip-label">Annualized subscription cost</span>
-          <span className="strip-value">
+      <div className="stat-grid strip-metrics">
+        <article className="stat">
+          <span className="stat-top">
+            <span className="stat-label">
+              <span className="stat-dot stat-dot-alert" aria-hidden="true" />
+              Annualized subscription cost
+            </span>
+          </span>
+          <span className="stat-value">
             {formatMoney(data.annualizedDrain?.totalAnnualized ?? 0, data.annualizedDrain?.currency ?? "USD")}
           </span>
-          <span className="strip-note">
+          <span className="stat-note">
             {data.annualizedDrain?.subscriptionCount} findings with known cadence · cadence assumption shown per finding
           </span>
-        </div>
-        <div className="strip-metric">
-          <span className="strip-label">Average cost per wear</span>
-          <span className="strip-value">
+        </article>
+        <article className="stat">
+          <span className="stat-top">
+            <span className="stat-label">
+              <span className="stat-dot stat-dot-good" aria-hidden="true" />
+              Average cost per wear
+            </span>
+          </span>
+          <span className="stat-value">
             {data.averageCPW
               ? `${formatMoney(data.averageCPW.value, data.averageCPW.currency)}`
               : "—"}
           </span>
-          <span className="strip-note">
+          <span className="stat-note">
             across {data.averageCPW?.garmentCount ?? 0} priced garments with confirmed wears
           </span>
-        </div>
-        <div className="strip-metric">
-          <span className="strip-label">Owned wardrobe value</span>
-          <span className="strip-value">
+        </article>
+        <article className="stat">
+          <span className="stat-top">
+            <span className="stat-label">
+              <span className="stat-dot stat-dot-accent" aria-hidden="true" />
+              Owned wardrobe value
+            </span>
+          </span>
+          <span className="stat-value">
             {formatMoney(data.wardrobeValue?.value ?? 0, data.wardrobeValue?.currency ?? "USD")}
           </span>
-          <span className="strip-note">{data.wardrobeValue?.itemCount} garments · prices you entered</span>
-        </div>
+          <span className="stat-note">
+            {data.wardrobeValue?.itemCount} garments · prices you entered
+          </span>
+        </article>
       </div>
 
       {urgent.length > 0 ? (

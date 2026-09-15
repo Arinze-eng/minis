@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { principalFromCookies } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
 import { syncSignalsAndNotifications } from "@/lib/server/seed";
+import { Wallet } from "lucide-react";
 import { annualizedAmount, type SubscriptionFinding } from "@/lib/audit";
 import { FindingCard } from "./FindingCard";
 import "./money.css";
@@ -25,13 +26,21 @@ export default async function MoneyPage() {
   const trials = findings.filter((f) => f.trialEnd);
 
   return (
-    <main id="main" className="money-page">
-      <h1>Money review</h1>
-      <p className="money-sub">
-        Recurring charges and price changes from read-only evidence. Atlas
-        prepares the review — cancellation is always a manual, user-executed
-        step at the merchant.
-      </p>
+    <main id="main" className="page">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">
+            <Wallet size={14} aria-hidden="true" />
+            Money review · read-only evidence
+          </p>
+          <h1>Money review</h1>
+          <p className="page-sub">
+            Recurring charges and price changes from read-only evidence. Atlas
+            prepares the review — cancellation is always a manual,
+            user-executed step at the merchant.
+          </p>
+        </div>
+      </div>
       {mode === "local_file" ? (
         <p className="demo-note" role="note">
           Local store with labelled synthetic merchants (sandbox fixtures). No

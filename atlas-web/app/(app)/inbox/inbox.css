@@ -1,88 +1,44 @@
-/* Atlas Inbox — calm editorial operations layout. */
+/* ============================================================================
+   Atlas Inbox — command center layout.
+
+   Two columns on wide screens: the ranked queue and the morning briefing on the
+   left, the source pulse and identity card on the right. Primitives (cards,
+   rows, badges, buttons, stats) come from globals.css.
+   ========================================================================== */
 
 .inbox-layout {
-  min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr min(340px, 30vw);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "banner banner"
-    "main rail";
-  max-width: 1180px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+  gap: var(--space-6);
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 var(--space-6);
-}
-
-.inbox-demo-banner {
-  grid-area: banner;
-  margin: var(--space-4) 0;
-  padding: var(--space-2) var(--space-4);
-  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
-  border-radius: var(--radius-control);
-  font-size: 0.9rem;
-  color: var(--color-ink);
+  padding: 0 var(--space-6) var(--space-12);
+  align-items: start;
 }
 
 .inbox-main {
-  grid-area: main;
-  padding: var(--space-6) var(--space-8) var(--space-12) 0;
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
 }
 
-.inbox-title {
-  font-size: 1.9rem;
+.inbox-head h1 {
+  font-size: clamp(1.7rem, 3vw, 2.15rem);
 }
 
-.inbox-sub {
-  color: var(--color-ink-muted);
-  margin: var(--space-2) 0 var(--space-6);
+.inbox-head .eyebrow {
+  margin-bottom: var(--space-2);
 }
 
-.signal-list {
+/* ---------- Command strip ---------- */
+
+.command-strip {
   display: grid;
   gap: var(--space-4);
-}
-
-/* Command strip */
-.command-strip {
-  margin-bottom: var(--space-6);
 }
 
 .strip-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
-.strip-metric {
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  padding: var(--space-4) var(--space-5);
-}
-
-.strip-label {
-  display: block;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-ink-muted);
-  margin-bottom: var(--space-1);
-}
-
-.strip-value {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.strip-note {
-  display: block;
-  margin-top: var(--space-1);
-  font-size: 0.76rem;
-  color: var(--color-ink-muted);
+  margin: 0;
 }
 
 .urgent-ribbon {
@@ -109,6 +65,10 @@
   background: color-mix(in srgb, var(--color-alert) 16%, transparent);
 }
 
+.urgent-item.urgent-review {
+  border-left-color: var(--color-alert);
+}
+
 .urgent-title {
   font-weight: 600;
   font-size: 0.92rem;
@@ -120,233 +80,170 @@
   font-variant-numeric: tabular-nums;
 }
 
-.signal-card {
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  padding: var(--space-4) var(--space-6);
+/* ---------- Priority queue ---------- */
+
+.inbox-queue {
+  overflow: hidden;
 }
 
-.signal-card.urgency-review {
-  border-left: 3px solid var(--color-alert);
+.queue-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
 }
 
-.signal-card.urgency-urgent {
-  border-left: 3px solid var(--color-danger);
+.queue-row .queue-dot {
+  margin-top: 6px;
 }
 
-.signal-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-}
-
-.signal-head h2 {
-  font-size: 1.12rem;
-}
-
-.urgency-dot {
-  width: 8px;
-  height: 8px;
+.queue-dot {
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--color-ink-muted);
   flex: none;
 }
 
-.urgency-review {
-  background: var(--color-alert);
-}
-
-.urgency-urgent {
+.queue-dot-urgent {
   background: var(--color-danger);
 }
 
-.signal-implication {
+.queue-dot-review {
+  background: var(--color-alert);
+}
+
+.queue-body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.queue-link {
+  text-decoration: none;
+}
+
+.queue-link:hover {
+  color: var(--color-accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.queue-evidence {
+  font-size: 0.78rem;
   color: var(--color-ink-muted);
-  margin: var(--space-2) 0 var(--space-4);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Route/waypoint motif: sources → gap → destination */
-.waypoints {
-  list-style: none;
+.queue-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  margin: 0 0 var(--space-4);
-  padding: 0;
+  gap: var(--space-2);
+  white-space: nowrap;
 }
 
-.waypoint {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--color-accent-deep);
-  position: relative;
-}
-
-.waypoint::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 100%;
-  width: var(--space-1);
-  height: 2px;
-  background: var(--color-line);
-}
-
-.waypoint:first-child::before {
-  display: none;
-}
-
-.waypoint-stale {
-  background: var(--color-ink-muted);
-  opacity: 0.6;
-}
-
-.waypoint-gap {
-  width: 14px;
-  height: 2px;
-  background-image: linear-gradient(
-    to right,
-    var(--color-line) 55%,
-    transparent 55%
-  );
-  background-size: 8px 2px;
-  margin: 0 var(--space-1);
-}
-
-.waypoint-dest-node {
-  background: var(--color-good);
-  width: 12px;
-  height: 12px;
-}
-
-.signal-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.signal-primary {
-  font-size: 0.92rem;
-  padding: 8px 16px;
-}
-
-.signal-why {
-  font-size: 0.9rem;
+.queue-why {
+  font-size: 0.82rem;
   color: var(--color-accent-deep);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.signal-capability {
-  font-size: 0.82rem;
+.inbox-empty {
+  padding: var(--space-6);
   color: var(--color-ink-muted);
 }
 
-.signal-meta {
-  margin: var(--space-3) 0 0;
-  font-size: 0.8rem;
-  color: var(--color-ink-muted);
-  font-variant-numeric: tabular-nums;
+.inbox-empty p {
+  margin: 0 0 var(--space-4);
 }
 
-/* Right rail */
+/* ---------- Right rail ---------- */
+
 .inbox-rail {
-  grid-area: rail;
-  border-left: 1px solid var(--color-line);
-  padding: var(--space-6) 0 var(--space-12) var(--space-6);
-}
-
-.rail-heading {
-  font-size: 1rem;
-  margin-bottom: var(--space-4);
-}
-
-.rail-sources {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  position: sticky;
+  top: var(--space-6);
 }
 
-.rail-source {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px var(--space-2);
-  font-size: 0.88rem;
+.pulse-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding-inline: var(--space-5);
 }
 
-.rail-source-name {
-  font-weight: 600;
+.pulse-row .source-dot {
+  margin-top: 6px;
 }
 
-.rail-source-mode {
-  color: var(--color-accent-deep);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.source-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
 }
 
-.rail-source-detail {
-  grid-column: 1 / -1;
-  color: var(--color-ink-muted);
-  font-size: 0.82rem;
+.source-dot-on {
+  background: var(--color-good);
 }
 
-.rail-note {
-  margin-top: var(--space-6);
-  font-size: 0.82rem;
-  color: var(--color-ink-muted);
+.source-dot-off {
+  background: transparent;
+  border: 1px dashed var(--color-line-strong);
 }
 
 .rail-link {
-  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.86rem;
+  font-weight: 600;
   color: var(--color-accent-deep);
+  text-decoration: none;
 }
 
-@media (max-width: 880px) {
-  .inbox-layout {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "banner"
-      "main";
-  }
+.rail-link:hover {
+  text-decoration: underline;
+}
 
-  .inbox-main {
-    padding-right: 0;
+.identity-card h2 {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.identity-line {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.identity-meta {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .inbox-layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: var(--space-4);
   }
 
   .inbox-rail {
-    grid-area: auto;
-    border-left: 0;
-    border-top: 1px solid var(--color-line);
-    padding-left: 0;
+    position: static;
   }
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
+/* ---------- Morning briefing ---------- */
 
-/* Morning briefing */
 .briefing {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
-  padding: var(--space-6);
-  margin-bottom: var(--space-6);
   box-shadow: var(--shadow-card);
+  padding: var(--space-6);
 }
 
 .briefing-weather {
@@ -376,9 +273,9 @@
 }
 
 .briefing h2 {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--color-ink-muted);
   margin-bottom: var(--space-1);
 }
@@ -417,51 +314,6 @@
   display: flex;
   gap: var(--space-3);
   flex-wrap: wrap;
-}
-
-.btn-primary,
-.btn-ghost,
-.btn-secondary {
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 9px 16px;
-  border-radius: var(--radius-control);
-  border: 1px solid transparent;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  transition: transform var(--dur-fast) var(--ease-out),
-    background-color var(--dur-fast) ease-in-out;
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
-.btn-primary:hover {
-  background: var(--color-accent-deep);
-}
-
-.btn-primary:disabled {
-  opacity: 0.72;
-  cursor: default;
-}
-
-.btn-ghost,
-.btn-secondary {
-  background: transparent;
-  color: var(--color-ink);
-  border-color: var(--color-line-strong);
-}
-
-.btn-primary:active,
-.btn-ghost:active,
-.btn-secondary:active {
-  transform: scale(0.98);
 }
 
 .briefing-status {

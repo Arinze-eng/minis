@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Moon, Bell, ShieldCheck, Check, Save, AlertCircle } from "lucide-react";
-import { RouteMark } from "@/components/RouteMark";
+import { AlertCircle, Bell, Check, Moon, Save, ShieldCheck, Sliders } from "lucide-react";
 
 /**
  * Delivery preferences, persisted server-side per verified principal. The
- * save button reflects the real request result — success, validation error,
- * or failure — and never claims a save that did not happen.
+ * save button reflects the real request result — success, validation error, or
+ * failure — and never claims a save that did not happen.
  */
 
 interface Preferences {
@@ -82,163 +81,158 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--atlas-lilac)]">
-          <RouteMark className="w-4 h-4" />
-          <span>Settings · Preferences & Quiet Hours</span>
-        </div>
-        <h1 className="text-3xl font-display font-semibold tracking-tight text-[var(--atlas-ink)]">
-          Delivery Preferences & Controls
-        </h1>
-        <p className="text-sm text-[var(--atlas-ink)]/70 max-w-xl">
-          Configure quiet-hours windows and notification delivery channels. Atlas never sends unauthorized external messages during quiet hours.
-        </p>
-      </div>
-
-      {loadFailed && (
-        <div className="border border-[var(--atlas-amber)]/40 bg-[var(--atlas-amber)]/10 rounded-xl p-5 flex gap-3" role="alert">
-          <AlertCircle className="w-5 h-5 text-[var(--atlas-amber)] shrink-0" />
-          <p className="text-sm text-[var(--atlas-ink)]">
-            Current preferences could not be loaded. Values shown are defaults —
-            saving will store them for real once the connection works.
+    <main id="main" className="page page-narrow">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">
+            <Sliders size={14} aria-hidden="true" />
+            Settings · preferences &amp; quiet hours
+          </p>
+          <h1>Delivery preferences &amp; controls</h1>
+          <p className="page-sub">
+            Configure quiet-hours windows and notification delivery channels.
+            Atlas never sends unauthorized external messages during quiet hours.
           </p>
         </div>
-      )}
+      </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
-        <div className="bg-[var(--atlas-paper)] border border-[var(--atlas-line)] rounded-xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 border-b border-[var(--atlas-line)] pb-3">
-            <Moon className="w-5 h-5 text-[var(--atlas-lilac)]" />
-            <div>
-              <h2 className="text-base font-display font-semibold text-[var(--atlas-ink)]">
-                Quiet Hours Window
-              </h2>
-              <p className="text-xs text-[var(--atlas-ink)]/60">
-                Suppress non-urgent delivery notifications during rest hours.
-              </p>
-            </div>
+      {loadFailed ? (
+        <div className="notice notice-warn" role="alert">
+          <AlertCircle size={18} aria-hidden="true" />
+          <p>
+            Current preferences could not be loaded. The values shown are
+            defaults — saving will store them for real once the connection
+            works.
+          </p>
+        </div>
+      ) : null}
+
+      <form onSubmit={handleSave} className="stack-md">
+        <section className="card" aria-labelledby="quiet-h">
+          <div className="card-head">
+            <h2 id="quiet-h">
+              <Moon size={15} aria-hidden="true" /> Quiet hours window
+            </h2>
+            <span className="badge">Local time</span>
           </div>
-
-          <div className="space-y-4">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div className="card-pad stack-md">
+            <label className="check-row">
+              <span>
+                <span className="row-title">Enable quiet-hours policy</span>
+                <span className="row-detail">
+                  Suppress non-urgent delivery notifications during rest hours.
+                </span>
+              </span>
               <input
                 type="checkbox"
                 checked={quietHoursEnabled}
                 onChange={(e) => setQuietHoursEnabled(e.target.checked)}
-                className="rounded border-[var(--atlas-line)] text-[var(--atlas-lime)] focus:ring-[var(--atlas-lime)]"
               />
-              <span className="text-sm font-medium text-[var(--atlas-ink)]">Enable Quiet Hours Policy</span>
             </label>
 
-            {quietHoursEnabled && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div>
-                  <label htmlFor="quiet-start" className="block text-xs font-mono uppercase text-[var(--atlas-ink)]/60 mb-1">
-                    Start Time
+            {quietHoursEnabled ? (
+              <div className="form-grid">
+                <div className="field">
+                  <label className="field-label" htmlFor="quiet-start">
+                    Start time
                   </label>
                   <input
                     id="quiet-start"
+                    className="input tabular"
                     type="time"
                     value={quietStart}
                     onChange={(e) => setQuietStart(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--atlas-line)] bg-background px-3 py-2 text-sm font-mono text-[var(--atlas-ink)]"
                   />
                 </div>
-                <div>
-                  <label htmlFor="quiet-end" className="block text-xs font-mono uppercase text-[var(--atlas-ink)]/60 mb-1">
-                    End Time
+                <div className="field">
+                  <label className="field-label" htmlFor="quiet-end">
+                    End time
                   </label>
                   <input
                     id="quiet-end"
+                    className="input tabular"
                     type="time"
                     value={quietEnd}
                     onChange={(e) => setQuietEnd(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--atlas-line)] bg-background px-3 py-2 text-sm font-mono text-[var(--atlas-ink)]"
                   />
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
-        </div>
+          <p className="card-foot">
+            Overnight windows are normal — a 22:00 → 07:30 window wraps midnight.
+          </p>
+        </section>
 
-        <div className="bg-[var(--atlas-paper)] border border-[var(--atlas-line)] rounded-xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 border-b border-[var(--atlas-line)] pb-3">
-            <Bell className="w-5 h-5 text-[var(--atlas-lime)]" />
-            <div>
-              <h2 className="text-base font-display font-semibold text-[var(--atlas-ink)]">
-                Delivery Channels
-              </h2>
-              <p className="text-xs text-[var(--atlas-ink)]/60">
-                Choose where Atlas surfaces Signal Cards and reminders.
-              </p>
-            </div>
+        <section className="card" aria-labelledby="channels-h">
+          <div className="card-head">
+            <h2 id="channels-h">
+              <Bell size={15} aria-hidden="true" /> Delivery channels
+            </h2>
           </div>
-
-          <div className="space-y-3">
-            <label className="flex items-center justify-between p-3 rounded-lg border border-[var(--atlas-line)] bg-background cursor-pointer">
-              <span className="text-sm font-medium text-[var(--atlas-ink)]">Browser WebUI Notifications</span>
+          <div className="card-pad stack-sm">
+            <label className="check-row">
+              <span>
+                <span className="row-title">Browser / WebUI notifications</span>
+                <span className="row-detail">
+                  Signal cards and reminders surface in this app.
+                </span>
+              </span>
               <input
                 type="checkbox"
                 checked={webuiNotifications}
                 onChange={(e) => setWebuiNotifications(e.target.checked)}
-                className="rounded border-[var(--atlas-line)] text-[var(--atlas-lime)]"
               />
             </label>
 
-            <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--atlas-line)] bg-background opacity-70">
-              <div>
-                <div className="text-sm font-medium text-[var(--atlas-ink)]">Telegram Delivery Gate</div>
-                <div className="text-xs text-[var(--atlas-ink)]/60">
+            <div className="check-row check-row-disabled">
+              <span>
+                <span className="row-title">Telegram delivery gate</span>
+                <span className="row-detail">
                   Not configurable yet — activates when the Telegram channel is
                   connected and you grant delivery consent.
-                </div>
-              </div>
+                </span>
+              </span>
               <input
                 type="checkbox"
                 checked={false}
                 disabled
                 aria-label="Telegram delivery (not yet configurable)"
-                className="rounded border-[var(--atlas-line)]"
               />
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="flex items-center justify-between">
-          {saveState.kind === "saved" && (
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20" role="status">
-              <Check className="w-4 h-4" />
-              <span>Preferences saved to your account</span>
-            </div>
-          )}
-          {saveState.kind === "error" && (
-            <div className="flex items-center gap-2 text-xs font-semibold text-[var(--atlas-amber)] bg-[var(--atlas-amber)]/10 px-3 py-1.5 rounded-lg border border-[var(--atlas-amber)]/30" role="alert">
-              <AlertCircle className="w-4 h-4" />
-              <span>{saveState.message}</span>
-            </div>
-          )}
-          {saveState.kind === "idle" && <div />}
-
-          <button
-            type="submit"
-            disabled={saveState.kind === "saving"}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--atlas-lime)] text-[var(--atlas-graphite)] font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 active:scale-[0.98]"
-          >
+        <div className="form-submit">
+          <div>
+            {saveState.kind === "saved" ? (
+              <span className="notice notice-good" role="status">
+                <Check size={16} aria-hidden="true" />
+                <span>Preferences saved to your account</span>
+              </span>
+            ) : null}
+            {saveState.kind === "error" ? (
+              <span className="notice notice-warn" role="alert">
+                <AlertCircle size={16} aria-hidden="true" />
+                <span>{saveState.message}</span>
+              </span>
+            ) : null}
+          </div>
+          <button type="submit" className="btn-primary" disabled={saveState.kind === "saving"}>
             {saveState.kind === "saving" ? (
               <>
-                <Save className="w-4 h-4 animate-pulse" />
-                <span>Saving…</span>
+                <Save size={15} aria-hidden="true" />
+                Saving…
               </>
             ) : (
               <>
-                <ShieldCheck className="w-4 h-4" />
-                <span>Save Preferences</span>
+                <ShieldCheck size={15} aria-hidden="true" />
+                Save preferences
               </>
             )}
           </button>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

@@ -36,7 +36,7 @@ export default async function SignalDetailPage({
           : null;
 
   return (
-    <main id="main" className="signal-page">
+    <main id="main" className="page page-narrow">
       <p className="signal-crumb">
         <Link href="/inbox">← Inbox</Link>
       </p>
@@ -51,7 +51,7 @@ export default async function SignalDetailPage({
         </header>
 
         {domains.includes("money") && domains.includes("wardrobe") ? (
-          <p className="signal-cross-domain" role="note">
+          <p className="notice notice-accent" role="note">
             Cross-domain signal: both wardrobe and money evidence contributed.
             The connection is shown for review — Atlas does not claim causality.
           </p>

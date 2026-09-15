@@ -1,29 +1,4 @@
-/* Money review. */
-
-.money-page {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-6) var(--space-12);
-}
-
-.money-page h1 {
-  font-size: 1.8rem;
-}
-
-.money-sub {
-  color: var(--color-ink-muted);
-  margin: var(--space-2) 0 var(--space-4);
-  max-width: 62ch;
-}
-
-.demo-note {
-  margin: 0 0 var(--space-6);
-  padding: var(--space-2) var(--space-3);
-  font-size: 0.85rem;
-  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
-  border-radius: var(--radius-control);
-}
+/* Money review. Page scaffolding, buttons and notices come from globals.css. */
 
 .money-summary {
   display: grid;
@@ -206,40 +181,10 @@
 
 .finding-actions {
   display: flex;
+  align-items: center;
   gap: var(--space-3);
+  flex-wrap: wrap;
   margin-top: var(--space-4);
-}
-
-.btn-primary,
-.btn-secondary,
-.finding-cancel-link {
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-  padding: 7px 14px;
-  border-radius: var(--radius-control);
-  border: 1px solid transparent;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.btn-primary {
-  background: var(--color-good);
-  color: var(--color-on-good);
-}
-
-.btn-secondary,
-.finding-cancel-link {
-  background: transparent;
-  color: var(--color-ink);
-  border-color: var(--color-line);
-}
-
-.btn-primary:disabled,
-.btn-secondary:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* Cancel guide */

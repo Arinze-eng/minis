@@ -21,22 +21,52 @@ npm run test
 
 Production requires `DATABASE_URL`, `ATLAS_SESSION_SECRET`, and both Clerk credentials. Without Clerk, the app fails closed rather than minting a local principal; local single-principal mode is development/test only.
 
-## Routes (Phase 1)
+The header identity control shows signed-in / signed-out state on every page, and the app shell is protected as a whole while each page and route handler re-checks identity where it reads data.
 
-- `/` — landing: value pitch, the four questions, security boundaries.
-- `/inbox` — Atlas Inbox with Signal Cards (demo mode).
+## Routes
+
+- `/` — landing: statement card, how the loop behaves, security boundaries.
+- `/inbox` — command center: dated head, stat strip, morning briefing, ranked
+  priority queue, system pulse rail.
+- `/ask` — bounded Ask Atlas request surface.
+- `/wardrobe`, `/wardrobe/add` — garment records, cost per wear, capture flow.
+- `/looks` — deterministic outfit planning from confirmed garments.
+- `/money` — subscription findings with evidence drawers and the manual
+  cancellation guide.
+- `/travel`, `/tasks` — operations surfaces; they state scope honestly while no
+  connector is configured.
+- `/sources` — consent, scan terminal, source health.
+- `/settings/privacy`, `/settings/preferences` — data controls and quiet hours.
 - `/signals/[id]` — signal detail + Why panel + "What Atlas did not do".
+- `/sign-in`, `/sign-up` — Clerk Core 3 auth routes.
 - `/manifest.webmanifest` — installable PWA manifest.
 - `public/sw.js` — service worker: network-first pages, cache-first static
   shell only, never caches `/api/*` or private responses.
 
+## Authentication
+
+Clerk (`@clerk/nextjs` v7 / Clerk Core 3) is the only identity authority when
+configured. `middleware.ts` verifies the session; identity is then resolved
+where data is read (`lib/server/identity.ts`), not asserted by the browser. The
+header always states whether you are signed in, signed out, or running in the
+labelled local dev mode. Without Clerk keys the app runs one labelled
+single-principal session in development and fails closed (`503`) in production.
+See `PRODUCTION_SETUP.md` for the environment matrix.
+
+## Design system
+
+`app/globals.css` owns the tokens (light/dark via `light-dark()`), the shared
+primitives (`.page`, `.card`, `.stat`, `.row`, `.btn-*`, `.badge`, `.notice`,
+`.field`), Clerk's `--clerk-*` theme variables, and motion. `app/shell.css` owns
+the adaptive navigation (labelled sidebar, mobile bar, tab bar, drawers) and
+`app/landing.css` the landing surface. Page stylesheets add layout only.
+
 ## Demo mode
 
-Everything is currently synthetic and labelled ("Demo mode — synthetic data,
-nothing here is private or live"). Demo data lives in `app/inbox/demoData.ts`
-and is pinned by `tests/demoLabelling.test.ts`: mode must be declared, every
-source must identify as demo, capability never exceeds "prepare", and ids stay
-deterministic.
+Everything synthetic is labelled ("Demo mode — synthetic data, nothing here is
+private or live"). Demo data lives in `lib/demo/*` and is pinned by
+`tests/demoLabelling.test.ts`: mode must be declared, every source must identify
+as demo, capability never exceeds "prepare", and ids stay deterministic.
 
 ## Backend integration contract (to implement in later phases)
 

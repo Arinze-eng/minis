@@ -13,6 +13,40 @@ CLERK_SECRET_KEY
 
 This is expected security behavior, not a UI bug. Set the variables in Render and redeploy.
 
+## Authentication flow (Clerk Core 3)
+
+`@clerk/nextjs` v7 is Clerk Core 3. Identity follows the current Clerk guidance:
+
+- **Clerk is the only identity authority.** `middleware.ts` bootstraps the request
+  and `clerkMiddleware()` verifies the session; then every page, layout and Route
+  Handler that reads data resolves identity with `auth()`
+  (`lib/server/identity.ts`). The legacy `atlas_session` cookie is no longer
+  minted on clerk deployments — middleware clears it if it exists, so a
+  signed-out browser cannot carry a stale identity forward.
+- **Protection is resource-based.** `createRouteMatcher()` is deprecated in Core 3
+  and is not used. The `(app)` shell calls `assertSignedIn()` (an addition, not a
+  replacement), pages call `principalFromCookies()`, and Route Handlers call
+  `requirePrincipal()`. Middleware additionally answers `401` for Atlas API routes
+  when the request is unauthenticated.
+- **Component vocabulary.** `<SignedIn>`, `<SignedOut>` and `<Protect>` were
+  removed in Core 3 and now throw at render; `<Show when="signed-in">` /
+  `<Show when="signed-out">` replaces them (`components/AuthControls.tsx`).
+  `tests/authContract.test.ts` fails the build if a removed component, the
+  deprecated matcher, or a removed redirect prop reappears.
+- **Redirects.** `fallbackRedirectUrl` (not `forceRedirectUrl`) is used so a
+  user bounced from a protected page lands back on that page after signing in.
+  `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL` and the
+  corresponding `*_FALLBACK_REDIRECT_URL` variables are the documented
+  configuration point.
+- **Signed-in vs signed-out is always visible.** The header shows “Signed in”
+  with the Clerk user menu, “Not signed in” with sign-in / create-account
+  actions, or a labelled “Local dev mode · no account” chip when Clerk is not
+  configured. Nothing simulates an account.
+
+Local development without Clerk still works through the labelled local
+single-principal mode. Production fails closed with `503 Authentication is not
+configured.` until both Clerk keys are present.
+
 ## Environment variable matrix
 
 ### Public/client-visible variables
@@ -21,6 +55,10 @@ This is expected security behavior, not a UI bug. Set the variables in Render an
 |---|---:|---|---|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | Clerk `pk_live_...` key for production | Safe for browser; never use the secret key here |
 | `ATLAS_PUBLIC_ORIGIN` | Yes | Canonical browser origin, e.g. `https://minis-1.onrender.com` | Used by server middleware; comma-separated origins are supported for controlled split hosting |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Recommended | `/sign-in` | Keeps Clerk’s redirects on the app’s own routes |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Recommended | `/sign-up` | Same, for sign-up |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Recommended | `/inbox` | Where to land after sign-in when Clerk has no `redirect_url` |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | Recommended | `/inbox` | Same, after sign-up |
 
 The publishable key is intentionally public. Clerk documents that development keys begin with `pk_test_` and production keys with `pk_live_`; use the production key in Render.
 
@@ -113,6 +151,12 @@ npm ci
 npm run dev
 ```
 
+`npm ci` must be run from `atlas-web/`. If it fails with “can only install
+packages when your package.json and package-lock.json are in sync”, run
+`npm install` once and commit the regenerated `package-lock.json` — the
+Dockerfile builds with `npm ci`, so an out-of-sync lock file breaks the image
+build.
+
 For local development without PostgreSQL or Clerk, omit production-only values and use the explicitly labelled local single-principal mode. To exercise the real production path locally, provide a disposable PostgreSQL database and Clerk development keys. Never point local tests at production data.
 
 Run the release checks:
@@ -142,8 +186,11 @@ After deployment:
 
 1. `GET /` returns `200` rather than `503`.
 2. Sign in and sign up work with the Clerk production instance.
-3. `/inbox` shows the verified account mode.
-4. `/api/consent` rejects unauthenticated requests.
+3. `/inbox` shows the verified account mode; the header shows “Signed in” with the
+   Clerk user menu, and signing out flips it to “Not signed in”.
+4. Requests to `/api/*` without a Clerk session return `401
+   {"error":"unauthenticated"}`, and a signed-out visit to `/inbox` (or any other
+   shell route) redirects to `/sign-in`.
 5. Wardrobe upload returns an explicit provider error if Cloudinary is unavailable; it must never show fake success.
 6. Privacy export/delete behavior is tested with a disposable account.
 7. Gmail remains disconnected until Google credentials, consent, encryption, and redirect URI are configured.
