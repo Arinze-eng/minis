@@ -1,7 +1,9 @@
 import { and, desc, eq } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
-import { atlasChatMessages, atlasMoneyFindings, atlasPreferences, atlasSignals, atlasSources, atlasTasks, atlasWardrobe } from "../drizzle/schema";
+import { atlasChatMessages, atlasMoneyFindings, atlasPreferences, atlasSignals, atlasSources, atlasTasks, atlasTryOns, atlasWardrobe } from "../drizzle/schema";
+import { storageGetSignedUrl, storagePut } from "./storage";
+import { generateImage } from "./_core/imageGeneration";
 
 export const PREVIEW_OWNER = "preview-owner";
 
@@ -149,3 +151,51 @@ export async function searchResearch(query: string) {
 }
 
 export const parseJson = safeJson;
+
+export async function uploadAtlasImage(ownerOpenId: string, input: { dataUrl: string; kind: "wardrobe" | "person"; wardrobeId?: number; fileName?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Atlas database is unavailable");
+  const match = input.dataUrl.match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,([A-Za-z0-9+/=]+)$/i);
+  if (!match) throw new Error("Only JPEG, PNG, or WebP images are supported");
+  const mimeType = match[1].toLowerCase() === "image/jpg" ? "image/jpeg" : match[1].toLowerCase();
+  const buffer = Buffer.from(match[2], "base64");
+  if (buffer.length > 10 * 1024 * 1024) throw new Error("Image must be 10MB or smaller");
+  const ext = mimeType.split("/")[1] === "jpeg" ? "jpg" : mimeType.split("/")[1];
+  const stored = await storagePut(`atlas/${ownerOpenId}/${input.kind}/${crypto.randomUUID()}.${ext}`, buffer, mimeType);
+  if (input.kind === "wardrobe") {
+    let garmentId = input.wardrobeId;
+    if (garmentId) {
+      await db.update(atlasWardrobe).set({ imageRef: stored.key, status: "pending" }).where(and(eq(atlasWardrobe.id, garmentId), eq(atlasWardrobe.ownerOpenId, ownerOpenId)));
+    } else {
+      const result = await db.insert(atlasWardrobe).values({ ownerOpenId, name: input.fileName?.replace(/\.[^.]+$/, "").slice(0, 160) || "New wardrobe piece", category: "other", colors: JSON.stringify([]), status: "pending", imageRef: stored.key, currency: "USD" });
+      garmentId = Number(result[0].insertId);
+    }
+    return { key: stored.key, url: stored.url, kind: input.kind, wardrobeId: garmentId };
+  }
+  return { key: stored.key, url: stored.url, kind: input.kind };
+}
+
+export async function createVirtualTryOn(ownerOpenId: string, input: { wardrobeId: number; personImageRef: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Atlas database is unavailable");
+  const garments = await db.select().from(atlasWardrobe).where(and(eq(atlasWardrobe.id, input.wardrobeId), eq(atlasWardrobe.ownerOpenId, ownerOpenId))).limit(1);
+  const garment = garments[0];
+  if (!garment?.imageRef) throw new Error("Choose a wardrobe image before generating a try-on");
+  const personUrl = input.personImageRef.startsWith("http") ? input.personImageRef : await storageGetSignedUrl(input.personImageRef);
+  const garmentUrl = garment.imageRef.startsWith("http") ? garment.imageRef : await storageGetSignedUrl(garment.imageRef);
+  const inserted = await db.insert(atlasTryOns).values({ ownerOpenId, wardrobeId: input.wardrobeId, personImageRef: input.personImageRef, status: "processing" });
+  const tryOnId = Number(inserted[0].insertId);
+  try {
+    const generated = await generateImage({
+      originalImages: [{ url: personUrl, mimeType: "image/jpeg" }, { url: garmentUrl, mimeType: "image/jpeg" }],
+      prompt: `Create a realistic virtual try-on image. Use the first reference as the exact person and preserve their face, identity, body proportions, pose, skin tone, hair, and background as much as possible. Use the second reference as the exact garment and dress the person in that garment with physically believable fit, drape, folds, seams, color, texture, and lighting. Do not add text, logos, extra people, or accessories. The result should look like an honest clothing fit preview, not a fashion illustration.`,
+    });
+    if (!generated.url) throw new Error("Image service returned no result");
+    await db.update(atlasTryOns).set({ resultImageRef: generated.url, status: "completed" }).where(and(eq(atlasTryOns.id, tryOnId), eq(atlasTryOns.ownerOpenId, ownerOpenId)));
+    return { id: tryOnId, status: "completed" as const, resultImageRef: generated.url };
+  } catch (error) {
+    const message = error instanceof Error ? error.message.slice(0, 500) : "Try-on generation failed";
+    await db.update(atlasTryOns).set({ status: "failed", errorMessage: message }).where(and(eq(atlasTryOns.id, tryOnId), eq(atlasTryOns.ownerOpenId, ownerOpenId)));
+    throw new Error("Try-on generation failed. Please check both images and try again.");
+  }
+}

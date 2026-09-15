@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { completeTask, getChatHistory, getDashboard, ownerId, savePreferences, searchResearch, sendChat, updateSignal } from "./atlas";
+import { completeTask, createVirtualTryOn, getChatHistory, getDashboard, ownerId, savePreferences, searchResearch, sendChat, updateSignal, uploadAtlasImage } from "./atlas";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -43,6 +43,12 @@ export const appRouter = router({
         telegramDelivery: z.boolean(),
       }))
       .mutation(({ ctx, input }) => savePreferences(ownerId(ctx.user?.openId), input)),
+    uploadImage: publicProcedure
+      .input(z.object({ dataUrl: z.string().max(15_000_000), kind: z.enum(["wardrobe", "person"]), wardrobeId: z.number().int().positive().optional(), fileName: z.string().max(180).optional() }))
+      .mutation(({ ctx, input }) => uploadAtlasImage(ownerId(ctx.user?.openId), input)),
+    virtualTryOn: publicProcedure
+      .input(z.object({ wardrobeId: z.number().int().positive(), personImageRef: z.string().min(1).max(600) }))
+      .mutation(({ ctx, input }) => createVirtualTryOn(ownerId(ctx.user?.openId), input)),
   }),
 
   // TODO: add feature routers here, e.g.

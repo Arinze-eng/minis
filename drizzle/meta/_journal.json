@@ -15,6 +15,13 @@
       "when": 1789436096850,
       "tag": "0001_dusty_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1789437038376,
+      "tag": "0002_mature_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

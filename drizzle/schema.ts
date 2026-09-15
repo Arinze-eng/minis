@@ -114,3 +114,14 @@ export const atlasChatMessages = mysqlTable("atlas_chat_messages", {
   content: text("content").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ ownerIndex: index("atlas_chat_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasTryOns = mysqlTable("atlas_try_ons", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  wardrobeId: int("wardrobeId").notNull(),
+  personImageRef: varchar("personImageRef", { length: 512 }).notNull(),
+  resultImageRef: varchar("resultImageRef", { length: 512 }),
+  status: mysqlEnum("status", ["processing", "completed", "failed"]).notNull().default("processing"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_try_ons_owner_idx").on(table.ownerOpenId) }));

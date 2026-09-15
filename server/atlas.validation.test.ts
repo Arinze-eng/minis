@@ -23,4 +23,14 @@ describe("Atlas procedures", () => {
       telegramDelivery: false,
     })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+
+  it("rejects non-image uploads before storage is called", async () => {
+    const caller = appRouter.createCaller({ user: null, req: {} as never, res: {} as never });
+    await expect(caller.atlas.uploadImage({ kind: "person", dataUrl: "data:text/plain;base64,SGVsbG8=" })).rejects.toThrow("Only JPEG");
+  });
+
+  it("requires a selected garment for virtual try-on", async () => {
+    const caller = appRouter.createCaller({ user: null, req: {} as never, res: {} as never });
+    await expect(caller.atlas.virtualTryOn({ wardrobeId: 999999, personImageRef: "missing-key" })).rejects.toThrow();
+  });
 });
