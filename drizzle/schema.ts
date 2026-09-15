@@ -125,3 +125,14 @@ export const atlasTryOns = mysqlTable("atlas_try_ons", {
   errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ ownerIndex: index("atlas_try_ons_owner_idx").on(table.ownerOpenId) }));
+
+export const atlasLooks = mysqlTable("atlas_looks", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerOpenId: varchar("ownerOpenId", { length: 128 }).notNull(),
+  title: varchar("title", { length: 160 }).notNull(),
+  vibe: varchar("vibe", { length: 160 }).notNull().default("Generated look"),
+  garmentId: int("garmentId").notNull(),
+  personImageRef: varchar("personImageRef", { length: 512 }).notNull(),
+  resultImageRef: varchar("resultImageRef", { length: 512 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ ownerIndex: index("atlas_looks_owner_idx").on(table.ownerOpenId) }));

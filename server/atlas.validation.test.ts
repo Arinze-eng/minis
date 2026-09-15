@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { ownerId } from "./atlas";
+import { getDashboard, ownerId } from "./atlas";
 
 describe("Atlas procedures", () => {
   it("uses a stable preview owner when no authenticated user exists", () => {
@@ -32,5 +32,11 @@ describe("Atlas procedures", () => {
   it("requires a selected garment for virtual try-on", async () => {
     const caller = appRouter.createCaller({ user: null, req: {} as never, res: {} as never });
     await expect(caller.atlas.virtualTryOn({ wardrobeId: 999999, personImageRef: "missing-key" })).rejects.toThrow();
+  });
+
+  it("exposes saved looks through the dashboard contract", async () => {
+    const dashboard = await getDashboard("preview-owner");
+    expect(dashboard?.looks).toBeDefined();
+    expect(Array.isArray(dashboard?.looks)).toBe(true);
   });
 });

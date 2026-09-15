@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
-import { atlasChatMessages, atlasMoneyFindings, atlasPreferences, atlasSignals, atlasSources, atlasTasks, atlasTryOns, atlasWardrobe } from "../drizzle/schema";
+import { atlasChatMessages, atlasLooks, atlasMoneyFindings, atlasPreferences, atlasSignals, atlasSources, atlasTasks, atlasTryOns, atlasWardrobe } from "../drizzle/schema";
 import { storageGetSignedUrl, storagePut } from "./storage";
 import { generateImage } from "./_core/imageGeneration";
 
@@ -58,15 +58,16 @@ export async function getDashboard(ownerOpenId: string) {
   if (!db) return null;
   try {
     await seedAtlasOwner(ownerOpenId);
-    const [tasks, signals, wardrobe, money, sources, preferences] = await Promise.all([
+    const [tasks, signals, wardrobe, money, sources, preferences, looks] = await Promise.all([
       db.select().from(atlasTasks).where(eq(atlasTasks.ownerOpenId, ownerOpenId)).orderBy(desc(atlasTasks.createdAt)),
       db.select().from(atlasSignals).where(eq(atlasSignals.ownerOpenId, ownerOpenId)).orderBy(desc(atlasSignals.createdAt)),
       db.select().from(atlasWardrobe).where(eq(atlasWardrobe.ownerOpenId, ownerOpenId)).orderBy(desc(atlasWardrobe.createdAt)),
       db.select().from(atlasMoneyFindings).where(eq(atlasMoneyFindings.ownerOpenId, ownerOpenId)).orderBy(desc(atlasMoneyFindings.createdAt)),
       db.select().from(atlasSources).where(eq(atlasSources.ownerOpenId, ownerOpenId)).orderBy(atlasSources.name),
       db.select().from(atlasPreferences).where(eq(atlasPreferences.ownerOpenId, ownerOpenId)).limit(1),
+      db.select().from(atlasLooks).where(eq(atlasLooks.ownerOpenId, ownerOpenId)).orderBy(desc(atlasLooks.createdAt)),
     ]);
-    return { tasks, signals, wardrobe, money, sources, preferences: preferences[0] ?? null };
+    return { tasks, signals, wardrobe, money, sources, preferences: preferences[0] ?? null, looks };
   } catch (error) {
     console.warn("[Atlas] Dashboard unavailable:", error);
     return null;
@@ -192,6 +193,7 @@ export async function createVirtualTryOn(ownerOpenId: string, input: { wardrobeI
     });
     if (!generated.url) throw new Error("Image service returned no result");
     await db.update(atlasTryOns).set({ resultImageRef: generated.url, status: "completed" }).where(and(eq(atlasTryOns.id, tryOnId), eq(atlasTryOns.ownerOpenId, ownerOpenId)));
+    await db.insert(atlasLooks).values({ ownerOpenId, title: `${garment.name} try-on`, vibe: "Generated look", garmentId: input.wardrobeId, personImageRef: input.personImageRef, resultImageRef: generated.url });
     return { id: tryOnId, status: "completed" as const, resultImageRef: generated.url };
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 500) : "Try-on generation failed";
