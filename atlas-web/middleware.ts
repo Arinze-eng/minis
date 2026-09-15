@@ -31,6 +31,10 @@ export default async function middleware(request: NextRequest, event: NextFetchE
   if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY) {
     try {
       const { clerkMiddleware, createRouteMatcher } = await import("@clerk/nextjs/server");
+      const authorizedParties = process.env.ATLAS_PUBLIC_ORIGIN
+        ?.split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean);
       const isProtected = createRouteMatcher([
         "/inbox(.*)",
         "/wardrobe(.*)",
@@ -49,10 +53,13 @@ export default async function middleware(request: NextRequest, event: NextFetchE
         "/api/assets(.*)",
         "/api/gmail(.*)",
       ]);
-      return clerkMiddleware(async (auth0, req, evt) => {
-        if (isProtected(req)) await auth0.protect();
-        return sessionBootstrap(req, evt);
-      })(request, event);
+      return clerkMiddleware(
+        async (auth0, req, evt) => {
+          if (isProtected(req)) await auth0.protect();
+          return sessionBootstrap(req, evt);
+        },
+        authorizedParties?.length ? { authorizedParties } : undefined,
+      )(request, event);
     } catch (e) {
       // Never let auth-provider failures produce a 500 — fail honestly.
       console.error("clerk middleware failure", e);
