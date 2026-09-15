@@ -30,7 +30,7 @@ describe("Atlas integration secrets", () => {
     expect(response.ok, `SerpApi account endpoint returned HTTP ${response.status}`).toBe(true);
   }, 30_000);
 
-  it("validates Plaid Sandbox with a read-only item lookup", async () => {
+  it.skipIf(process.env.ATLAS_ENABLE_PLAID !== "true")("validates Plaid Sandbox with a read-only item lookup", async () => {
     const response = await fetch("https://sandbox.plaid.com/item/get", {
       method: "POST",
       headers: { "content-type": "application/json" },
