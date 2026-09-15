@@ -1,49 +1,35 @@
 services:
   - type: web
-    name: atlas-drip-runtime
+    name: atlas-web
     runtime: docker
-    plan: free
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /
+    dockerContext: .
+    plan: free
+    region: frankfurt
     autoDeploy: true
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
         sync: false
-      - key: JWT_SECRET
+      - key: ATLAS_SESSION_SECRET
         generateValue: true
-      - key: VITE_APP_ID
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
         sync: false
-      - key: OAUTH_SERVER_URL
-        value: https://api.manus.im
-      - key: VITE_OAUTH_PORTAL_URL
+      - key: CLERK_SECRET_KEY
         sync: false
-      - key: OWNER_OPEN_ID
-        sync: false
-      - key: OWNER_NAME
-        sync: false
-      - key: BUILT_IN_FORGE_API_URL
-        sync: false
-      - key: BUILT_IN_FORGE_API_KEY
-        sync: false
-      - key: ATLAS_MODEL_PROVIDER
-        value: groq
-      - key: ATLAS_MODEL_ID
-        value: openai/gpt-oss-120b
-      - key: GROQ_API_KEY
-        sync: false
-      - key: ATLAS_SERPAPI_API_KEY
-        sync: false
-      - key: ATLAS_ENABLE_SERPAPI
-        value: "false"
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: ATLAS_ENABLE_TELEGRAM_DELIVERY
-        value: "false"
-      - key: TELEGRAM_BOT_TOKEN
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
         sync: false

@@ -1,27 +1,23 @@
-FROM node:22-bookworm-slim AS build
+FROM node:22-bookworm-slim AS deps
+WORKDIR /app/atlas-web
+COPY atlas-web/package.json atlas-web/package-lock.json ./
+RUN npm ci
 
-WORKDIR /app
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-RUN corepack enable
+FROM node:22-bookworm-slim AS builder
+WORKDIR /app/atlas-web
+COPY --from=deps /app/atlas-web/node_modules ./node_modules
+COPY atlas-web/ ./
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run typecheck && npm test && npm run build
 
-COPY package.json pnpm-lock.yaml ./
-COPY patches ./patches
-RUN pnpm install --frozen-lockfile
-
-COPY . .
-RUN pnpm check && pnpm build
-
-FROM node:22-bookworm-slim AS runtime
-
-WORKDIR /app
+FROM node:22-bookworm-slim AS runner
+WORKDIR /app/atlas-web
 ENV NODE_ENV=production
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-RUN corepack enable
-
-COPY --from=build /app/package.json /app/pnpm-lock.yaml ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/drizzle ./drizzle
-
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=builder /app/atlas-web/package.json ./package.json
+COPY --from=builder /app/atlas-web/node_modules ./node_modules
+COPY --from=builder /app/atlas-web/.next ./.next
+COPY --from=builder /app/atlas-web/public ./public
+COPY --from=builder /app/atlas-web/next.config.ts ./next.config.ts
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["npm", "run", "start"]

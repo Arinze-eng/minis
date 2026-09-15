@@ -1,0 +1,307 @@
+/* Wardrobe studio. */
+
+.wardrobe-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-12);
+}
+
+.demo-note {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.85rem;
+  background: color-mix(in srgb, var(--color-alert) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-alert) 45%, transparent);
+  border-radius: var(--radius-control);
+}
+
+.wardrobe-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.wardrobe-head h1 {
+  font-size: 1.8rem;
+}
+
+.btn-primary,
+.btn-secondary {
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.btn-primary {
+  background: var(--color-good);
+  color: var(--color-on-good);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-line);
+}
+
+/* Confirmation queue */
+.confirm-queue {
+  border: 1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.confirm-queue h2 {
+  font-size: 1.02rem;
+  margin-bottom: var(--space-3);
+}
+
+.queue-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  text-decoration: none;
+  color: inherit;
+}
+
+.queue-name {
+  font-weight: 600;
+}
+
+.queue-detail {
+  color: var(--color-ink-muted);
+  font-size: 0.9rem;
+}
+
+.queue-cta {
+  color: var(--color-accent-deep);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Filter rail */
+.filter-rail {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pill {
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+  text-decoration: none;
+  background: var(--color-surface-raised);
+  transition: background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.pill:hover {
+  border-color: var(--color-accent);
+}
+
+.pill-active {
+  background: var(--color-chrome);
+  color: var(--color-on-good);
+  border-color: var(--color-on-good);
+}
+
+.search-form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.search-form input[type="search"] {
+  flex: 1;
+  max-width: 420px;
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 8px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+}
+
+/* Garment grid */
+.garment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-4);
+}
+
+.garment-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.garment-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+.garment-media {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--color-accent) 9%, transparent) 0 12px,
+    transparent 12px 24px
+  );
+}
+
+.garment-media-letter {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--color-accent-deep);
+}
+
+.garment-body {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.garment-body h3 {
+  font-size: 1rem;
+  margin-bottom: var(--space-1);
+}
+
+.garment-tags {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--color-ink-muted);
+}
+
+.garment-occasions {
+  margin: 2px 0 var(--space-3);
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+  text-transform: capitalize;
+}
+
+.garment-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cpw-pill,
+.wear-pill {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cpw-pill {
+  background: color-mix(in srgb, var(--color-good) 22%, transparent);
+  color: var(--color-ink);
+}
+
+.cpw-good {
+  background: var(--color-good);
+  color: var(--color-on-good);
+}
+
+.cpw-unknown {
+  background: transparent;
+  border: 1px dashed var(--color-line);
+  color: var(--color-ink-muted);
+}
+
+.wear-pill {
+  background: transparent;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-muted);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius-card);
+}
+
+.empty-state h2 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-2);
+}
+
+.empty-state p {
+  color: var(--color-ink-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.wardrobe-footnote {
+  margin-top: var(--space-6);
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.garment-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.garment-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  background: transparent;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: color var(--dur-fast) ease-in-out, border-color var(--dur-fast) ease-in-out;
+}
+
+.garment-delete:hover {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+}
+
+/* Real photo media: object-fit cover inside the existing media slot. */
+img.garment-media-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: var(--color-surface-raised);
+}

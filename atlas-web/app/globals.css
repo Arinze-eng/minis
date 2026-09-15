@@ -1,0 +1,244 @@
+/* ============================================================================
+   Atlas theme engine — single-point dual-theme tokens.
+
+   One palette, two modes, zero duplication: every color is declared once via
+   light-dark() (with a static light fallback for browsers without support).
+   The pre-hydration ThemeScript sets data-theme so the mode is correct at
+   first paint; light-dark() resolves against the used color-scheme.
+
+   - Light "Atelier Editorial": warm porcelain paper, white cards, charcoal ink.
+   - Dark  "Atlas Night": warm basalt — harmonized with the paper family, not
+     a gray void. Parchment ink, warm amber chrome accents.
+
+   Rules:
+   - Components consume ONLY semantic tokens (--color-*, --shadow-*); raw hex
+     values never appear outside this file (brand marks exempt).
+   - Contrast: every on-* token is paired with its background (WCAG AA); muted
+     ink is >= 4.5:1 on both surfaces.
+   - Motion: 150ms color transitions; prefers-reduced-motion collapses all.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Static light fallback (used only where light-dark() is unsupported). */
+  --color-bg: #f9f9fb;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-chrome: #14161c;
+  --color-chrome-raised: #1d2029;
+  --color-on-chrome: #f4f2ed;
+  --color-on-chrome-muted: rgba(244, 242, 237, 0.64);
+  --color-chrome-line: rgba(255, 255, 255, 0.09);
+  --color-ink: #121316;
+  --color-ink-muted: #5e6472;
+  --color-line: rgba(0, 0, 0, 0.06);
+  --color-line-strong: rgba(0, 0, 0, 0.12);
+  --color-accent: #3b82f6;
+  --color-accent-deep: #2563eb;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: rgba(59, 130, 246, 0.1);
+  --color-alert: #d97706;
+  --color-alert-deep: #b45309;
+  --color-on-alert: #ffffff;
+  --color-alert-soft: rgba(217, 119, 6, 0.1);
+  --color-good: #059669;
+  --color-good-deep: #047857;
+  --color-on-good: #ffffff;
+  --color-good-soft: rgba(5, 150, 105, 0.1);
+  --color-danger: #dc2626;
+  --color-on-danger: #ffffff;
+  --color-danger-soft: rgba(220, 38, 38, 0.08);
+  --color-lavender: #7c6fb0;
+  --color-lavender-soft: rgba(124, 111, 176, 0.12);
+  --shadow-card: 0 1px 2px rgba(15, 17, 21, 0.04), 0 2px 8px rgba(15, 17, 21, 0.04);
+  --shadow-pop: 0 4px 12px rgba(15, 17, 21, 0.08), 0 12px 32px rgba(15, 17, 21, 0.12);
+  --shadow-drawer: -24px 0 64px rgba(15, 17, 21, 0.24);
+}
+
+@supports (color: light-dark(#fff, #000)) {
+  :root {
+    color-scheme: light dark;
+
+    /* --- Surfaces --------------------------------------------------------- */
+    --color-bg: light-dark(#f9f9fb, #141311);        /* warm basalt, never flat black */
+    --color-surface: light-dark(#ffffff, #1e1c19);   /* warm low-sheen slate */
+    --color-surface-raised: light-dark(#ffffff, #272421);
+    --color-chrome: light-dark(#14161c, #0e0d0b);    /* nav dock/tab bar */
+    --color-chrome-raised: light-dark(#1d2029, #1b1916);
+    --color-on-chrome: light-dark(#f4f2ed, #f2efe8); /* parchment on basalt */
+    --color-on-chrome-muted: light-dark(rgba(244, 242, 237, 0.64), rgba(242, 239, 232, 0.66));
+    --color-chrome-line: light-dark(rgba(255, 255, 255, 0.09), rgba(243, 230, 205, 0.1));
+
+    /* --- Ink -------------------------------------------------------------- */
+    --color-ink: light-dark(#121316, #f0ede6);       /* parchment ink */
+    --color-ink-muted: light-dark(#5e6472, #a8a294); /* ash — AA on both surfaces */
+    --color-line: light-dark(rgba(0, 0, 0, 0.06), rgba(243, 230, 205, 0.1));
+    --color-line-strong: light-dark(rgba(0, 0, 0, 0.12), rgba(243, 230, 205, 0.18));
+
+    /* --- Accents (adapt per mode) ----------------------------------------- */
+    --color-accent: light-dark(#3b82f6, #8db8f8);    /* indigo cobalt / sky cobalt */
+    --color-accent-deep: light-dark(#2563eb, #b3ccf9);
+    --color-on-accent: light-dark(#ffffff, #0b1220);
+    --color-accent-soft: light-dark(rgba(59, 130, 246, 0.1), rgba(141, 184, 248, 0.16));
+
+    --color-alert: light-dark(#d97706, #f0a13c);     /* amber / warm amber */
+    --color-alert-deep: light-dark(#b45309, #f7bd6b);
+    --color-on-alert: light-dark(#ffffff, #211603);
+    --color-alert-soft: light-dark(rgba(217, 119, 6, 0.1), rgba(240, 161, 60, 0.16));
+
+    --color-good: light-dark(#059669, #4ade80);      /* emerald / mint */
+    --color-good-deep: light-dark(#047857, #86efac);
+    --color-on-good: light-dark(#ffffff, #052012);
+    --color-good-soft: light-dark(rgba(5, 150, 105, 0.1), rgba(74, 222, 128, 0.16));
+
+    --color-danger: light-dark(#dc2626, #f87171);
+    --color-on-danger: light-dark(#ffffff, #2a0505);
+    --color-danger-soft: light-dark(rgba(220, 38, 38, 0.08), rgba(248, 113, 113, 0.16));
+
+    --color-lavender: light-dark(#7c6fb0, #b5a8e0);  /* decorative second voice */
+    --color-lavender-soft: light-dark(rgba(124, 111, 176, 0.12), rgba(181, 168, 224, 0.16));
+
+    /* --- Elevation (tinted shadows) ---------------------------------------- */
+    --shadow-card: light-dark(
+      0 1px 2px rgba(15, 17, 21, 0.04), 0 2px 8px rgba(15, 17, 21, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4)
+    );
+    --shadow-pop: light-dark(
+      0 4px 12px rgba(15, 17, 21, 0.08), 0 12px 32px rgba(15, 17, 21, 0.12),
+      0 4px 12px rgba(0, 0, 0, 0.55), 0 12px 32px rgba(0, 0, 0, 0.6)
+    );
+    --shadow-drawer: light-dark(-24px 0 64px rgba(15, 17, 21, 0.24), -24px 0 64px rgba(0, 0, 0, 0.65));
+  }
+}
+
+/* Explicit user choice overrides the OS preference for light-dark(). */
+[data-theme="light"] {
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* --- Typography / space / motion tokens (mode-independent) ------------------ */
+
+:root {
+  --font-display: var(--font-space-grotesk), "DM Sans", system-ui, sans-serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+
+  --radius-control: 8px;
+  --radius-card: 14px;
+  --radius-feature: 20px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --dur-fast: 150ms;
+  --dur-move: 240ms;
+  --dur-drawer: 280ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* --- Base ------------------------------------------------------------------ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--dur-fast) ease-in-out,
+    color var(--dur-fast) ease-in-out;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  /* Tactile press (secondary action principle): a subtle scale-down that
+     reads as a physical push. Collapsed under reduced-motion below. */
+  transition: transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) ease-in-out,
+    border-color var(--dur-fast) ease-in-out,
+    color var(--dur-fast) ease-in-out;
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Shared card entrance: soft rise, applied per-surface via local CSS. */
+@keyframes atlas-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Explicit theme choice (ThemeToggle): the persisted data-theme attribute is
+   mapped onto the used color-scheme so every light-dark() token resolves to
+   the chosen mode on every page. No attribute = follow the OS
+   (color-scheme: light dark on :root above).
+   --------------------------------------------------------------------------- */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}

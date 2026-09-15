@@ -1,4 +1,6 @@
-# Render deployment
+# Render deployment (superseded)
+
+> The Vite/Express/Drizzle deployment described below is legacy audit material. The production service is now `atlas-web`, built by the repository root `Dockerfile` and configured in `render.yaml`. See `ATLAS_MIGRATION.md` and `atlas-web/README.md` for the authoritative runbook.
 
 ## Recommended service
 

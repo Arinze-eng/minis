@@ -1,0 +1,9 @@
+# atlas-web dependencies are managed with bun; keep the lockfile out of git
+# the same way the existing webui/ does. No secrets belong in this directory.
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+atlas-web/.atlas-dev-session-secret
