@@ -1,11 +1,18 @@
 import { useState } from "react";
-import { Bell, ChevronRight, Compass, LayoutDashboard, Menu, MessageCircle, Settings2, Sparkles, Target, X } from "lucide-react";
+import { Bell, ChevronRight, CircleDollarSign, Compass, LayoutDashboard, ListChecks, Menu, MessageCircle, Shirt, Settings2, Sparkles, Target, TrainFront, UploadCloud } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const navigation = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
+  { label: "Inbox", href: "/inbox", icon: ListChecks },
   { label: "Ask Drip", href: "/ask", icon: MessageCircle },
   { label: "Research", href: "/research", icon: Compass },
+  { label: "Looks", href: "/looks", icon: Shirt },
+  { label: "Wardrobe", href: "/wardrobe", icon: UploadCloud },
+  { label: "Money review", href: "/money", icon: CircleDollarSign },
+  { label: "Tasks", href: "/tasks", icon: ListChecks },
+  { label: "Travel", href: "/travel", icon: TrainFront },
+  { label: "Sources", href: "/sources", icon: Compass },
   { label: "Settings", href: "/settings", icon: Settings2 },
 ];
 

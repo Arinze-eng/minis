@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Ask from "./pages/Ask";
 import Home from "./pages/Home";
+import { InboxPage, LooksPage, MoneyPage, SourcesPage, TasksPage, TravelPage, WardrobePage } from "./pages/RepoPages";
 import Research from "./pages/Research";
 import Settings from "./pages/Settings";
 
@@ -16,6 +17,13 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/ask"} component={Ask} />
       <Route path={"/research"} component={Research} />
+      <Route path={"/inbox"} component={InboxPage} />
+      <Route path={"/looks"} component={LooksPage} />
+      <Route path={"/wardrobe"} component={WardrobePage} />
+      <Route path={"/money"} component={MoneyPage} />
+      <Route path={"/sources"} component={SourcesPage} />
+      <Route path={"/tasks"} component={TasksPage} />
+      <Route path={"/travel"} component={TravelPage} />
       <Route path={"/settings"} component={Settings} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
