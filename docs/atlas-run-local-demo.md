@@ -1,6 +1,6 @@
-# Atlas Local Full-Stack and Demo Runbook
+# Atlas Local Full-Stack Runbook
 
-This runbook explains how to run the current repository locally for development, testing, Telegram interaction, and a hackathon demo.
+This runbook explains how to run the repository locally for development, testing, Telegram interaction, and the Atlas agent product.
 
 ## Architecture in one view
 
@@ -27,7 +27,7 @@ scripts/atlas_demo.py
   -> typed recommendation
 ```
 
-The existing nanobot gateway already serves the normal WebUI and Telegram experience. The Atlas backend is implemented as a policy-controlled service/demo path. The next integration phase is to route WebUI and Telegram Atlas requests through `AtlasService` so that Atlas evidence cards and approval cards appear directly in those channels.
+The nanobot gateway owns the Python agent runtime, channels, sessions, automations, MCP, and provider routing. `atlas-web` is the production browser surface: its Next.js Route Handlers call the same authenticated Atlas store and policy boundary, with Postgres as the durable store when `DATABASE_URL` is configured. Telegram and the browser therefore share the same consent and capability model even though they use different presentation channels.
 
 ## Before starting
 

@@ -11,7 +11,7 @@ cd /path/to/minis
 On Windows Git Bash, use the Windows checkout path, for example:
 
 ```bash
-cd ~/Documents/chinaza/builds/hackathon/minis
+cd ~/Documents/projects/minis
 ```
 
 ## 2. Install dependencies
@@ -73,7 +73,7 @@ Look for:
 
 ## 5. Prove the real Atlas Task Start path
 
-If consent has not been recorded for the local demo user:
+If consent has not been recorded for the local development user:
 
 ```bash
 uv run --no-sync python scripts/atlas_demo.py \
@@ -90,7 +90,7 @@ uv run --no-sync python scripts/atlas_demo.py \
   --query "What should I do next?"
 ```
 
-Use JSON output when collecting redacted evidence for the hackathon record:
+Use JSON output when collecting redacted verification evidence:
 
 ```bash
 uv run --no-sync python scripts/atlas_demo.py \
@@ -117,7 +117,7 @@ uv run --no-sync pytest tests/atlas/test_connector_smoke.py \
   -k telegram -m atlas_smoke -v
 ```
 
-This uses the read-only `getMe` health operation. The demo script itself keeps `send_flag=False`.
+This uses the read-only `getMe` health operation. The verification script itself keeps `send_flag=False`.
 
 ## 8. Test the application without real providers
 
@@ -139,31 +139,43 @@ uv run --no-sync pytest tests/channels -q
 uv run --no-sync pytest -q --maxfail=1
 ```
 
-Run the WebUI checks:
+Run the Atlas Web checks:
 
 ```bash
-cd webui
-bun install --frozen-lockfile
-bun run lint
-bun run test:coverage
-bun run build
+cd atlas-web
+npm ci
+npm run typecheck
+npm run build
+npm run test
 ```
 
-## 10. Start the existing WebUI
+## 10. Start Atlas locally
 
-From the repository root:
+Start the Python runtime and its channels from the repository root when you
+need the agent loop, Telegram, or MCP services:
 
 ```bash
 uv run nanobot webui
 ```
 
-The normal local URL is:
+The normal nanobot gateway URL is:
 
 ```text
 http://127.0.0.1:8765
 ```
 
-Use the existing WebUI for normal nanobot chat and settings. Atlas backend demonstrations remain available through `scripts/atlas_demo.py` until the Atlas Inbox is wired into the WebUI.
+Start the production browser surface separately from `atlas-web`:
+
+```bash
+cd atlas-web
+npm run dev
+```
+
+Atlas Web uses the same authenticated Atlas store and policy boundary as the
+agent runtime. Set `DATABASE_URL` to use Postgres; without it, development uses
+the explicitly labelled local store. The browser calls the Next.js `/api/*`
+Route Handlers, which bind requests to the signed-in principal before reading
+or mutating data.
 
 ## 11. Persistent memory
 

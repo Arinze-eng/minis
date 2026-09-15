@@ -13,9 +13,10 @@ export default async function SourcesPage() {
   const principal = await principalFromCookies();
   const { store } = getStore();
 
-  // Latest scan job used to determine Gmail connected state in the grid.
-  const scanJob = await store.latestScanJob(principal.userId, "gmail");
-  const gmailConnected = scanJob?.status === "completed";
+  // Authorization state is distinct from scan state: a newly connected user
+  // should see Gmail as connected before the first scan completes.
+  const connection = await store.getSourceConnection(principal.userId, "gmail");
+  const gmailConnected = connection?.status === "connected";
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">

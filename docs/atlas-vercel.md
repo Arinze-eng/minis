@@ -4,14 +4,14 @@
 
 Vercel can host a frontend or a thin API layer for Atlas, but it is not the best first host for the complete Python nanobot gateway, Strands runtime, Telegram worker, and background Drip Advice process.
 
-The existing repository already has a Docker and Render deployment path. For the hackathon MVP, keep the Python Atlas backend, Strands agent, connector credentials, Telegram channel, and background runtime together on the existing container host. Use Vercel only if the team deliberately separates the frontend from that backend.
+The existing repository already has a Docker and Render deployment path. The current Atlas Web product is a Next.js full-stack service: the browser UI and authenticated `/api/*` Route Handlers deploy together, while the Python nanobot runtime remains the source of truth for agent channels, MCP, and provider execution.
 
 ## Why Vercel can help
 
 Vercel is a good fit for:
 
 - a React/Vite or Next.js frontend;
-- a public demo page;
+- a public landing page;
 - a thin request proxy;
 - preview deployments for UI work;
 - static assets and edge-delivered frontend code.
@@ -33,7 +33,7 @@ Atlas currently includes:
 
 A Vercel serverless function is request-scoped and should not be used as the sole home for a continuously running Telegram polling worker, a persistent nanobot gateway, a local MCP process, or an in-memory background scheduler. Timeouts, cold starts, stateless execution, and provider secret handling also complicate the first demo.
 
-## Recommended topology for the hackathon
+## Recommended topology
 
 ```text
 Vercel (optional)
@@ -88,9 +88,9 @@ For low-frequency digests, a backend cron or managed scheduler can trigger a bou
 
 Do not rely on a Vercel function staying alive after the response. Do not run Telegram polling inside a request handler. Use the existing gateway/container or a separately managed worker for continuous channel behavior.
 
-## Cost and hackathon recommendation
+## Deployment recommendation
 
-For the current free-first hackathon build:
+For the current product build:
 
 1. Keep the existing local/container deployment as the primary working path.
 2. Use free-tier Groq/Gemini and read-only/sandbox connectors.

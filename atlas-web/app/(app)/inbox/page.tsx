@@ -18,13 +18,19 @@ function SignalCard({ card }: { card: SignalCard }) { const tone = URGENCY_STYLE
 export default async function InboxPage() {
   const principal = await principalFromCookies();
   const { store, mode } = getStore();
-  const [rows, garments, findings, latestScan] = await Promise.all([store.listSignals(principal.userId), store.listGarments(principal.userId), store.listFindings(principal.userId), store.latestScanJob(principal.userId, "gmail")]);
+  const [rows, garments, findings, connection, latestScan] = await Promise.all([
+    store.listSignals(principal.userId),
+    store.listGarments(principal.userId),
+    store.listFindings(principal.userId),
+    store.getSourceConnection(principal.userId, "gmail"),
+    store.latestScanJob(principal.userId, "gmail"),
+  ]);
   const cards = rows.filter((signal) => signal.state === "active").map(toCard);
   const { userIdHash } = principalSummary(principal);
   const sources = [
     { name: "Wardrobe", detail: `${garments.filter((item) => item.status === "confirmed").length} confirmed pieces`, connected: garments.length > 0, href: "/wardrobe", icon: Sparkles },
     { name: "Money review", detail: `${findings.filter((item) => item.state !== "ignored").length} findings in your store`, connected: findings.length > 0, href: "/money", icon: Database },
-    { name: "Gmail", detail: latestScan ? `Last scan ${latestScan.status}` : "Not connected", connected: Boolean(latestScan), href: "/sources", icon: CircleDashed },
+    { name: "Gmail", detail: connection?.status === "connected" ? (latestScan ? `Last scan ${latestScan.status}` : "Connected · ready to scan") : "Not connected", connected: connection?.status === "connected", href: "/sources", icon: CircleDashed },
   ];
 
   return <div className="relative mx-auto max-w-[1440px] px-5 py-7 sm:px-8 sm:py-10 xl:px-12">

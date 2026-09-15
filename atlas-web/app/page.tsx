@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { RouteMark } from "@/components/RouteMark";
 import { Reveal } from "@/components/Reveal";
 import { AuthControls } from "@/components/AuthControls";
+import { LandingPreviewCarousel } from "@/components/LandingPreviewCarousel";
 
 const FEATURES = [
   {
@@ -200,6 +201,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <LandingPreviewCarousel />
 
         {/* ── Proof strip ── */}
         <Reveal delay={0.05}>
