@@ -90,7 +90,7 @@ Atlas uses server-side signed private uploads and opaque asset IDs. The Cloudina
 |---|---:|---|
 | `GOOGLE_CLIENT_ID` | For Gmail | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | For Gmail | Google OAuth client secret |
-| `GOOGLE_REDIRECT_URI` | For Gmail | Exact callback URL, e.g. `https://minis-1.onrender.com/api/gmail/callback` |
+| `GOOGLE_REDIRECT_URI` | For Gmail | Exact callback URL, e.g. `https://minis-1.onrender.com/api/gmail/callback`; preferred in production |
 
 The Gmail integration is read-only and requires `ENCRYPTION_KEY`. Register the exact redirect URI in Google Cloud Console. Do not enable Gmail until the consent copy, OAuth scopes, redirect URI, and token encryption have been reviewed.
 
@@ -114,7 +114,8 @@ CLOUDINARY_API_SECRET=...
 ```
 
 4. If Gmail is enabled, also set the three `GOOGLE_*` variables.
-5. Save with **Save, rebuild, and deploy**. Render notes that saving without redeploying does not make the new variables available to the running process.
+5. If Gmail is enabled, set `GOOGLE_REDIRECT_URI` to the exact public callback URL, for example `https://minis-1.onrender.com/api/gmail/callback`. Atlas uses this explicit value before request-derived origins, preventing Render's internal `localhost:10000` origin from being sent to Google.
+6. Save with **Save, rebuild, and deploy**. Render notes that saving without redeploying does not make the new variables available to the running process.
 6. Confirm the deployment health check is `/` and that the service listens on Render’s injected `PORT`; do not hard-code a public port.
 
 ## Clerk production setup

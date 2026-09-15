@@ -23,6 +23,12 @@ export function gmailConfigured(): boolean {
 
 /** Where Google must return the user. Registered exactly in Google Cloud. */
 export function gmailRedirectUri(origin: string): string {
+  const configured = process.env.GOOGLE_REDIRECT_URI?.trim();
+  if (configured) return configured;
+
+  const publicOrigin = process.env.ATLAS_PUBLIC_ORIGIN?.split(",")[0]?.trim();
+  if (publicOrigin) return `${publicOrigin.replace(/\/$/, "")}/api/gmail/callback`;
+
   return `${origin}/api/gmail/callback`;
 }
 
