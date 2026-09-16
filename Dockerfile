@@ -1,23 +1,29 @@
-FROM node:22-bookworm-slim AS deps
-WORKDIR /app/atlas-web
-COPY atlas-web/package.json atlas-web/package-lock.json ./
-RUN npm ci
+FROM node:22-bookworm-slim AS build
 
-FROM node:22-bookworm-slim AS builder
-WORKDIR /app/atlas-web
-COPY --from=deps /app/atlas-web/node_modules ./node_modules
-COPY atlas-web/ ./
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run typecheck && npm test && npm run build
+WORKDIR /app
+
+RUN corepack enable
+
+COPY drip/dripadvisor/package.json drip/dripadvisor/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY drip/dripadvisor/ ./
+
+ENV NODE_ENV=production
+RUN pnpm run check
+RUN pnpm run build
 
 FROM node:22-bookworm-slim AS runner
-WORKDIR /app/atlas-web
+
+WORKDIR /app
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-COPY --from=builder /app/atlas-web/package.json ./package.json
-COPY --from=builder /app/atlas-web/node_modules ./node_modules
-COPY --from=builder /app/atlas-web/.next ./.next
-COPY --from=builder /app/atlas-web/public ./public
-COPY --from=builder /app/atlas-web/next.config.ts ./next.config.ts
+ENV NODE_OPTIONS=--enable-source-maps
+
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/client/dist ./client/dist
+
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["node", "dist/index.js"]
