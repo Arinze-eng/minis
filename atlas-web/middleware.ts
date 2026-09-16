@@ -60,9 +60,13 @@ export default async function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ): Promise<Response | null | undefined | void> {
-  if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
-
   if (!clerkKeysPresent()) {
+    // Public pages can render without Clerk when the app is explicitly
+    // unconfigured. When Clerk is configured, they must still pass through
+    // clerkMiddleware so server components such as <Show> receive the
+    // request auth context instead of throwing during the landing render.
+    if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
+
     // Production must never fall back to a forgeable or synthetic principal.
     if (process.env.NODE_ENV === "production") {
       return new NextResponse("Authentication is not configured.", {

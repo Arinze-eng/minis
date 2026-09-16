@@ -115,6 +115,13 @@ describe("Clerk Core 3 auth contract", () => {
     expect(middleware).toContain("return await clerkMiddleware(");
   });
 
+  it("keeps configured public pages inside Clerk middleware", () => {
+    const middleware = read(join(projectRoot, "middleware.ts")).text;
+    const publicPathCheck = middleware.indexOf("if (isPublicPath(request.nextUrl.pathname))");
+    const keyCheck = middleware.indexOf("if (!clerkKeysPresent())");
+    expect(publicPathCheck).toBeGreaterThan(keyCheck);
+  });
+
   it("never caches authenticated HTML in the service worker", () => {
     const serviceWorker = readFileSync(join(projectRoot, "public/sw.js"), "utf8");
     expect(serviceWorker).not.toMatch(/cache\.addAll\([\s\S]*["']\/["']/);
