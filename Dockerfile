@@ -5,6 +5,7 @@ WORKDIR /app
 RUN corepack enable
 
 COPY drip/dripadvisor/package.json drip/dripadvisor/pnpm-lock.yaml ./
+COPY drip/dripadvisor/patches ./patches
 RUN pnpm install --frozen-lockfile
 
 COPY drip/dripadvisor/ ./
