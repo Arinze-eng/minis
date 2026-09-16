@@ -40,8 +40,8 @@ The header identity control shows signed-in / signed-out state on every page, an
 - `/signals/[id]` — signal detail + Why panel + "What Atlas did not do".
 - `/sign-in`, `/sign-up` — Clerk Core 3 auth routes.
 - `/manifest.webmanifest` — installable PWA manifest.
-- `public/sw.js` — service worker: network-first pages, cache-first static
-  shell only, never caches `/api/*` or private responses.
+- `public/sw.js` — service worker: cache-first static assets only; navigations
+  and `/api/*` responses are never cached.
 
 ## Authentication
 
@@ -51,7 +51,9 @@ where data is read (`lib/server/identity.ts`), not asserted by the browser. The
 header always states whether you are signed in, signed out, or running in the
 labelled local dev mode. Without Clerk keys the app runs one labelled
 single-principal session in development and fails closed (`503`) in production.
-See `PRODUCTION_SETUP.md` for the environment matrix.
+The root layout is request-rendered and passes the runtime publishable key
+explicitly, so a Docker build does not freeze an unconfigured auth state into
+the production bundle. See `PRODUCTION_SETUP.md` for the environment matrix.
 
 ## Design system
 Tailwind CSS v4 is the default styling layer. `app/globals.css` owns the

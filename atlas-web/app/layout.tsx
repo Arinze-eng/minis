@@ -5,6 +5,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { ThemeScript } from "@/components/ThemeScript";
 import {
   clerkConfigured,
+  clerkPublishableKey,
   clerkSignInFallbackRedirectUrl,
   clerkSignInUrl,
   clerkSignUpFallbackRedirectUrl,
@@ -13,6 +14,11 @@ import {
 import "./globals.css";
 import "./ui-fixes.css";
 import "./auth.css";
+
+// Clerk credentials are supplied by the runtime in production. Do not let
+// Next.js prerender this layout during the image build, when Render's runtime
+// environment variables are not available yet.
+export const dynamic = "force-dynamic";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -74,6 +80,7 @@ export default function RootLayout({
       <body>
         {withClerk ? (
           <ClerkProvider
+            publishableKey={clerkPublishableKey()}
             signInUrl={clerkSignInUrl()}
             signUpUrl={clerkSignUpUrl()}
             signInFallbackRedirectUrl={clerkSignInFallbackRedirectUrl()}

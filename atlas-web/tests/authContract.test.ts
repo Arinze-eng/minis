@@ -103,4 +103,22 @@ describe("Clerk Core 3 auth contract", () => {
       expect(checksConfig, `${file} imports Clerk without a configuration check`).toBe(true);
     }
   });
+
+  it("keeps runtime Clerk configuration out of the build-time render", () => {
+    const layout = read(join(projectRoot, "app/layout.tsx")).text;
+    expect(layout).toContain('export const dynamic = "force-dynamic"');
+    expect(layout).toContain("publishableKey={clerkPublishableKey()}");
+  });
+
+  it("awaits Clerk middleware so provider failures become the explicit 503", () => {
+    const middleware = read(join(projectRoot, "middleware.ts")).text;
+    expect(middleware).toContain("return await clerkMiddleware(");
+  });
+
+  it("never caches authenticated HTML in the service worker", () => {
+    const serviceWorker = readFileSync(join(projectRoot, "public/sw.js"), "utf8");
+    expect(serviceWorker).not.toMatch(/cache\.addAll\([\s\S]*["']\/["']/);
+    expect(serviceWorker).not.toContain('caches.match("/")');
+    expect(serviceWorker).toMatch(/if \(request\.mode === "navigate"\)\s*\{\s*return;/);
+  });
 });

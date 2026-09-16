@@ -52,6 +52,10 @@ const SESSION_COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 365,
 };
 
+const AUTH_FAILURE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
 export default async function middleware(
   request: NextRequest,
   event: NextFetchEvent,
@@ -61,7 +65,10 @@ export default async function middleware(
   if (!clerkKeysPresent()) {
     // Production must never fall back to a forgeable or synthetic principal.
     if (process.env.NODE_ENV === "production") {
-      return new NextResponse("Authentication is not configured.", { status: 503 });
+      return new NextResponse("Authentication is not configured.", {
+        status: 503,
+        headers: AUTH_FAILURE_HEADERS,
+      });
     }
     return localSessionBootstrap(request);
   }
@@ -73,7 +80,7 @@ export default async function middleware(
       .map((origin) => origin.trim())
       .filter(Boolean);
 
-    return clerkMiddleware(
+    return await clerkMiddleware(
       async (auth, req) => {
         const { isAuthenticated } = await auth();
 
@@ -82,7 +89,7 @@ export default async function middleware(
         if (isApiPath(req.nextUrl.pathname) && !isAuthenticated) {
           return NextResponse.json(
             { error: "unauthenticated", message: "Sign in to continue." },
-            { status: 401 },
+            { status: 401, headers: AUTH_FAILURE_HEADERS },
           );
         }
 
@@ -106,7 +113,10 @@ export default async function middleware(
   } catch (e) {
     // Never let auth-provider failures produce a 500 — fail honestly.
     console.error("clerk middleware failure", e);
-    return new NextResponse("Authentication is temporarily unavailable.", { status: 503 });
+    return new NextResponse("Authentication is temporarily unavailable.", {
+      status: 503,
+      headers: AUTH_FAILURE_HEADERS,
+    });
   }
 }
 

@@ -2,15 +2,15 @@
  * Atlas service worker — deliberate, limited offline behavior.
  *
  * Strategy (threat model §5, product contract §7):
- *  - network-first for navigations and freshness-sensitive reads, with a
- *    short timeout fallback to the cached shell;
+ *  - navigations are never cached: authenticated HTML must not survive a
+ *    sign-out or become visible to a different account on the same browser;
  *  - cache-first ONLY for the versioned static shell (icons, manifest);
  *  - never cache /api/* or anything authenticated/private;
  *  - explicit versioned cache names with old-cache cleanup on activate;
  *  - no background sync of destructive or financial operations (none exist).
  */
 
-const VERSION = "atlas-v5";
+const VERSION = "atlas-v6";
 const SHELL_CACHE = `${VERSION}-shell`;
 
 self.addEventListener("install", (event) => {
@@ -19,7 +19,6 @@ self.addEventListener("install", (event) => {
       .open(SHELL_CACHE)
       .then((cache) =>
         cache.addAll([
-          "/",
           "/manifest.webmanifest",
           "/icons/icon-192.png",
           "/icons/icon-512.png",
@@ -85,20 +84,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first with cached-shell fallback for navigations/pages.
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok && request.mode === "navigate") {
-          const copy = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy));
-        }
-        return response;
-      })
-      .catch(() =>
-        caches
-          .match(request)
-          .then((cached) => cached || caches.match("/")),
-      ),
-  );
+  // Let the browser handle navigations directly. Caching HTML here would
+  // preserve signed-in UI after sign-out and can cross account boundaries on
+  // shared devices, even when the page's API calls are correctly protected.
+  if (request.mode === "navigate") {
+    return;
+  }
 });

@@ -23,6 +23,11 @@ This is expected security behavior, not a UI bug. Set the variables in Render an
   (`lib/server/identity.ts`). The legacy `atlas_session` cookie is no longer
   minted on clerk deployments — middleware clears it if it exists, so a
   signed-out browser cannot carry a stale identity forward.
+- **Runtime configuration is preserved.** The root layout is forced to render
+  per request and passes `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` explicitly to
+  `ClerkProvider`. This matters for the Docker/Render setup: Render supplies
+  the key at runtime, not during the image build, so the build must not
+  prerender the app in local mode.
 - **Protection is resource-based.** `createRouteMatcher()` is deprecated in Core 3
   and is not used. The `(app)` shell calls `assertSignedIn()` (an addition, not a
   replacement), pages call `principalFromCookies()`, and Route Handlers call
@@ -196,6 +201,8 @@ After deployment:
 6. Privacy export/delete behavior is tested with a disposable account.
 7. Gmail remains disconnected until Google credentials, consent, encryption, and redirect URI are configured.
 8. Browser, API, and Render logs contain no secrets or provider tokens.
+9. After signing out, a reload must fetch fresh HTML; the service worker must
+   not serve a previously authenticated page.
 
 ## Official references
 
