@@ -11,6 +11,7 @@ export const THEME_SCRIPT = `(() => {
     const choice = localStorage.getItem("atlas-theme");
     if (choice === "light" || choice === "dark") {
       document.documentElement.setAttribute("data-theme", choice);
+      document.documentElement.classList.toggle("dark", choice === "dark");
     }
   } catch {
     /* private mode etc. — media query in CSS decides */

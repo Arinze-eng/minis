@@ -18,8 +18,10 @@ function apply(choice: ThemeChoice) {
   const root = document.documentElement;
   if (choice === "system") {
     root.removeAttribute("data-theme"); // media query in globals.css decides
+    root.classList.remove("dark");
   } else {
     root.setAttribute("data-theme", choice);
+    root.classList.toggle("dark", choice === "dark");
   }
 }
 

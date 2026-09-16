@@ -185,21 +185,22 @@ export default function PreferencesPage() {
               />
             </label>
 
-            <div className="check-row check-row-disabled">
+            <label className="check-row">
               <span>
                 <span className="row-title">Telegram delivery gate</span>
                 <span className="row-detail">
-                  Not configurable yet — activates when the Telegram channel is
-                  connected and you grant delivery consent.
+                  Save your preference here. Actual delivery remains blocked
+                  unless the server has Telegram configured and the Atlas
+                  consent and policy checks pass.
                 </span>
               </span>
               <input
                 type="checkbox"
-                checked={false}
-                disabled
-                aria-label="Telegram delivery (not yet configurable)"
+                checked={telegramDelivery}
+                onChange={(e) => setTelegramDelivery(e.target.checked)}
+                aria-label="Enable Telegram delivery gate"
               />
-            </div>
+            </label>
           </div>
         </section>
 
