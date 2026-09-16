@@ -98,10 +98,10 @@ export default async function SourcesPage() {
           <a href="https://www.google.com/travel/flights" target="_blank" rel="noreferrer" className="inline-flex w-fit items-center justify-center gap-2 text-[0.87rem] font-semibold px-4 py-2 rounded-lg border border-[var(--color-line-strong)] bg-[var(--color-surface)] text-[var(--color-ink-2)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] no-underline transition-colors">Open Google Flights <ExternalLink size={14} /></a>
         </div>
 
-        {/* Google Tasks — coming soon */}
+        {/* Google Tasks — consent-gated read-only connector */}
         <div
           role="listitem"
-          className="flex flex-col gap-3 bg-[var(--color-surface)] border border-dashed border-[var(--color-line)] rounded-2xl p-5 opacity-70"
+          className="flex flex-col gap-3 bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-pop)]"
         >
           <div className="flex items-center gap-3">
             <div
@@ -118,15 +118,18 @@ export default async function SourcesPage() {
               <span className="font-semibold text-[0.97rem] leading-tight text-[var(--color-ink)]">
                 Google Tasks
               </span>
-              <span className="inline-flex items-center text-[0.73rem] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full w-fit border border-dashed border-[var(--color-line-strong)] text-[var(--color-ink-muted)]">
-                Coming soon
+              <span className="inline-flex items-center text-[0.73rem] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full w-fit bg-[var(--color-good-soft)] text-[var(--color-good-deep)]">
+                Read-only
               </span>
             </div>
           </div>
           <p className="text-[0.87rem] text-[var(--color-ink-muted)] leading-relaxed m-0">
-            Read-only task list. Atlas surfaces your next actionable item
-            without editing or deleting tasks.
+            Read-only task list. Atlas surfaces deadlines — including tax events
+            you add yourself — without editing or deleting tasks.
           </p>
+          <Link href="/tasks" className="inline-flex w-fit items-center justify-center gap-2 text-[0.87rem] font-semibold px-4 py-2 rounded-lg bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-deep)] transition-colors no-underline">
+            Manage Google Tasks
+          </Link>
         </div>
 
         {/* Plaid — coming soon */}

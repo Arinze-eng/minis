@@ -29,6 +29,7 @@ export default function PreferencesPage() {
   const [quietEnd, setQuietEnd] = useState("07:30");
   const [webuiNotifications, setWebuiNotifications] = useState(true);
   const [telegramDelivery, setTelegramDelivery] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState<{ configured: boolean; healthy: boolean; username?: string | null } | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
 
@@ -44,6 +45,8 @@ export default function PreferencesPage() {
         if (typeof p.quietEnd === "string") setQuietEnd(p.quietEnd);
         if (typeof p.webuiNotifications === "boolean") setWebuiNotifications(p.webuiNotifications);
         if (typeof p.telegramDelivery === "boolean") setTelegramDelivery(p.telegramDelivery);
+        const telegram = await fetch("/api/telegram/status", { cache: "no-store" });
+        if (telegram.ok) setTelegramStatus((await telegram.json()) as { configured: boolean; healthy: boolean; username?: string | null });
       } catch {
         setLoadFailed(true);
       }
@@ -189,9 +192,9 @@ export default function PreferencesPage() {
               <span>
                 <span className="row-title">Telegram delivery gate</span>
                 <span className="row-detail">
-                  Save your preference here. Actual delivery remains blocked
-                  unless the server has Telegram configured and the Atlas
-                  consent and policy checks pass.
+                  {telegramStatus?.healthy
+                    ? `Bot @${telegramStatus.username ?? "configured"} is reachable. Delivery still requires Atlas consent and policy checks.`
+                    : "Save your preference here. Delivery remains unavailable until the server has a valid Telegram bot token and the Atlas consent and policy checks pass."}
                 </span>
               </span>
               <input

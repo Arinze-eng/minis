@@ -13,6 +13,7 @@ const GOOGLE_REVOKE = "https://oauth2.googleapis.com/revoke";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
 export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+export const GOOGLE_TASKS_SCOPE = "https://www.googleapis.com/auth/tasks.readonly";
 
 export function gmailConfigured(): boolean {
   return Boolean(
@@ -48,13 +49,14 @@ export function buildAuthorizeUrl(params: {
   state: string;
   codeChallenge: string;
   redirectUri: string;
+  scope?: string;
   loginHint?: string | null;
 }): string {
   const url = new URL(GOOGLE_AUTH);
   url.searchParams.set("client_id", clientId());
   url.searchParams.set("redirect_uri", params.redirectUri);
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", GMAIL_SCOPE);
+  url.searchParams.set("scope", params.scope ?? GMAIL_SCOPE);
   url.searchParams.set("state", params.state);
   url.searchParams.set("code_challenge", params.codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
