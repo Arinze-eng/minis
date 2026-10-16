@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main id="main" className="page page-narrow">
+    <div className="page page-narrow">
       <div className="page-head">
         <div>
           <p className="eyebrow">
@@ -41,6 +41,6 @@ export default function PrivacyPage() {
           operations include a short undo window instead of a prompt.
         </p>
       </section>
-    </main>
+    </div>
   );
 }

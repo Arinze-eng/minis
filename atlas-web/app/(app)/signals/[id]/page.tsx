@@ -36,7 +36,7 @@ export default async function SignalDetailPage({
           : null;
 
   return (
-    <main id="main" className="page page-narrow">
+    <div className="page page-narrow">
       <p className="signal-crumb">
         <Link href="/inbox">← Inbox</Link>
       </p>
@@ -111,6 +111,6 @@ export default async function SignalDetailPage({
           <p className="next-note">Store mode: local file (this device).</p>
         ) : null}
       </article>
-    </main>
+    </div>
   );
 }

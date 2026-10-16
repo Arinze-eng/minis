@@ -7,6 +7,7 @@ import { principalFromCookies, principalSummary } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
 import { CommandStrip } from "./CommandStrip";
 import { MorningBriefing } from "./MorningBriefing";
+import "./inbox.css";
 
 export const metadata: Metadata = { title: "Inbox" };
 
@@ -99,7 +100,7 @@ export default async function InboxPage() {
   const { userIdHash } = principalSummary(principal);
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-8 lg:px-8">
+    <div className="page">
       {/* ------------------------------------------------------------------ */}
       {/* Page header                                                        */}
       {/* ------------------------------------------------------------------ */}
@@ -108,7 +109,7 @@ export default async function InboxPage() {
           {formatLongDate(new Date())}
         </p>
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-ink)]">
+          <h1 className="large-title">
             Inbox
           </h1>
           {cards.length > 0 && (

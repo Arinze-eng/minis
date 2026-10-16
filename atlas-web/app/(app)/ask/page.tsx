@@ -66,7 +66,7 @@ export default function AskAtlasPage() {
   };
 
   return (
-    <main id="main" className="page page-narrow">
+    <div className="page page-narrow">
       <div className="page-head">
         <div>
           <p className="eyebrow">
@@ -236,6 +236,6 @@ export default function AskAtlasPage() {
           </div>
         </section>
       ) : null}
-    </main>
+    </div>
   );
 }

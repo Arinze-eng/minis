@@ -49,7 +49,7 @@ export default async function AddGarmentPage({
   }
 
   return (
-    <main id="main" className="page page-narrow">
+    <div className="page page-narrow">
       <p className="crumb">
         <Link href="/wardrobe">← Wardrobe</Link>
       </p>
@@ -61,6 +61,6 @@ export default async function AddGarmentPage({
         consent-gated, and you can delete it at any time.
       </p>
       <CaptureFlow initialPending={pendingForReview} />
-    </main>
+    </div>
   );
 }

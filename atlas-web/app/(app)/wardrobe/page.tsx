@@ -107,7 +107,7 @@ export default async function WardrobePage({
     filters.query !== "";
 
   return (
-    <main id="main" className="max-w-[1200px] mx-auto px-6 py-8">
+    <div className="page">
       {/* Page header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
@@ -115,7 +115,7 @@ export default async function WardrobePage({
             <Shirt size={14} aria-hidden="true" />
             Wardrobe · cost per wear
           </p>
-          <h1 className="text-2xl font-bold text-[var(--color-ink)] leading-tight">
+          <h1 className="large-title">
             Your Wardrobe
           </h1>
           <p className="mt-1 text-sm text-[var(--color-ink-muted)] max-w-prose">
@@ -330,6 +330,6 @@ export default async function WardrobePage({
         Cost per wear uses confirmed wear events only — never estimates dressed
         up as data. Prices are what you entered, if you entered them.
       </p>
-    </main>
+    </div>
   );
 }

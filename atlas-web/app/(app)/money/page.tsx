@@ -26,14 +26,14 @@ export default async function MoneyPage() {
   const trials = findings.filter((f) => f.trialEnd);
 
   return (
-    <main id="main" className="max-w-[1200px] mx-auto px-6 py-8">
+    <div className="page">
       {/* Page header */}
       <div className="mb-6">
         <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-ink-muted)] uppercase tracking-wider mb-1">
           <Wallet size={14} aria-hidden="true" />
           Money review · read-only evidence
         </p>
-        <h1 className="text-2xl font-bold text-[var(--color-ink)] leading-tight">
+        <h1 className="large-title">
           Money review
         </h1>
         <p className="mt-1 text-sm text-[var(--color-ink-muted)] max-w-prose">
@@ -179,7 +179,7 @@ export default async function MoneyPage() {
           </div>
         </details>
       ) : null}
-    </main>
+    </div>
   );
 }
 

@@ -1,195 +1,144 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   Atlas design tokens — consumed by both Tailwind utilities (via @theme) and
-   plain CSS classes that ship with components.
+   Atlas design tokens, following Apple's published rules (Human Interface
+   Guidelines + WWDC "Designing Fluid Interfaces"):
+   - semantic colors that hold in light, dark and increased contrast;
+     text pairs meet 4.5:1 (computed from hex, not eyeballed)
+   - the platform system font; 44px touch targets, 11px minimum text
+   - critically damped motion; press feedback scales to 0.97
+   Consumed by Tailwind (@theme) and the component classes at the end.
    ============================================================================ */
 
 @theme {
-  /* Fonts */
-  --font-display: var(--font-space-grotesk), "DM Sans", system-ui, sans-serif;
-  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, sans-serif;
 
-  /* Spacing */
-  --spacing-px: 1px;
-  --spacing-0: 0px;
-  --spacing-0\.5: 2px;
-  --spacing-1: 4px;
-  --spacing-1\.5: 6px;
-  --spacing-2: 8px;
-  --spacing-2\.5: 10px;
-  --spacing-3: 12px;
-  --spacing-3\.5: 14px;
-  --spacing-4: 16px;
-  --spacing-5: 20px;
-  --spacing-6: 24px;
-  --spacing-7: 28px;
-  --spacing-8: 32px;
-  --spacing-9: 36px;
-  --spacing-10: 40px;
-  --spacing-11: 44px;
-  --spacing-12: 48px;
-  --spacing-14: 56px;
-  --spacing-16: 64px;
-  --spacing-20: 80px;
-  --spacing-24: 96px;
-  --spacing-28: 112px;
-  --spacing-32: 128px;
-
-  /* Border radius */
   --radius-none: 0px;
-  --radius-sm: 4px;
-  --radius-DEFAULT: 8px;
+  --radius-sm: 6px;
+  --radius-DEFAULT: 10px;
   --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-2xl: 24px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 22px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(15,17,21,0.04), 0 2px 8px rgba(15,17,21,0.04);
-  --shadow-DEFAULT: 0 2px 8px rgba(15,17,21,0.06), 0 4px 16px rgba(15,17,21,0.06);
-  --shadow-md: 0 4px 12px rgba(15,17,21,0.08), 0 12px 32px rgba(15,17,21,0.12);
-  --shadow-lg: 0 8px 24px rgba(15,17,21,0.12), 0 24px 48px rgba(15,17,21,0.14);
-  --shadow-xl: 0 16px 40px rgba(15,17,21,0.16), 0 40px 80px rgba(15,17,21,0.18);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-DEFAULT: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08);
 
-  /* Animation */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Critically damped feel (no overshoot) for CSS-driven motion. */
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --duration-fast: 150ms;
-  --duration-move: 240ms;
-  --duration-drawer: 280ms;
+  --duration-fast: 100ms;
+  --duration-move: 300ms;
+  --duration-drawer: 350ms;
 }
 
 /* --------------------------------------------------------------------------
-   CSS custom properties — design tokens not in @theme (used in raw CSS and
-   light-dark() calls which Tailwind's @theme doesn't support).
+   Semantic color tokens. light-dark() follows color-scheme, which the
+   appearance control sets via html[data-theme]; "System" leaves it to the OS.
    -------------------------------------------------------------------------- */
 
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 
-  --color-bg:              #f5f5f7;
-  --color-surface:         #ffffff;
-  --color-surface-raised:  #fafafa;
-  --color-chrome:          #111113;
-  --color-chrome-raised:   #1a1a1d;
-  --color-on-chrome:       #f4f2ed;
-  --color-on-chrome-muted: rgba(244,242,237,0.56);
-  --color-chrome-line:     rgba(255,255,255,0.07);
-  --color-ink:             #111116;
-  --color-ink-2:           #3a3a44;
-  --color-ink-muted:       #636874;
-  --color-line:            rgba(0,0,0,0.07);
-  --color-line-strong:     rgba(0,0,0,0.13);
-  --color-accent:          #2563eb;
-  --color-accent-light:    #3b82f6;
-  --color-accent-deep:     #1d4ed8;
+  /* Backgrounds: grouped page, cards, raised fills inside cards */
+  --color-bg:              light-dark(#f2f2f7, #000000);
+  --color-surface:         light-dark(#ffffff, #1c1c1e);
+  --color-surface-raised:  light-dark(#f7f7fa, #2c2c2e);
+  --color-fill:            light-dark(rgba(118,118,128,0.12), rgba(118,118,128,0.24));
+  --color-fill-strong:     light-dark(rgba(118,118,128,0.2), rgba(118,118,128,0.36));
+  --color-segment-thumb:   light-dark(#ffffff, #636366);
+
+  /* Labels */
+  --color-ink:             light-dark(#1d1d1f, #f5f5f7);
+  --color-ink-2:           light-dark(#3a3a3c, #d1d1d6);
+  --color-ink-muted:       light-dark(#6e6e73, #98989d);
+  --color-line:            light-dark(rgba(60,60,67,0.13), rgba(84,84,88,0.4));
+  --color-line-strong:     light-dark(rgba(60,60,67,0.24), rgba(84,84,88,0.7));
+
+  /* Tint. "-deep" variants are the text-safe shades (>=4.5:1 on surface). */
+  --color-accent:          light-dark(#0071e3, #0a84ff);
+  --color-accent-light:    light-dark(#2b8cff, #409cff);
+  --color-accent-deep:     light-dark(#0066cc, #409cff);
   --color-on-accent:       #ffffff;
-  --color-accent-soft:     rgba(37,99,235,0.09);
-  --color-alert:           #d97706;
-  --color-alert-deep:      #b45309;
-  --color-on-alert:        #ffffff;
-  --color-alert-soft:      rgba(217,119,6,0.09);
-  --color-good:            #059669;
-  --color-good-deep:       #047857;
-  --color-on-good:         #ffffff;
-  --color-good-soft:       rgba(5,150,105,0.09);
-  --color-danger:          #dc2626;
+  --color-accent-soft:     light-dark(rgba(0,113,227,0.1), rgba(10,132,255,0.2));
+  --color-alert:           light-dark(#ff9500, #ff9f0a);
+  --color-alert-deep:      light-dark(#b25000, #ffb340);
+  --color-on-alert:        light-dark(#ffffff, #1c0d00);
+  --color-alert-soft:      light-dark(rgba(255,149,0,0.12), rgba(255,159,10,0.2));
+  --color-good:            light-dark(#34c759, #30d158);
+  --color-good-deep:       light-dark(#1f7a34, #30d158);
+  --color-on-good:         light-dark(#ffffff, #002a0c);
+  --color-good-soft:       light-dark(rgba(52,199,89,0.12), rgba(48,209,88,0.18));
+  --color-danger:          light-dark(#ff3b30, #ff453a);
+  --color-danger-deep:     light-dark(#d70015, #ff6961);
   --color-on-danger:       #ffffff;
-  --color-danger-soft:     rgba(220,38,38,0.08);
-  --color-lavender:        #7c3aed;
-  --color-lavender-soft:   rgba(124,58,237,0.09);
-  --color-hero:            #1e3a8a;
-  --color-hero-deep:       #1e2d6b;
-  --color-on-hero:         #eff6ff;
-  --color-on-hero-muted:   rgba(239,246,255,0.72);
-  --color-hero-line:       rgba(255,255,255,0.15);
+  --color-danger-soft:     light-dark(rgba(255,59,48,0.1), rgba(255,69,58,0.18));
+  --color-lavender:        light-dark(#af52de, #bf5af2);
+  --color-lavender-soft:   light-dark(rgba(175,82,222,0.12), rgba(191,90,242,0.2));
 
-  --shadow-card: 0 1px 2px rgba(15,17,21,0.04), 0 2px 8px rgba(15,17,21,0.04);
-  --shadow-pop:  0 4px 12px rgba(15,17,21,0.08), 0 12px 32px rgba(15,17,21,0.12);
-  --shadow-drawer: -8px 0 40px rgba(0,0,0,0.16);
+  /* Older names still referenced by a few surfaces */
+  --color-chrome:          light-dark(#1d1d1f, #1c1c1e);
+  --color-chrome-raised:   #2c2c2e;
+  --color-on-chrome:       #f5f5f7;
+  --color-on-chrome-muted: rgba(245,245,247,0.6);
+  --color-chrome-line:     rgba(255,255,255,0.08);
+  --color-hero:            light-dark(#0071e3, #0a3d7a);
+  --color-hero-deep:       light-dark(#0058b0, #072a55);
+  --color-on-hero:         #ffffff;
+  --color-on-hero-muted:   rgba(255,255,255,0.78);
+  --color-hero-line:       rgba(255,255,255,0.18);
 
-  --radius-control: 8px;
-  --radius-card:    14px;
-  --radius-feature: 20px;
+  /* Floating chrome material (header, tab bar): content scrolls beneath */
+  --material-bar: light-dark(rgba(249,249,251,0.78), rgba(22,22,24,0.72));
 
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
+  --shadow-card: light-dark(0 1px 2px rgba(0,0,0,0.04), 0 0 0 transparent);
+  --shadow-pop:  light-dark(0 8px 24px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.5));
+  --shadow-drawer: -12px 0 40px rgba(0,0,0,0.18);
 
-  --dur-fast: 150ms;
-  --dur-move: 240ms;
-  --dur-drawer: 280ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-control: 10px;
+  --radius-card:    16px;
+  --radius-feature: 22px;
+
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px; --space-20: 80px;
+
+  --dur-fast: 100ms;
+  --dur-move: 300ms;
+  --dur-drawer: 350ms;
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --font-display: var(--font-space-grotesk), "DM Sans", system-ui, sans-serif;
-  --font-body: var(--font-dm-sans), system-ui, sans-serif;
-}
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, sans-serif;
 
-@supports (color: light-dark(#fff, #000)) {
-  :root {
-    color-scheme: light dark;
-
-    --color-bg:              light-dark(#f5f5f7, #111113);
-    --color-surface:         light-dark(#ffffff, #1c1c1e);
-    --color-surface-raised:  light-dark(#fafafa, #242426);
-    --color-chrome:          light-dark(#111113, #090909);
-    --color-chrome-raised:   light-dark(#1a1a1d, #161618);
-    --color-on-chrome:       light-dark(#f4f2ed, #f0ede6);
-    --color-on-chrome-muted: light-dark(rgba(244,242,237,0.56), rgba(240,237,230,0.5));
-    --color-chrome-line:     light-dark(rgba(255,255,255,0.07), rgba(255,255,255,0.06));
-    --color-ink:             light-dark(#111116, #f2f2f7);
-    --color-ink-2:           light-dark(#3a3a44, #d1d1d6);
-    --color-ink-muted:       light-dark(#636874, #8e8e93);
-    --color-line:            light-dark(rgba(0,0,0,0.07), rgba(255,255,255,0.08));
-    --color-line-strong:     light-dark(rgba(0,0,0,0.13), rgba(255,255,255,0.14));
-    --color-accent:          light-dark(#2563eb, #3b82f6);
-    --color-accent-light:    light-dark(#3b82f6, #60a5fa);
-    --color-accent-deep:     light-dark(#1d4ed8, #93c5fd);
-    --color-on-accent:       light-dark(#ffffff, #0b1220);
-    --color-accent-soft:     light-dark(rgba(37,99,235,0.09), rgba(59,130,246,0.14));
-    --color-alert:           light-dark(#d97706, #f59e0b);
-    --color-alert-deep:      light-dark(#b45309, #fbbf24);
-    --color-on-alert:        light-dark(#ffffff, #1c0d00);
-    --color-alert-soft:      light-dark(rgba(217,119,6,0.09), rgba(245,158,11,0.14));
-    --color-good:            light-dark(#059669, #10b981);
-    --color-good-deep:       light-dark(#047857, #34d399);
-    --color-on-good:         light-dark(#ffffff, #021a0e);
-    --color-good-soft:       light-dark(rgba(5,150,105,0.09), rgba(16,185,129,0.14));
-    --color-danger:          light-dark(#dc2626, #ef4444);
-    --color-on-danger:       light-dark(#ffffff, #1e0000);
-    --color-danger-soft:     light-dark(rgba(220,38,38,0.08), rgba(239,68,68,0.14));
-    --color-lavender:        light-dark(#7c3aed, #8b5cf6);
-    --color-lavender-soft:   light-dark(rgba(124,58,237,0.09), rgba(139,92,246,0.14));
-    --color-hero:            light-dark(#1e3a8a, #172554);
-    --color-hero-deep:       light-dark(#1e2d6b, #0f172a);
-    --color-on-hero:         light-dark(#eff6ff, #dbeafe);
-    --color-on-hero-muted:   light-dark(rgba(239,246,255,0.72), rgba(219,234,254,0.68));
-    --color-hero-line:       light-dark(rgba(255,255,255,0.15), rgba(255,255,255,0.12));
-
-    --shadow-card: light-dark(
-      0 1px 2px rgba(15,17,21,0.04), 0 2px 8px rgba(15,17,21,0.04),
-      0 1px 2px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4)
-    );
-    --shadow-pop: light-dark(
-      0 4px 12px rgba(15,17,21,0.08), 0 12px 32px rgba(15,17,21,0.12),
-      0 4px 16px rgba(0,0,0,0.55), 0 16px 40px rgba(0,0,0,0.6)
-    );
-  }
+  --tap: 44px; /* HIG minimum comfortable touch target */
 }
 
 html[data-theme="light"] { color-scheme: light; }
 html[data-theme="dark"]  { color-scheme: dark; }
+
+@media (pointer: fine) {
+  :root { --tap: 36px; } /* precise pointers: desktop control height */
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-line:        light-dark(rgba(60,60,67,0.4), rgba(235,235,245,0.4));
+    --color-line-strong: light-dark(rgba(60,60,67,0.6), rgba(235,235,245,0.6));
+    --color-ink-muted:   light-dark(#48484a, #c7c7cc);
+    --material-bar:      var(--color-surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root { --material-bar: var(--color-surface); }
+}
 
 /* --------------------------------------------------------------------------
    Clerk component theming — maps our tokens onto Clerk's CSS API.
@@ -217,54 +166,71 @@ html[data-theme="dark"]  { color-scheme: dark; }
 }
 
 /* --------------------------------------------------------------------------
-   Base resets and global styles.
+   Base.
    -------------------------------------------------------------------------- */
 
-* { box-sizing: border-box; }
+/* Layered so Tailwind utilities (colors, margins) can override element defaults. */
+@layer base {
+  * { box-sizing: border-box; }
 
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.55;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background-color var(--dur-fast) ease-in-out, color var(--dur-fast) ease-in-out;
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 17px; /* HIG body size on touch devices */
+    line-height: 1.47;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    /* Ease appearance switches so brightness never jumps. */
+    transition: background-color 250ms ease, color 250ms ease;
+  }
+
+  @media (pointer: fine) {
+    body { font-size: 15px; }
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    line-height: 1.15;
+    margin: 0;
+    letter-spacing: -0.02em; /* tighten display sizes */
+  }
+
+  a { color: inherit; }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation; /* no 300ms tap delay */
+  }
+
+  input, select, textarea { font-family: inherit; }
+
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px;
+    margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
 }
 
-h1, h2, h3, h4 {
-  font-family: var(--font-display);
-  line-height: 1.15;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-a { color: inherit; }
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.visually-hidden {
-  position: absolute; width: 1px; height: 1px;
-  margin: -1px; padding: 0; overflow: hidden;
-  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
-}
-
+/* Reduced motion: no slides or springs, only short cross-fades. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -298,11 +264,6 @@ button {
 
 @keyframes drawer-in {
   from { transform: translateX(20px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes drawer-in-left {
-  from { transform: translateX(-20px); opacity: 0; }
   to   { transform: translateX(0); opacity: 1; }
 }
 
@@ -343,4 +304,311 @@ button {
 
 @media (max-width: 640px) {
   .identity .identity-chip, .identity .identity-link { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Components. In a layer so Tailwind utilities on the same element win.
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  /* Page frame and the large-title pattern */
+  .page {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-4) var(--space-12);
+  }
+  @media (min-width: 1024px) {
+    .page { padding: var(--space-8) var(--space-8) var(--space-16); }
+  }
+  .page-narrow { max-width: 720px; }
+  .page-head { margin-bottom: var(--space-6); }
+  .page-head h1, .large-title {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--color-ink);
+  }
+  .page-sub {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-muted);
+    font-size: 15px;
+    line-height: 1.45;
+    max-width: 60ch;
+  }
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+  }
+  .section-header {
+    margin: 0 0 6px;
+    padding: 0 var(--space-4);
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-ink-muted);
+  }
+  .section-footer {
+    margin: 6px 0 0;
+    padding: 0 var(--space-4);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-ink-muted);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-line);
+  }
+  .card-head h2, .card-head h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .card-pad { padding: var(--space-5); }
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-line);
+  }
+
+  /* Buttons: respond on press (scale 0.97, 100ms ease-out) */
+  .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: var(--tap);
+    padding: 0 18px;
+    border-radius: 12px;
+    border: 0;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 100ms ease-out, background-color 150ms ease, color 150ms ease, opacity 150ms ease;
+  }
+  .btn:active:not(:disabled), .btn-primary:active:not(:disabled),
+  .btn-secondary:active:not(:disabled), .btn-ghost:active:not(:disabled),
+  .btn-danger:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled, .btn-primary:disabled, .btn-secondary:disabled,
+  .btn-ghost:disabled, .btn-danger:disabled { opacity: 0.4; cursor: default; }
+
+  .btn { background: var(--color-fill); color: var(--color-ink); }
+  .btn:hover:not(:disabled) { background: var(--color-fill-strong); }
+  .btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
+  .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 88%, black); }
+  .btn-secondary { background: var(--color-accent-soft); color: var(--color-accent-deep); }
+  .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+  .btn-ghost { background: transparent; color: var(--color-accent-deep); padding: 0 10px; }
+  .btn-ghost:hover:not(:disabled) { background: var(--color-fill); }
+  .btn-danger { background: var(--color-danger-soft); color: var(--color-danger-deep); }
+  .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--color-danger) 20%, transparent); }
+
+  /* Press feedback for any custom tappable */
+  .press { transition: transform 100ms ease-out; }
+  .press:active { transform: scale(0.97); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--color-fill);
+    color: var(--color-ink-2);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .badge-accent { background: var(--color-accent-soft); color: var(--color-accent-deep); }
+  .badge-good   { background: var(--color-good-soft);   color: var(--color-good-deep); }
+  .badge-alert  { background: var(--color-alert-soft);  color: var(--color-alert-deep); }
+  .badge-danger { background: var(--color-danger-soft); color: var(--color-danger-deep); }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Forms */
+  .form-stack { display: grid; gap: var(--space-4); }
+  .form-grid { display: grid; gap: var(--space-4); }
+  @media (min-width: 640px) {
+    .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .form-submit { display: flex; justify-content: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field-label { font-size: 13px; font-weight: 500; color: var(--color-ink-2); }
+  .input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 16px; /* >=16px stops iOS zooming on focus */
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  textarea.input { padding: 10px 12px; min-height: 96px; resize: vertical; line-height: 1.45; }
+  .input::placeholder { color: var(--color-ink-muted); }
+  .input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 4px var(--color-accent-soft); }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 44px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .check-row input { width: 20px; height: 20px; accent-color: var(--color-accent); }
+  .check-row-disabled { opacity: 0.5; cursor: default; }
+
+  /* Notices */
+  .notice {
+    padding: var(--space-3) var(--space-4);
+    border-radius: 12px;
+    background: var(--color-fill);
+    color: var(--color-ink);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .notice-accent { background: var(--color-accent-soft); }
+  .notice-good   { background: var(--color-good-soft); }
+  .notice-warn   { background: var(--color-alert-soft); }
+
+  /* Stats */
+  .stat-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .stat {
+    display: grid;
+    gap: 4px;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+  .stat-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .stat-label { font-size: 13px; color: var(--color-ink-muted); }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+    line-height: 1.15;
+  }
+  .stat-note { font-size: 13px; color: var(--color-ink-muted); }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-ink-muted); flex: none; }
+  .stat-dot-accent { background: var(--color-accent); }
+  .stat-dot-good   { background: var(--color-good); }
+  .stat-dot-alert  { background: var(--color-alert); }
+  .stat-skeleton { min-height: 104px; }
+
+  /* Segmented control (HIG): equal segments, raised selected thumb */
+  .segmented {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9px;
+    background: var(--color-fill);
+  }
+  .segmented button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 200ms ease, box-shadow 200ms ease, transform 100ms ease-out;
+  }
+  .segmented button:active { transform: scale(0.97); }
+  .segmented button[aria-checked="true"] {
+    background: var(--color-segment-thumb);
+    font-weight: 600;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04);
+  }
+  @media (pointer: coarse) { .segmented button { min-height: 36px; } }
+
+  /* Inset grouped list (iOS Settings pattern) */
+  .grouped { margin: 0 0 var(--space-8); }
+  .grouped-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--color-surface);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  .grouped-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 44px;
+    padding: 10px var(--space-4);
+    color: var(--color-ink);
+    text-decoration: none;
+    font-size: 17px;
+    transition: background-color 150ms ease;
+  }
+  @media (pointer: fine) { .grouped-row { font-size: 15px; } }
+  a.grouped-row:hover { background: var(--color-fill); }
+  a.grouped-row:active { background: var(--color-fill-strong); }
+  .grouped-list > li + li .grouped-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 57px; /* separator inset to the label, past the icon tile */
+    right: 0;
+    border-top: 1px solid var(--color-line);
+  }
+  .grouped-icon {
+    display: grid;
+    place-items: center;
+    width: 29px;
+    height: 29px;
+    border-radius: 7px;
+    color: #fff;
+    flex: none;
+  }
+  .grouped-label { flex: 1; min-width: 0; }
+  .grouped-detail { color: var(--color-ink-muted); font-size: 15px; }
+  .grouped-chevron { color: var(--color-ink-muted); opacity: 0.6; flex: none; }
+
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  .gauge-wrap { display: grid; place-items: center; }
+  .capture-flow { display: grid; gap: var(--space-5); }
 }

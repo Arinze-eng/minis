@@ -81,7 +81,7 @@ export default function PreferencesPage() {
   };
 
   return (
-    <main id="main" className="page page-narrow">
+    <div className="page page-narrow">
       <div className="page-head">
         <div>
           <p className="eyebrow">
@@ -233,6 +233,6 @@ export default function PreferencesPage() {
           </button>
         </div>
       </form>
-    </main>
+    </div>
   );
 }

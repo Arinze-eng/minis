@@ -86,14 +86,14 @@ export default async function LooksPage({
   const totalCPWBasis = picks.reduce((sum, g) => sum + (g.price ?? 0), 0);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+    <div className="page page-narrow">
       {/* ── Page header ─────────────────────────────────────────────────── */}
       <div className="mb-6">
         <p className="flex items-center gap-1.5 text-[0.72rem] font-bold tracking-widest uppercase text-[var(--color-ink-muted)] mb-2">
           <Shirt size={13} aria-hidden="true" />
           Looks · composed from confirmed pieces
         </p>
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-ink)] mb-2">
+        <h1 className="large-title mb-2">
           Looks
         </h1>
         <p className="text-[0.95rem] text-[var(--color-ink-muted)] leading-relaxed max-w-prose">

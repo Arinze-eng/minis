@@ -4,6 +4,7 @@ import Link from "next/link";
 import { principalFromCookies } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
 import { GmailConnection } from "./GmailConnection";
+import "./sources.css";
 
 export const metadata: Metadata = {
   title: "Sources",
@@ -18,14 +19,14 @@ export default async function SourcesPage() {
   const gmailConnected = scanJob?.status === "completed";
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+    <div className="page page-narrow">
       {/* ── Page header ─────────────────────────────────────────────────── */}
       <div className="mb-8">
         <p className="flex items-center gap-1.5 text-[0.72rem] font-bold tracking-widest uppercase text-[var(--color-ink-muted)] mb-2">
           <Radio size={13} aria-hidden="true" />
           Sources · consented and revocable
         </p>
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-ink)] mb-2">
+        <h1 className="large-title mb-2">
           Sources
         </h1>
         <p className="text-[var(--color-ink-muted)] text-[0.95rem] leading-relaxed max-w-prose">

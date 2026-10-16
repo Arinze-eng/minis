@@ -29,6 +29,9 @@ export function ServiceWorkerRegistration() {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return;
     }
+    // Dev chunks are not content-hashed, so a cache-first worker would serve
+    // stale code after every edit.
+    if (process.env.NODE_ENV !== "production") return;
     if (
       window.location.protocol !== "https:" &&
       window.location.hostname !== "localhost"

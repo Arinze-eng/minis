@@ -4,60 +4,138 @@ import { useCallback, useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 /**
- * Theme control: cycles light → dark → system, persists the explicit choice
- * in localStorage. The pre-hydration FOUC guard in the root layout consumes
- * the same keys, so the toggle only ever refines what is already rendered.
+ * Appearance control: a segmented System / Light / Dark choice (HIG segmented
+ * control, radiogroup semantics). "System" follows the OS and is the default.
+ * The pre-hydration script in ThemeScript reads the same storage key, so
+ * first paint already matches. Every instance stays in sync via an event.
  */
 
-type ThemeChoice = "light" | "dark" | "system";
+type ThemeChoice = "system" | "light" | "dark";
 
 const STORAGE_KEY = "atlas-theme";
-const ORDER: ThemeChoice[] = ["light", "dark", "system"];
+const SYNC_EVENT = "atlas-theme-change";
+const OPTIONS: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
+  { value: "system", label: "System", Icon: Monitor },
+  { value: "light", label: "Light", Icon: Sun },
+  { value: "dark", label: "Dark", Icon: Moon },
+];
 
 function apply(choice: ThemeChoice) {
   const root = document.documentElement;
-  if (choice === "system") {
-    root.removeAttribute("data-theme"); // media query in globals.css decides
-  } else {
-    root.setAttribute("data-theme", choice);
+  if (choice === "system") root.removeAttribute("data-theme");
+  else root.setAttribute("data-theme", choice);
+  // Keep the browser chrome (status bar / tab strip) in step with the page.
+  const dark =
+    choice === "dark" ||
+    (choice === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+    meta.content = dark ? "#000000" : "#f2f2f7";
   }
 }
 
-export function ThemeToggle() {
+function readChoice(): ThemeChoice {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    /* storage blocked: follow the system */
+  }
+  return "system";
+}
+
+function useAppearance(): [ThemeChoice, (next: ThemeChoice) => void] {
   const [choice, setChoice] = useState<ThemeChoice>("system");
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeChoice | null;
-    if (stored && ORDER.includes(stored)) setChoice(stored);
+    setChoice(readChoice());
+    const sync = () => setChoice(readChoice());
+    window.addEventListener(SYNC_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(SYNC_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
-  const cycle = useCallback(() => {
-    setChoice((prev) => {
-      const idx = ORDER.indexOf(prev);
-      const next = ORDER[(idx + 1) % ORDER.length] ?? "system";
-      window.localStorage.setItem(STORAGE_KEY, next);
-      apply(next);
-      return next;
-    });
+  const select = useCallback((next: ThemeChoice) => {
+    try {
+      if (next === "system") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* storage blocked: still apply for this page view */
+    }
+    apply(next);
+    setChoice(next);
+    window.dispatchEvent(new Event(SYNC_EVENT));
   }, []);
 
-  const label =
-    choice === "light"
-      ? "Theme: light (activate to switch to dark)"
-      : choice === "dark"
-        ? "Theme: dark (activate to follow system)"
-        : "Theme: system (activate to switch to light)";
-  const Icon = choice === "light" ? Sun : choice === "dark" ? Moon : Monitor;
+  return [choice, select];
+}
 
+/** Arrow keys move between segments, as a native radiogroup does. */
+function onArrow(e: React.KeyboardEvent, choice: ThemeChoice, select: (c: ThemeChoice) => void) {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  e.preventDefault();
+  const i = OPTIONS.findIndex((o) => o.value === choice);
+  const next = OPTIONS[(i + (e.key === "ArrowRight" ? 1 : OPTIONS.length - 1)) % OPTIONS.length]!;
+  select(next.value);
+  (e.currentTarget.querySelector(`[data-value="${next.value}"]`) as HTMLElement | null)?.focus();
+}
+
+/** Labelled control for Settings. */
+export function AppearanceControl() {
+  const [choice, select] = useAppearance();
   return (
-    <button
-      type="button"
-      className="theme-toggle"
-      onClick={cycle}
-      aria-label={label}
-      title={label}
+    <div
+      role="radiogroup"
+      aria-label="Appearance"
+      className="segmented w-full"
+      onKeyDown={(e) => onArrow(e, choice, select)}
     >
-      <Icon size={16} aria-hidden="true" />
-    </button>
+      {OPTIONS.map(({ value, label, Icon }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          data-value={value}
+          aria-checked={choice === value}
+          tabIndex={choice === value ? 0 : -1}
+          onClick={() => select(value)}
+        >
+          <Icon size={15} aria-hidden="true" />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Compact icon-only variant for toolbars and the landing header. */
+export function ThemeToggle() {
+  const [choice, select] = useAppearance();
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Appearance"
+      className="segmented"
+      onKeyDown={(e) => onArrow(e, choice, select)}
+    >
+      {OPTIONS.map(({ value, label, Icon }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          data-value={value}
+          aria-checked={choice === value}
+          aria-label={label}
+          title={label}
+          tabIndex={choice === value ? 0 : -1}
+          onClick={() => select(value)}
+          style={{ paddingInline: 10 }}
+        >
+          <Icon size={15} aria-hidden="true" />
+        </button>
+      ))}
+    </div>
   );
 }

@@ -15,14 +15,14 @@ const PLANNED_BEHAVIOUR = [
 
 export default function TravelPage() {
   return (
-    <main id="main" className="max-w-[720px] mx-auto px-6 py-10 w-full">
+    <div className="page page-narrow">
       {/* Page header */}
       <div className="mb-8">
         <p className="inline-flex items-center gap-1.5 mb-3 text-[0.72rem] font-extrabold tracking-[0.13em] uppercase text-[var(--color-accent-deep)]">
           <Plane size={14} aria-hidden="true" />
           Operations engine · travel timeline
         </p>
-        <h1 className="text-3xl font-bold tracking-[-0.015em] leading-[1.15] m-0 mb-3 text-[var(--color-ink)]">
+        <h1 className="large-title mb-3">
           Travel obligations, prepared not chased
         </h1>
         <p className="m-0 text-base text-[var(--color-ink-muted)] leading-relaxed max-w-[56ch]">
@@ -137,6 +137,6 @@ export default function TravelPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -14,17 +14,17 @@ export default async function AppLayout({
     <div className="min-h-screen bg-[var(--color-bg)]">
       <a
         href="#main"
-        className="absolute -top-14 left-4 z-[200] bg-[var(--color-accent)] text-white
-                   px-4 py-2 rounded-lg font-semibold text-sm focus-visible:top-2
-                   transition-[top] duration-150 no-underline"
+        className="absolute -top-14 left-4 z-[200] btn-primary focus-visible:top-2 transition-[top] duration-150"
       >
         Skip to content
       </a>
 
       <AppNav />
 
-      {/* Content area — shifted right on desktop for sidebar */}
-      <div className="lg:ml-[260px] flex flex-col min-h-screen pb-[72px] lg:pb-0">
+      {/* Content sits right of the desktop sidebar and above the phone tab bar */}
+      <div
+        className="lg:ml-[260px] flex flex-col min-h-screen pb-[calc(51px+env(safe-area-inset-bottom,0px))] lg:pb-0"
+      >
         <AppHeader authControls={<AuthControls />} />
         <NetworkBanner />
         <main id="main" className="flex-1">
