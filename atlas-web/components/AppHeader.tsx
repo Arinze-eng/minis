@@ -8,7 +8,7 @@ import { RouteMark } from "@/components/RouteMark";
 import { unreadCount, type AgentNotification } from "@/lib/notifications";
 
 const TITLES: Array<{ match: RegExp; title: string }> = [
-  { match: /^\/inbox/,              title: "Inbox"           },
+  { match: /^\/inbox/,              title: "Overview"        },
   { match: /^\/ask/,                title: "Ask Atlas"       },
   { match: /^\/wardrobe\/add/,      title: "Add garment"     },
   { match: /^\/wardrobe/,           title: "Wardrobe"        },
@@ -28,6 +28,7 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notifications, setNotifications] = useState<AgentNotification[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const unread = unreadCount(notifications);
   const title = TITLES.find((t) => t.match.test(pathname))?.title ?? "Atlas";
 
@@ -43,26 +44,40 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
   }, [pathname]);
 
   const load = useCallback(async () => {
+    setRefreshing(true);
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = (await res.json()) as { notifications?: AgentNotification[] };
-      if (Array.isArray(data.notifications)) setNotifications(data.notifications);
-    } catch { /* offline */ } finally {
+      if (res.ok) {
+        const data = (await res.json()) as { notifications?: AgentNotification[] };
+        if (Array.isArray(data.notifications)) setNotifications(data.notifications);
+      }
+    } catch { /* preserve the last server-confirmed state while offline */ } finally {
       setLoaded(true);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => { if (!loaded) void load(); }, [loaded, load]);
+  useEffect(() => {
+    const timer = window.setInterval(() => { void load(); }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [load]);
 
-  const onDismiss = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
-    void fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-  }, []);
+  // Optimistic mark-read; roll back if the server does not confirm it.
+  const onDismiss = useCallback(async (id: string) => {
+    const previous = notifications;
+    setNotifications((items) => items.map((n) => n.id === id ? { ...n, read: true } : n));
+    try {
+      const res = await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("notification update failed");
+    } catch {
+      setNotifications(previous);
+    }
+  }, [notifications]);
 
   return (
     <>
@@ -120,6 +135,8 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
         notifications={notifications}
         onClose={() => setDrawerOpen(false)}
         onDismiss={onDismiss}
+        refreshing={refreshing}
+        onRefresh={() => void load()}
       />
     </>
   );

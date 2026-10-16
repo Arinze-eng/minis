@@ -29,6 +29,7 @@ export default function PreferencesPage() {
   const [quietEnd, setQuietEnd] = useState("07:30");
   const [webuiNotifications, setWebuiNotifications] = useState(true);
   const [telegramDelivery, setTelegramDelivery] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState<{ configured: boolean; healthy: boolean; username?: string | null } | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
 
@@ -44,6 +45,8 @@ export default function PreferencesPage() {
         if (typeof p.quietEnd === "string") setQuietEnd(p.quietEnd);
         if (typeof p.webuiNotifications === "boolean") setWebuiNotifications(p.webuiNotifications);
         if (typeof p.telegramDelivery === "boolean") setTelegramDelivery(p.telegramDelivery);
+        const telegram = await fetch("/api/telegram/status", { cache: "no-store" });
+        if (telegram.ok) setTelegramStatus((await telegram.json()) as { configured: boolean; healthy: boolean; username?: string | null });
       } catch {
         setLoadFailed(true);
       }
@@ -185,21 +188,22 @@ export default function PreferencesPage() {
               />
             </label>
 
-            <div className="check-row check-row-disabled">
+            <label className="check-row">
               <span>
                 <span className="row-title">Telegram delivery gate</span>
                 <span className="row-detail">
-                  Not configurable yet — activates when the Telegram channel is
-                  connected and you grant delivery consent.
+                  {telegramStatus?.healthy
+                    ? `Bot @${telegramStatus.username ?? "configured"} is reachable. Delivery still requires Atlas consent and policy checks.`
+                    : "Save your preference here. Delivery remains unavailable until the server has a valid Telegram bot token and the Atlas consent and policy checks pass."}
                 </span>
               </span>
               <input
                 type="checkbox"
-                checked={false}
-                disabled
-                aria-label="Telegram delivery (not yet configurable)"
+                checked={telegramDelivery}
+                onChange={(e) => setTelegramDelivery(e.target.checked)}
+                aria-label="Enable Telegram delivery gate"
               />
-            </div>
+            </label>
           </div>
         </section>
 

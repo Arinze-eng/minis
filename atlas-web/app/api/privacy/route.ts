@@ -76,15 +76,17 @@ export async function POST(request: Request) {
         imagesFailed += 1;
       }
     }
-    let gmailRevoked = false;
-    const gmail = await store.getSourceConnection(principal.userId, "gmail");
-    if (gmail?.encryptedRefreshToken && tokenEncryptionConfigured()) {
-      const token = decryptRefreshToken(gmail.encryptedRefreshToken);
-      if (token) gmailRevoked = await revokeToken(token);
+    // Revoke every Google grant at Google before forgetting the tokens.
+    const revoked: Record<string, boolean> = {};
+    for (const provider of ["gmail", "google_tasks"]) {
+      const conn = await store.getSourceConnection(principal.userId, provider);
+      if (!conn?.encryptedRefreshToken || !tokenEncryptionConfigured()) continue;
+      const token = decryptRefreshToken(conn.encryptedRefreshToken);
+      revoked[provider] = token ? await revokeToken(token) : false;
     }
-    await store.audit(principal.userId, "data_wipe", null, { mode, imagesFailed, gmailRevoked });
+    await store.audit(principal.userId, "data_wipe", null, { mode, imagesFailed, revoked });
     await store.wipe(principal.userId);
-    return NextResponse.json({ ok: true, wiped: true, storeMode: mode, imagesFailed, gmailRevoked });
+    return NextResponse.json({ ok: true, wiped: true, storeMode: mode, imagesFailed, revoked });
   }
 
   return NextResponse.json({ error: "unknown_action" }, { status: 400 });

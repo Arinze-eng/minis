@@ -118,6 +118,19 @@ describe("local file store", () => {
     expect(await store.consumeOauthState("st-1")).toBeNull();
   });
 
+  it("disconnecting one source destroys its token and keeps other sources' data", async () => {
+    const { store } = getStore();
+    await store.upsertSourceConnection("hana", "google_tasks", { status: "connected", encryptedRefreshToken: "v1.x.y" });
+    await store.upsertEmailFinding("hana", {
+      id: "ef1", kind: "recurring_charge", merchant: "M", messageRef: "m1", confidence: 0.9, extractionVersion: "v",
+    });
+    await store.deleteSourceData("hana", "google_tasks");
+    const conn = await store.getSourceConnection("hana", "google_tasks");
+    expect(conn?.status).toBe("disconnected");
+    expect(conn?.encryptedRefreshToken).toBeNull();
+    expect(await store.listEmailFindings("hana")).toHaveLength(1);
+  });
+
   it("wipes everything for one principal only", async () => {
     const { store } = getStore();
     await store.createGarment("erin", garmentInput("g4", "Erin Coat"));

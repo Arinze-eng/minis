@@ -1,10 +1,10 @@
-# Atlas Rebrand, Domain, and Demo Handoff
+# Atlas Product, Domain, and Design Handoff
 
-This document is the next-person handoff for making the starter project feel like Atlas rather than a lightly modified nanobot installation.
+This document is the next-person handoff for making the product feel like Atlas rather than a lightly modified nanobot installation.
 
 ## Objective
 
-Refurbish the product so that a reviewer sees a coherent Atlas product identity across the browser, Telegram messages, documentation, repository metadata, and public demo domain.
+Refurbish the product so that users see a coherent Atlas identity across the browser, Telegram messages, documentation, repository metadata, and public domain.
 
 The work must preserve the existing nanobot runtime and Atlas safety contracts. Rebranding is a product-surface task, not permission to weaken consent, approval, identity, credential, or audit controls.
 
@@ -39,7 +39,7 @@ Create a small, consistent design system:
 
 Use original team-created assets or permissively licensed assets. Record asset licenses in `docs/atlas-assets.md`.
 
-### P0: domain and public demo
+### P0: domain and public product surface
 
 Choose a domain that clearly belongs to Atlas and does not impersonate AWS, nanobot, Strands, Google, Telegram, or another provider. Before purchasing or publishing, confirm ownership, DNS, and billing with the project owner.
 
@@ -109,7 +109,7 @@ Test Telegram inbound, callback, duplicate callback, expired callback, revoked c
 
 ### P1: presentation polish
 
-Prepare a five-minute demo path:
+Prepare a concise new-user product path:
 
 1. Atlas welcome screen;
 2. authorized Google Tasks or SerpApi source;
@@ -138,7 +138,7 @@ The next teammate should not block the rebrand on the following items:
 - replacing the existing nanobot runtime;
 - a full image-recognition fashion model.
 
-For the hackathon, a polished read-only vertical slice with real Strands orchestration, real authorized data, strong consent behavior, and an original Atlas surface is more valuable than many incomplete connectors.
+For the product, a polished read-only vertical slice with real Strands orchestration, real authorized data, strong consent behavior, and an original Atlas surface is more valuable than many incomplete connectors.
 
 ## Required handoff sequence
 

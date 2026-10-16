@@ -4,13 +4,20 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { ThemeScript } from "@/components/ThemeScript";
 import {
   clerkConfigured,
+  clerkPublishableKey,
   clerkSignInFallbackRedirectUrl,
   clerkSignInUrl,
   clerkSignUpFallbackRedirectUrl,
   clerkSignUpUrl,
 } from "@/lib/server/clerkIdentity";
 import "./globals.css";
+import "./ui-fixes.css";
 import "./auth.css";
+
+// Clerk credentials are supplied by the runtime in production. Do not let
+// Next.js prerender this layout during the image build, when Render's runtime
+// environment variables are not available yet.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
@@ -25,6 +32,7 @@ export const metadata: Metadata = {
     title: "Atlas",
     statusBarStyle: "default",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
@@ -55,6 +63,7 @@ export default function RootLayout({
       <body>
         {withClerk ? (
           <ClerkProvider
+            publishableKey={clerkPublishableKey()}
             signInUrl={clerkSignInUrl()}
             signUpUrl={clerkSignUpUrl()}
             signInFallbackRedirectUrl={clerkSignInFallbackRedirectUrl()}

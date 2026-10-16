@@ -739,7 +739,10 @@ class PgStore {
   async deleteSourceData(principalId: string, provider: string): Promise<void> {
     await this.ensureMigrated();
     const pool = await this.getPool();
-    await pool.query("DELETE FROM email_findings WHERE principal_id = $1", [principalId]);
+    // Email findings come only from Gmail; other providers keep them.
+    if (provider === "gmail") {
+      await pool.query("DELETE FROM email_findings WHERE principal_id = $1", [principalId]);
+    }
     await pool.query("DELETE FROM scan_jobs WHERE principal_id = $1 AND provider = $2", [principalId, provider]);
     await pool.query(
       "UPDATE source_connections SET status = 'disconnected', encrypted_refresh_token = NULL, account_email = NULL, disconnected_at = now(), updated_at = now() WHERE principal_id = $1 AND provider = $2",
@@ -1234,9 +1237,15 @@ class LocalFileStore {
   }
 
   async deleteSourceData(principalId: string, provider: string): Promise<void> {
-    this.write(principalId, "emailFindings", []);
-    this.write(principalId, "scanJobs", []);
-    await this.upsertSourceConnection(principalId, provider, { status: "disconnected", encryptedRefreshToken: null, accountEmail: null });
+    if (provider === "gmail") this.write(principalId, "emailFindings", []);
+    this.write(principalId, "scanJobs", this.read<ScanJobRow>(principalId, "scanJobs").filter((j) => j.provider !== provider));
+    // Set fields directly: upsertSourceConnection treats null as "keep existing".
+    const rows = this.read<SourceConnectionRow>(principalId, "sources");
+    const target = rows.find((r) => r.provider === provider);
+    if (target) {
+      Object.assign(target, { status: "disconnected", encryptedRefreshToken: null, accountEmail: null, disconnectedAt: new Date().toISOString() });
+      this.write(principalId, "sources", rows);
+    }
   }
 
   async getPreferences(principalId: string): Promise<Record<string, unknown>> {

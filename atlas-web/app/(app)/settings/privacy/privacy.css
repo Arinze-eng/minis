@@ -1,72 +1,10 @@
-/* Privacy hub. Primitives come from globals.css. */
-
-.privacy-stack {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.privacy-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-5) var(--space-6);
-}
-
-.privacy-card h2 {
-  font-size: 1.05rem;
-}
-
-.privacy-card p {
-  color: var(--color-ink-muted);
-  font-size: 0.92rem;
-  max-width: 58ch;
-}
-
-.privacy-danger {
-  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
-}
-
-.privacy-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  margin-top: var(--space-3);
-}
-
-.confirm-question {
-  font-weight: 600;
-}
-
-.privacy-status {
-  margin: var(--space-3) 0 0;
-  font-size: 0.88rem;
-  color: var(--color-good-deep);
-}
-
-.privacy-notes {
-  margin-top: var(--space-8);
-  background: var(--color-accent-soft);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 32%, transparent);
-  border-radius: var(--radius-card);
-  padding: var(--space-5) var(--space-6);
-}
-
-.privacy-notes h2 {
-  font-size: 1.02rem;
-  margin-bottom: var(--space-3);
-}
-
-.privacy-notes ul {
-  margin: 0 0 var(--space-3);
-  padding-left: var(--space-6);
-  display: grid;
-  gap: var(--space-2);
-  font-size: 0.92rem;
-}
-
-.privacy-notes p {
-  font-size: 0.88rem;
-  color: var(--color-ink-muted);
-}
+.privacy-stack { display:grid; gap:14px; }
+.privacy-card { position:relative; overflow:hidden; padding:22px 24px; }
+.privacy-card::before { content:""; position:absolute; inset:0 auto 0 0; width:3px; background:var(--color-accent); opacity:.72; }
+.privacy-card h2 { font-size:1.08rem; } .privacy-card p { max-width:62ch; margin:9px 0 0; color:var(--color-ink-muted); font-size:.9rem; line-height:1.65; }
+.privacy-danger { border-color:color-mix(in srgb,var(--color-danger) 35%,var(--color-line)); } .privacy-danger::before { background:var(--color-danger); }
+.privacy-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:18px; } .confirm-question { font-weight:800; }
+.privacy-status { margin-top:14px !important; color:var(--color-good-deep) !important; }
+.privacy-notes { margin-top:28px; border:1px solid color-mix(in srgb,var(--color-accent) 22%,transparent); border-radius:22px; background:linear-gradient(135deg,var(--color-accent-soft),var(--color-surface)); padding:22px 24px; }
+.privacy-notes h2 { margin-bottom:12px; font-size:1.05rem; } .privacy-notes ul { display:grid; gap:8px; margin:0 0 14px; padding-left:20px; font-size:.9rem; } .privacy-notes p { margin:0; color:var(--color-ink-muted); font-size:.85rem; line-height:1.65; }
+@media (max-width:520px) { .privacy-card,.privacy-notes { padding:18px; } .privacy-actions > * { width:100%; } }

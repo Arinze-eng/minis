@@ -28,6 +28,8 @@ function apply(choice: ThemeChoice) {
   const dark =
     choice === "dark" ||
     (choice === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  // Tailwind's dark: variant keys off this class (see globals.css).
+  root.classList.toggle("dark", dark);
   for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
     meta.content = dark ? "#000000" : "#f2f2f7";
   }

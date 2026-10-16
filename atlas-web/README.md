@@ -40,8 +40,8 @@ The header identity control shows signed-in / signed-out state on every page, an
 - `/signals/[id]` — signal detail + Why panel + "What Atlas did not do".
 - `/sign-in`, `/sign-up` — Clerk Core 3 auth routes.
 - `/manifest.webmanifest` — installable PWA manifest.
-- `public/sw.js` — service worker: network-first pages, cache-first static
-  shell only, never caches `/api/*` or private responses.
+- `public/sw.js` — service worker: cache-first static assets only; navigations
+  and `/api/*` responses are never cached.
 
 ## Authentication
 
@@ -51,22 +51,26 @@ where data is read (`lib/server/identity.ts`), not asserted by the browser. The
 header always states whether you are signed in, signed out, or running in the
 labelled local dev mode. Without Clerk keys the app runs one labelled
 single-principal session in development and fails closed (`503`) in production.
-See `PRODUCTION_SETUP.md` for the environment matrix.
+The root layout is request-rendered and passes the runtime publishable key
+explicitly, so a Docker build does not freeze an unconfigured auth state into
+the production bundle. See `PRODUCTION_SETUP.md` for the environment matrix.
 
 ## Design system
-
-`app/globals.css` owns the tokens (light/dark via `light-dark()`), the shared
-primitives (`.page`, `.card`, `.stat`, `.row`, `.btn-*`, `.badge`, `.notice`,
-`.field`), Clerk's `--clerk-*` theme variables, and motion. `app/shell.css` owns
-the adaptive navigation (labelled sidebar, mobile bar, tab bar, drawers) and
-`app/landing.css` the landing surface. Page stylesheets add layout only.
+Tailwind CSS v4 is the default styling layer. `app/globals.css` owns the
+design tokens, light/dark color scheme, Clerk variables, focus treatment, and
+small global resets; route and component UI should use Tailwind utility classes
+and shared token variables rather than page-specific CSS selectors. The
+authenticated shell is implemented in `components/AppNav.tsx`,
+`components/AppHeader.tsx`, and `(app)/layout.tsx`, with padded responsive
+navigation, glass surfaces, and mobile-safe touch targets.
 
 ## Demo mode
-
-Everything synthetic is labelled ("Demo mode — synthetic data, nothing here is
-private or live"). Demo data lives in `lib/demo/*` and is pinned by
-`tests/demoLabelling.test.ts`: mode must be declared, every source must identify
-as demo, capability never exceeds "prepare", and ids stay deterministic.
+The production Inbox does not fabricate dashboard metrics, source status,
+weather, or wardrobe recommendations. It reads the authenticated principal's
+signals, findings, garments, notifications, and Gmail scan state through the
+server store and Route Handlers. `lib/demo/*` remains only for explicitly
+labelled development/test fixtures and must never be used as a production
+fallback.
 
 ## Backend integration contract (to implement in later phases)
 
@@ -76,6 +80,17 @@ normalized evidence → deterministic domain logic → optional Strands
 explanation → typed recommendation/signal → persisted state → card.
 Next.js Route Handlers / Server Actions may only forward requests that
 preserve these contracts; no provider calls from the browser.
+
+## Hosting boundary
+`atlas-web` is the production web application and must be deployed as the
+Next.js service (`npm run build && npm run start`). The frontend and backend are
+not separate browser services: the browser renders this app, while the same
+Next.js deployment serves the authenticated Route Handlers under `/api/*`.
+Those handlers call `lib/server/store.ts`, which uses Postgres when
+`DATABASE_URL` is configured and the labelled local store only in development.
+Configure Clerk, `DATABASE_URL`, `ATLAS_SESSION_SECRET`, and connector
+credentials in the hosting provider's environment; do not point the browser at
+the repository's legacy Vite/Express WebUI.
 
 ## Brand
 

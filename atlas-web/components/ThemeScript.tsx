@@ -12,6 +12,9 @@ export const THEME_SCRIPT = `(() => {
     if (choice === "light" || choice === "dark") {
       document.documentElement.setAttribute("data-theme", choice);
     }
+    const dark = choice === "dark" ||
+      (choice !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", dark);
   } catch {
     /* private mode etc. — media query in CSS decides */
   }

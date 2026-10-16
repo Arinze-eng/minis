@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Tailwind dark: variant follows the appearance control (html.dark). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================================
    Atlas design tokens, following Apple's published rules (Human Interface
@@ -49,6 +51,7 @@
   --color-bg:              light-dark(#f2f2f7, #000000);
   --color-surface:         light-dark(#ffffff, #1c1c1e);
   --color-surface-raised:  light-dark(#f7f7fa, #2c2c2e);
+  --color-surface-solid:   var(--color-surface); /* already opaque */
   --color-fill:            light-dark(rgba(118,118,128,0.12), rgba(118,118,128,0.24));
   --color-fill-strong:     light-dark(rgba(118,118,128,0.2), rgba(118,118,128,0.36));
   --color-segment-thumb:   light-dark(#ffffff, #636366);
@@ -388,7 +391,7 @@ html[data-theme="dark"]  { color-scheme: dark; }
   }
 
   /* Buttons: respond on press (scale 0.97, 100ms ease-out) */
-  .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+  .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger, .btn-danger-outline {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -409,7 +412,7 @@ html[data-theme="dark"]  { color-scheme: dark; }
   }
   .btn:active:not(:disabled), .btn-primary:active:not(:disabled),
   .btn-secondary:active:not(:disabled), .btn-ghost:active:not(:disabled),
-  .btn-danger:active:not(:disabled) { transform: scale(0.97); }
+  .btn-danger:active:not(:disabled), .btn-danger-outline:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled, .btn-primary:disabled, .btn-secondary:disabled,
   .btn-ghost:disabled, .btn-danger:disabled { opacity: 0.4; cursor: default; }
 
@@ -423,6 +426,12 @@ html[data-theme="dark"]  { color-scheme: dark; }
   .btn-ghost:hover:not(:disabled) { background: var(--color-fill); }
   .btn-danger { background: var(--color-danger-soft); color: var(--color-danger-deep); }
   .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--color-danger) 20%, transparent); }
+  .btn-danger-outline {
+    background: transparent;
+    color: var(--color-danger-deep);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-danger) 45%, transparent);
+  }
+  .btn-danger-outline:hover:not(:disabled) { background: var(--color-danger-soft); }
 
   /* Press feedback for any custom tappable */
   .press { transition: transform 100ms ease-out; }
@@ -458,7 +467,7 @@ html[data-theme="dark"]  { color-scheme: dark; }
   .form-submit { display: flex; justify-content: flex-end; gap: var(--space-2); flex-wrap: wrap; }
   .field { display: grid; gap: 6px; min-width: 0; }
   .field-label { font-size: 13px; font-weight: 500; color: var(--color-ink-2); }
-  .input {
+  .input, .textarea {
     width: 100%;
     min-height: 44px;
     padding: 0 12px;
@@ -470,17 +479,23 @@ html[data-theme="dark"]  { color-scheme: dark; }
     font-size: 16px; /* >=16px stops iOS zooming on focus */
     transition: border-color 150ms ease, box-shadow 150ms ease;
   }
-  textarea.input { padding: 10px 12px; min-height: 96px; resize: vertical; line-height: 1.45; }
-  .input::placeholder { color: var(--color-ink-muted); }
-  .input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 4px var(--color-accent-soft); }
+  textarea.input, .textarea { padding: 10px 12px; min-height: 96px; resize: vertical; line-height: 1.45; }
+  .input::placeholder, .textarea::placeholder { color: var(--color-ink-muted); }
+  .input:focus, .textarea:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 4px var(--color-accent-soft); }
   .check-row {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    justify-content: space-between;
+    gap: var(--space-4);
     min-height: 44px;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-line);
     font-size: 15px;
     cursor: pointer;
   }
+  .check-row:last-child { border-bottom: 0; }
+  .row-title { display: block; color: var(--color-ink); font-weight: 500; }
+  .row-detail { display: block; margin-top: 2px; color: var(--color-ink-muted); font-size: 13px; line-height: 1.4; }
   .check-row input { width: 20px; height: 20px; accent-color: var(--color-accent); }
   .check-row-disabled { opacity: 0.5; cursor: default; }
 
@@ -605,6 +620,27 @@ html[data-theme="dark"]  { color-scheme: dark; }
   .grouped-label { flex: 1; min-width: 0; }
   .grouped-detail { color: var(--color-ink-muted); font-size: 15px; }
   .grouped-chevron { color: var(--color-ink-muted); opacity: 0.6; flex: none; }
+
+  .stack-sm { display: grid; gap: var(--space-3); }
+  .stack-md { display: grid; gap: var(--space-5); }
+  .crumb { margin: 0 0 var(--space-4); font-size: 15px; color: var(--color-ink-muted); }
+  .crumb a, .inline-link { color: var(--color-accent-deep); text-decoration: none; }
+  .crumb a:hover, .inline-link:hover { text-decoration: underline; }
+  .muted { margin: 0; color: var(--color-ink-muted); font-size: 15px; }
+  .policy-line { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--color-ink-muted); }
+  .result-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+  .prose-list { display: grid; gap: 6px; margin: 0; padding-left: 20px; font-size: 15px; color: var(--color-ink-2); }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: var(--color-fill);
+    color: var(--color-ink);
+    font-size: 15px;
+    font-weight: 500;
+  }
 
   .scrollbar-none { scrollbar-width: none; }
   .scrollbar-none::-webkit-scrollbar { display: none; }

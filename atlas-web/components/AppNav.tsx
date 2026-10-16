@@ -23,7 +23,7 @@ type Item = { href: string; label: string; icon: typeof Inbox; also?: string[] }
 const SIDEBAR: { label?: string; items: Item[] }[] = [
   {
     items: [
-      { href: "/inbox", label: "Inbox", icon: Inbox, also: ["/signals"] },
+      { href: "/inbox", label: "Overview", icon: Inbox, also: ["/signals"] },
       { href: "/ask", label: "Ask Atlas", icon: MessageCircle },
     ],
   },
@@ -49,7 +49,7 @@ const SIDEBAR: { label?: string; items: Item[] }[] = [
 ];
 
 const TABS: Item[] = [
-  { href: "/inbox", label: "Inbox", icon: Inbox, also: ["/signals"] },
+  { href: "/inbox", label: "Home", icon: Inbox, also: ["/signals"] },
   { href: "/ask", label: "Ask", icon: MessageCircle },
   { href: "/wardrobe", label: "Wardrobe", icon: Shirt, also: ["/looks"] },
   { href: "/money", label: "Money", icon: Wallet },

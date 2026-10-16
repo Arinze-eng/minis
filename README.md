@@ -111,7 +111,7 @@ uv run --no-sync python scripts/atlas_demo.py \
   --json
 ```
 
-The demo is read-only and never sends Telegram messages. Delivery requires a separate explicit send path.
+These commands are read-only verification paths and never send Telegram messages. Delivery requires a separate explicit send path.
 
 ## Local setup
 
@@ -209,7 +209,7 @@ The MVP does not make purchases, payments, transfers, disputes, subscription can
 
 ## Wardrobe and picture-based drip advice
 
-The initial Wardrobe Help path uses explicit garment records because it is deterministic, cheap, and safe for the hackathon. A future image intake path may let a user photograph a garment or outfit and store an opaque object reference plus user-provided description. The image should be stored in private object storage, scoped to the authenticated user, encrypted or access-controlled, and represented in Atlas state by a non-sensitive reference rather than raw image bytes.
+The initial Wardrobe Help path uses explicit garment records because it is deterministic, cheap, and safe. A future image intake path may let a user photograph a garment or outfit and store an opaque object reference plus user-provided description. The image should be stored in private object storage, scoped to the authenticated user, encrypted or access-controlled, and represented in Atlas state by a non-sensitive reference rather than raw image bytes.
 
 The agent must not infer identity, attractiveness, body value, age, ethnicity, health, or gender from a photograph. It may use an image only for an explicitly requested clothing task, and the user must be able to delete the image and revoke image access. The implementation workflow for this extension is documented in [`docs/atlas-workflow.md`](docs/atlas-workflow.md).
 
@@ -223,20 +223,14 @@ The existing repository has a Docker and Render-oriented deployment surface. The
 
 Vercel can be useful for a separate frontend or thin HTTPS proxy, but it is not the natural host for the complete Python nanobot process or a continuously running Telegram polling/gateway worker. If Vercel is used, keep the Atlas backend and Telegram worker on the existing Python host and use Vercel only for a frontend or carefully bounded serverless endpoint. See [`docs/atlas-vercel.md`](docs/atlas-vercel.md).
 
-## Hackathon disclosure
-
-Atlas is submitted to the Everyday Agents track of the Agents for Humans Hackathon. It uses the AWS Strands Agents SDK as the real orchestration layer. The repository is an extension of the `Arinze-eng/minis` nanobot starter framework; this pre-existing template and incorporated open-source components should be disclosed in the submission.
-
-The submission requires a public repository, README, MIT or Apache license, architecture diagram, and a public video of no more than five minutes showing the working project and explaining the problem, audience, and importance. AWS Builder ID is required in the submission; it is a personal identity separate from an AWS account. Amazon Bedrock AgentCore is encouraged but not required.
-
 ## Project files
 
 - [`docs/nanobot-original-README.md`](docs/nanobot-original-README.md) — preserved original upstream README;
 - [`docs/atlas-local-quickstart.md`](docs/atlas-local-quickstart.md) — beginner-friendly local walkthrough;
-- [`docs/atlas-run-local-demo.md`](docs/atlas-run-local-demo.md) — frontend/backend, Vite, Telegram, testing, and presentation runbook;
-- [`docs/atlas-team-onboarding.md`](docs/atlas-team-onboarding.md) — zero-to-demo teammate setup, credentials, OAuth, providers, MCP, and Telegram;
+- [`docs/atlas-run-local-demo.md`](docs/atlas-run-local-demo.md) — frontend/backend, Telegram, and local verification runbook;
+- [`docs/atlas-team-onboarding.md`](docs/atlas-team-onboarding.md) — teammate setup, credentials, OAuth, providers, MCP, and Telegram;
 - [`docs/atlas-rebrand-handoff.md`](docs/atlas-rebrand-handoff.md) — Atlas visual identity, domain, WebUI/Telegram integration, and next-person task list;
-- [`docs/atlas-workflow.md`](docs/atlas-workflow.md) — user workflow, background behavior, image privacy, MCP, and demo plan;
+- [`docs/atlas-workflow.md`](docs/atlas-workflow.md) — user workflow, background behavior, image privacy, and MCP;
 - [`docs/atlas-vercel.md`](docs/atlas-vercel.md) — Vercel tradeoffs and deployment topology;
 - [`.atlas/ATLAS_MEMORY.md`](.atlas/ATLAS_MEMORY.md) — persistent implementation checklist;
 - [`scripts/atlas_demo.py`](scripts/atlas_demo.py) — read-only Atlas service demo;

@@ -39,6 +39,11 @@ function isApiPath(pathname: string): boolean {
   return pathname === "/api" || pathname.startsWith("/api/");
 }
 
+/** Public surfaces must remain reachable before a visitor signs in. */
+function isPublicPath(pathname: string): boolean {
+  return pathname === "/" || pathname === "/sign-in" || pathname.startsWith("/sign-in/") || pathname === "/sign-up" || pathname.startsWith("/sign-up/");
+}
+
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: "lax" as const,
@@ -47,14 +52,27 @@ const SESSION_COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 365,
 };
 
+const AUTH_FAILURE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
 export default async function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ): Promise<Response | null | undefined | void> {
   if (!clerkKeysPresent()) {
+    // Public pages can render without Clerk when the app is explicitly
+    // unconfigured. When Clerk is configured, they must still pass through
+    // clerkMiddleware so server components such as <Show> receive the
+    // request auth context instead of throwing during the landing render.
+    if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
+
     // Production must never fall back to a forgeable or synthetic principal.
     if (process.env.NODE_ENV === "production") {
-      return new NextResponse("Authentication is not configured.", { status: 503 });
+      return new NextResponse("Authentication is not configured.", {
+        status: 503,
+        headers: AUTH_FAILURE_HEADERS,
+      });
     }
     return localSessionBootstrap(request);
   }
@@ -66,7 +84,7 @@ export default async function middleware(
       .map((origin) => origin.trim())
       .filter(Boolean);
 
-    return clerkMiddleware(
+    return await clerkMiddleware(
       async (auth, req) => {
         const { isAuthenticated } = await auth();
 
@@ -75,7 +93,7 @@ export default async function middleware(
         if (isApiPath(req.nextUrl.pathname) && !isAuthenticated) {
           return NextResponse.json(
             { error: "unauthenticated", message: "Sign in to continue." },
-            { status: 401 },
+            { status: 401, headers: AUTH_FAILURE_HEADERS },
           );
         }
 
@@ -99,7 +117,10 @@ export default async function middleware(
   } catch (e) {
     // Never let auth-provider failures produce a 500 — fail honestly.
     console.error("clerk middleware failure", e);
-    return new NextResponse("Authentication is temporarily unavailable.", { status: 503 });
+    return new NextResponse("Authentication is temporarily unavailable.", {
+      status: 503,
+      headers: AUTH_FAILURE_HEADERS,
+    });
   }
 }
 
