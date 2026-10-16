@@ -19,5 +19,5 @@ export async function GET(
   if (!asset || !cloudinaryConfigured()) {
     return new NextResponse("Not found", { status: 404 });
   }
-  return NextResponse.redirect(signedDeliveryUrl(asset.publicId), 302);
+  return NextResponse.redirect(signedDeliveryUrl(asset.publicId, asset.mime), 302);
 }

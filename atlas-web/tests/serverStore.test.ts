@@ -107,6 +107,17 @@ describe("local file store", () => {
     expect(signals[0]?.state).toBe("snoozed");
   });
 
+  it("round-trips an OAuth state once, bound to its principal", async () => {
+    const { store } = getStore();
+    await store.createOauthState("st-1", "gina", "gmail_connect", "verifier-1", 600);
+    expect(await store.consumeOauthState("st-1")).toEqual({
+      principalId: "gina",
+      action: "gmail_connect",
+      codeVerifier: "verifier-1",
+    });
+    expect(await store.consumeOauthState("st-1")).toBeNull();
+  });
+
   it("wipes everything for one principal only", async () => {
     const { store } = getStore();
     await store.createGarment("erin", garmentInput("g4", "Erin Coat"));

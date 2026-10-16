@@ -16,8 +16,8 @@ import {
  *
  * Key rotation: set ENCRYPTION_KEY (primary) and optionally
  * ENCRYPTION_KEY_PREVIOUS; decryption tries primary then previous so a
- * rotation window never breaks existing connections. Key version is recorded
- * on the connection row when it is written.
+ * rotation window never breaks existing connections. A token re-encrypts
+ * under the new key the next time the user reconnects.
  *
  * The plaintext never touches logs, responses, or the browser. The module is
  * `server-only`: importing it from client code is a build error.
@@ -29,22 +29,24 @@ export function tokenEncryptionConfigured(): boolean {
   return Boolean(process.env.ENCRYPTION_KEY?.trim());
 }
 
-function deriveKeyMaterial(versionLabel: string): Buffer {
-  const master = process.env.ENCRYPTION_KEY!.trim();
-  return createHmac("sha256", `${versionLabel}:${master}`)
+// The "current:" label is part of every stored envelope's key derivation, so
+// it stays fixed; rotation changes only which master secret feeds it.
+function deriveKeyMaterial(master: string): Buffer {
+  return createHmac("sha256", `current:${master}`)
     .update("atlas:refresh-token:v1")
     .digest();
 }
 
-function keysToTry(): string[] {
-  const keys = ["current"];
-  if (process.env.ENCRYPTION_KEY_PREVIOUS?.trim()) keys.push("previous");
-  return keys;
+function mastersToTry(): string[] {
+  const masters = [process.env.ENCRYPTION_KEY!.trim()];
+  const previous = process.env.ENCRYPTION_KEY_PREVIOUS?.trim();
+  if (previous) masters.push(previous);
+  return masters;
 }
 
 export function encryptRefreshToken(plaintext: string): string {
   const iv = randomBytes(12);
-  const key = deriveKeyMaterial("current");
+  const key = deriveKeyMaterial(process.env.ENCRYPTION_KEY!.trim());
   const cipher = createCipheriv("aes-256-gcm", key, iv);
   const enc = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
@@ -66,9 +68,9 @@ export function decryptRefreshToken(envelope: string): string | null {
   } catch {
     return null;
   }
-  for (const label of keysToTry()) {
+  for (const master of mastersToTry()) {
     try {
-      const key = deriveKeyMaterial(label);
+      const key = deriveKeyMaterial(master);
       const tag = data.subarray(data.length - 16);
       const ciphertext = data.subarray(0, data.length - 16);
       const decipher = createDecipheriv("aes-256-gcm", key, iv);

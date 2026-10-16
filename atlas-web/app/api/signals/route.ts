@@ -36,14 +36,9 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ ok: true, state, until });
 }
 
-// Keep the sync import referenced for the POST re-sync path used by clients
-// after bulk changes.
 export async function POST() {
   const principal = await requirePrincipal();
   const { mode } = getStore();
   await syncSignalsAndNotifications(principal.userId);
   return NextResponse.json({ ok: true, mode });
 }
-
-const _sync = syncSignalsAndNotifications;
-void _sync;

@@ -4,13 +4,13 @@ import { deriveSignals } from "@/lib/server/signals";
 /**
  * Post-write sync: deterministically re-derive signals and notifications
  * from the principal's current garments + findings. Idempotent via dedup
- * keys — safe to run after every mutation. Demo rows are seeded once with
- * clearly synthetic merchants so first-run surfaces are never empty; the
- * seed also carries the "demo" provenance in analysisProvider/labels.
+ * keys — safe to run after every mutation. In local dev mode only, demo rows
+ * are seeded once with clearly synthetic merchants so first-run surfaces are
+ * never empty. Real (Postgres) accounts never get synthetic money rows.
  */
 
 export async function syncSignalsAndNotifications(principalId: string): Promise<void> {
-  const { store } = getStore();
+  const { store, mode } = getStore();
   const [garments, findings] = await Promise.all([
     store.listGarments(principalId),
     store.listFindings(principalId),
@@ -18,7 +18,7 @@ export async function syncSignalsAndNotifications(principalId: string): Promise<
 
   // Seed synthetic findings once (labelled demo merchants) so derivation has
   // both domains on first run. No mailbox or bank is ever contacted.
-  if (findings.length === 0) {
+  if (mode === "local_file" && findings.length === 0) {
     const now = new Date();
     const inDays = (d: number) => new Date(now.getTime() + d * 86_400_000).toISOString();
     await store.upsertFinding(principalId, {

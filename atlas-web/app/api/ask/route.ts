@@ -24,8 +24,9 @@ function requiredFormality(prompt: string): number {
 }
 
 function requiredWarmth(prompt: string): number {
-  const cold = /\b(cold|freezing|snow|winter|chilly|18°|1[0-7]°|\b[0-9]\s?°)\b/i.test(prompt);
-  const warm = /\b(hot|warm|summer|heat ?wave|2[5-9]°|3[0-9]°)\b/i.test(prompt);
+  // "°" is not a word character, so a temperature must not end in \b.
+  const cold = /\b(cold|freezing|snow|winter|chilly)\b|\b(1[0-8]|[0-9])\s?°/i.test(prompt);
+  const warm = /\b(hot|warm|summer|heat ?wave)\b|\b(2[5-9]|3[0-9])\s?°/i.test(prompt);
   if (cold) return 2;
   if (warm) return 1;
   return 2; // temperate default: one warm layer

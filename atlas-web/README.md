@@ -1,6 +1,6 @@
 # Atlas Web (Next.js App Router)
 
-This directory is the sole production WebUI destination. The former Vite/Express runtime is quarantined under `legacy/atlas-runtime/` and is not included in the deployment image.
+This directory is the sole production WebUI destination. The former Vite/Express runtime was removed; it remains in git history (commit `f2a934f`, `legacy/atlas-runtime/`).
 
 The Atlas presentation layer. The existing nanobot runtime + `nanobot/atlas/*`
 remain the source of truth for identity, consent, capability policy,

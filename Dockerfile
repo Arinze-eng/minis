@@ -19,5 +19,7 @@ COPY --from=builder /app/atlas-web/node_modules ./node_modules
 COPY --from=builder /app/atlas-web/.next ./.next
 COPY --from=builder /app/atlas-web/public ./public
 COPY --from=builder /app/atlas-web/next.config.ts ./next.config.ts
+# Read at runtime by the Postgres store (lib/server/store.ts runMigrations).
+COPY --from=builder /app/atlas-web/lib/server/migrations ./lib/server/migrations
 EXPOSE 3000
 CMD ["npm", "run", "start"]

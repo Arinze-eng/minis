@@ -36,7 +36,7 @@ export async function GET(
       purpose: asset.purpose,
       createdAt: asset.createdAt,
     },
-    url: signedDeliveryUrl(asset.publicId),
+    url: signedDeliveryUrl(asset.publicId, asset.mime),
     expiresInSeconds: 3600,
   });
 }

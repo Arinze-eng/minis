@@ -90,10 +90,6 @@ function strOrNull(v: unknown, maxLen: number): string | null {
   return t || null;
 }
 
-// scopedKey is used by wear/feedback routes that import this module's helpers;
-// keep the reference so tree-shaking doesn't complain in strict builds.
-void scopedKey;
-
 export async function PATCH(request: Request) {
   const principal = await requirePrincipal();
   let body: Record<string, unknown>;

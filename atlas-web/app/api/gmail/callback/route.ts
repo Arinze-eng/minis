@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requirePrincipal } from "@/lib/server/identity";
 import { getStore } from "@/lib/server/store";
 import {
   exchangeCodeForTokens,
@@ -12,7 +13,7 @@ import { encryptRefreshToken, tokenEncryptionConfigured } from "@/lib/server/sec
  * Step 2 of the consent-gated Gmail connection. Google returns here with
  * `code` + `state`. The state is consumed atomically (single-use, TTL-bound)
  * and carries the principal id + PKCE verifier — so the connection is bound to
- * the user who started it, verified server-side, never by client-supplied ids.
+ * the user who started it, and must match the signed-in user finishing it.
  *
  * Failure modes land on /sources with an honest error marker; success lands
  * there with the connection active.
@@ -31,10 +32,19 @@ export async function GET(request: Request) {
   if (!tokenEncryptionConfigured()) return back("encryption_missing");
   if (!code || !state) return back("invalid_callback");
 
+  let principal;
+  try {
+    principal = await requirePrincipal();
+  } catch {
+    return back("invalid_state");
+  }
   const { store } = getStore();
   const consumed = await store.consumeOauthState(state);
   if (!consumed) return back("expired_state"); // replayed, forged, or older than 10 min
   if (consumed.action !== "gmail_connect") return back("invalid_state");
+  // The browser finishing the flow must be the user who started it; otherwise
+  // a link from someone else would attach this mailbox to their account.
+  if (consumed.principalId !== principal.userId) return back("invalid_state");
 
   try {
     const origin = url.origin;

@@ -25,6 +25,8 @@ import { syncSignalsAndNotifications } from "@/lib/server/seed";
  * Scan-trigger idempotency: a running job for the same principal short-circuits
  * (409) instead of stacking concurrent API walks.
  */
+const STALE_RUNNING_MS = 10 * 60 * 1000;
+
 export async function POST() {
   const principal = await requirePrincipal();
   const { store } = getStore();
@@ -41,8 +43,14 @@ export async function POST() {
     return NextResponse.json({ error: "gmail_not_connected" }, { status: 409 });
   }
 
+  // A "running" job older than the request budget died with its process
+  // (timeout, restart); it must not block new scans forever.
   const running = await store.latestScanJob(principal.userId, "gmail");
-  if (running && running.status === "running") {
+  if (
+    running &&
+    running.status === "running" &&
+    Date.now() - Date.parse(running.createdAt) < STALE_RUNNING_MS
+  ) {
     return NextResponse.json({ error: "scan_already_running", job: running }, { status: 409 });
   }
 
@@ -83,7 +91,19 @@ export async function POST() {
       await store.audit(principal.userId, "gmail_scan_token_error", null, {
         error: msg.slice(0, 120),
       });
-      return NextResponse.json({ error: "token_invalid", job }, { status: 409 });
+      const failedJob = await store.recordScanJob(principal.userId, {
+        id: `scan_${crypto.randomUUID()}`,
+        provider: "gmail",
+        status: "failed",
+        discovered: 0,
+        processed: 0,
+        skipped: 0,
+        deduplicated: 0,
+        failed: 0,
+        error: "token_invalid",
+        finishedAt: null,
+      });
+      return NextResponse.json({ error: "token_invalid", job: failedJob }, { status: 409 });
     }
 
     while (discovered < cap) {

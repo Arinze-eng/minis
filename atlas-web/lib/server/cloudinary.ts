@@ -16,9 +16,9 @@ export function cloudinaryConfigured(): boolean {
   return Boolean(CLOUD_NAME() && API_KEY() && API_SECRET());
 }
 
-/** Monotonic timestamp for signatures (ms — Cloudinary accepts both). */
+/** Signature timestamp: Unix seconds, as Cloudinary's signing spec requires. */
 function timestamp(): number {
-  return Date.now();
+  return Math.floor(Date.now() / 1000);
 }
 
 function sign(params: Record<string, string>): string {
@@ -109,7 +109,6 @@ export async function destroyImage(publicId: string): Promise<void> {
     public_id: publicId,
     type: "private",
     api_key: API_KEY(),
-    nonce: String(Date.now()),
     timestamp: timestampStr,
     signature,
   });
@@ -124,23 +123,28 @@ export async function destroyImage(publicId: string): Promise<void> {
   }
 }
 
-/** Signed delivery URL (1h) for owner-scoped serving; never cached by SW. */
-export function signedDeliveryUrl(publicId: string, ttlSeconds = 3600): string {
-  const ts = Math.floor(Date.now() / 1000) + ttlSeconds;
+const FORMAT_BY_MIME: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/heic": "heic",
+};
+
+/**
+ * Expiring private download URL (Cloudinary's private_download_url shape:
+ * the /image/download endpoint, signed, with expires_at). Never cached by SW.
+ */
+export function signedDeliveryUrl(publicId: string, mime: string, ttlSeconds = 3600): string {
+  const now = timestamp();
   const params: Record<string, string> = {
+    expires_at: String(now + ttlSeconds),
+    format: FORMAT_BY_MIME[mime] ?? "jpg",
     public_id: publicId,
-    timestamp: String(ts),
+    timestamp: String(now),
     type: "private",
   };
-  const signature = sign(params);
-  const query = new URLSearchParams({
-    public_id: publicId,
-    timestamp: String(ts),
-    type: "private",
-    signature,
-    api_key: API_KEY(),
-  });
-  return `https://api.cloudinary.com/v1_1/${CLOUD_NAME()}/image/private/${publicId}?${query.toString()}`;
+  const query = new URLSearchParams({ ...params, signature: sign(params), api_key: API_KEY() });
+  return `https://api.cloudinary.com/v1_1/${CLOUD_NAME()}/image/download?${query.toString()}`;
 }
 
 /** HMAC of the principal id for folder namespacing (no raw ids at provider). */

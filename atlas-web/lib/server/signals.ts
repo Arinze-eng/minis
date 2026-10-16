@@ -141,7 +141,7 @@ export function deriveSignals(
       state: "active",
       stateUntil: null,
       createdAt: nowDate.toISOString(),
-      dedupKey: `unworn:${g.id}:${nowDate.toISOString().slice(0, 10)}`,
+      dedupKey: `unworn:${g.id}`, // one per garment, so a dismissal sticks
     });
   }
 
@@ -213,7 +213,7 @@ export function deriveSignals(
       state: "active",
       stateUntil: null,
       createdAt: nowDate.toISOString(),
-      dedupKey: `cross_domain:${rentalLike.id}:${nowDate.toISOString().slice(0, 10)}`,
+      dedupKey: `cross_domain:${rentalLike.id}:${(rentalLike.nextRenewal ?? "").slice(0, 10)}`, // one per renewal cycle
     });
   }
 

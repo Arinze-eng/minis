@@ -85,7 +85,7 @@ export interface NotificationRow {
   createdAt: string;
 }
 
-const MIGRATIONS = ["001_atlas_core", "002_assets_consent", "003_sources_email", "004_preferences"] as const;
+const MIGRATIONS = ["001_atlas_core", "002_assets_consent", "003_sources_email", "004_preferences", "005_remove_demo_seed"] as const;
 
 export interface SourceConnectionRow {
   principalId: string;
@@ -178,11 +178,8 @@ class PgStore {
         // Neon cold-start can take several seconds; a tight budget killed the
         // first parallel burst of requests. 20s covers a cold compute start.
         connectionTimeoutMillis: 20_000,
-        // Let the URL drive TLS (sslmode=require); allow unverified fallback
-        // for local Postgres where certs are self-signed.
-        ssl: process.env.DATABASE_URL?.includes("sslmode=disable")
-          ? false
-          : { rejectUnauthorized: false },
+        // TLS comes from the URL's sslmode and verifies certificates; use
+        // sslmode=no-verify only for a local Postgres with a self-signed cert.
       });
     }
     return this.pool;
@@ -321,11 +318,13 @@ class PgStore {
         await client.query("ROLLBACK");
         return { ok: false, duplicate: false };
       }
-      const dup = await client.query(
-        "SELECT 1 FROM idempotency_keys WHERE principal_id = $1 AND key = $2",
+      // Claim the key first: a concurrent duplicate waits on this row, then
+      // inserts nothing, instead of failing on the primary key.
+      const claimed = await client.query(
+        "INSERT INTO idempotency_keys (principal_id, key) VALUES ($1,$2) ON CONFLICT (principal_id, key) DO NOTHING",
         [principalId, idempotencyKey],
       );
-      if ((dup.rowCount ?? 0) > 0) {
+      if ((claimed.rowCount ?? 0) === 0) {
         await client.query("ROLLBACK");
         const current = await client.query(
           "SELECT wear_count FROM wardrobe_garments WHERE id = $1 AND principal_id = $2",
@@ -337,10 +336,6 @@ class PgStore {
         "INSERT INTO wear_events (id, principal_id, garment_id, idempotency_key) VALUES ($1,$2,$3,$4)",
         [randomUUID(), principalId, garmentId, idempotencyKey],
       );
-      await client.query(
-        "INSERT INTO idempotency_keys (principal_id, key) VALUES ($1,$2)",
-        [principalId, idempotencyKey],
-      );
       const updated = await client.query(
         `UPDATE wardrobe_garments SET wear_count = wear_count + 1, updated_at = now()
          WHERE id = $1 AND principal_id = $2 RETURNING wear_count`,
@@ -348,6 +343,10 @@ class PgStore {
       );
       await client.query("COMMIT");
       return { ok: true, duplicate: false, wearCount: updated.rows[0]?.wear_count };
+    } catch (e) {
+      // Never hand a connection back to the pool inside an aborted transaction.
+      await client.query("ROLLBACK").catch(() => {});
+      throw e;
     } finally {
       client.release();
     }
@@ -520,10 +519,20 @@ class PgStore {
     await this.ensureMigrated();
     const pool = await this.getPool();
     const { rows } = await pool.query(
-      "SELECT * FROM wardrobe_assets WHERE id = $1 AND principal_id = $2",
+      "SELECT * FROM wardrobe_assets WHERE id = $1 AND principal_id = $2 AND status = 'active'",
       [id, principalId],
     );
     return rows[0] ? mapAsset(rows[0]) : null;
+  }
+
+  async listAssets(principalId: string): Promise<AssetRow[]> {
+    await this.ensureMigrated();
+    const pool = await this.getPool();
+    const { rows } = await pool.query(
+      "SELECT * FROM wardrobe_assets WHERE principal_id = $1 AND status = 'active' ORDER BY created_at DESC",
+      [principalId],
+    );
+    return rows.map(mapAsset);
   }
 
   async markAssetDeleted(principalId: string, id: string): Promise<AssetRow | null> {
@@ -680,7 +689,7 @@ class PgStore {
     const { rows } = await pool.query(
       `INSERT INTO scan_jobs (id, principal_id, provider, status, discovered, processed, skipped, deduplicated, failed, error, finished_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [job.id, principalId, job.provider, job.status, job.discovered, job.processed, job.skipped, job.deduplicated, job.failed, job.error ?? null, job.finishedAt ?? null],
+      [job.id, principalId, job.provider, job.status, job.discovered, job.processed, job.skipped, job.deduplicated, job.failed, job.error ?? null, job.finishedAt ?? (job.status === "running" ? null : new Date().toISOString())],
     );
     const r = rows[0];
     return mapScanJob(r);
@@ -1106,6 +1115,10 @@ class LocalFileStore {
     return this.read<AssetRow>(principalId, "assets").find((a) => a.id === id && a.status === "active") ?? null;
   }
 
+  async listAssets(principalId: string): Promise<AssetRow[]> {
+    return this.read<AssetRow>(principalId, "assets").filter((a) => a.status === "active");
+  }
+
   async markAssetDeleted(principalId: string, id: string): Promise<AssetRow | null> {
     const rows = this.read<AssetRow>(principalId, "assets");
     const target = rows.find((a) => a.id === id && a.status === "active");
@@ -1170,15 +1183,17 @@ class LocalFileStore {
   }
 
   async createOauthState(state: string, principalId: string, action: string, codeVerifier: string, ttlSeconds: number): Promise<void> {
-    const rows = this.read<{ state: string; principalId: string; action: string; codeVerifier: string; expiresAt: number }>(principalId, "oauthStates");
-    rows.push({ state, principalId, action, codeVerifier, expiresAt: Date.now() + ttlSeconds * 1000 });
-    this.write(principalId, "oauthStates", rows.filter((r) => r.expiresAt > Date.now()));
+    // shortcut: process-local index, lost on dev-server restart; Postgres is the durable path.
+    const now = Date.now();
+    for (let i = localOauthStates.length - 1; i >= 0; i--) {
+      if (localOauthStates[i]!.expiresAt <= now) localOauthStates.splice(i, 1);
+    }
+    localOauthStates.push({ state, principalId, action, codeVerifier, expiresAt: now + ttlSeconds * 1000 });
   }
 
   async consumeOauthState(state: string): Promise<{ principalId: string; action: string; codeVerifier: string } | null> {
-    // Local mode: scan every principal directory is not possible here; states
-    // are stored under the creating principal, so the facade keeps a process-
-    // wide index instead. See localOauthStates below.
+    // The callback arrives without a principal, so states live in a
+    // process-wide index (see localOauthStates below).
     const idx = localOauthStates.findIndex((s) => s.state === state && s.expiresAt > Date.now());
     if (idx < 0) return null;
     const [found] = localOauthStates.splice(idx, 1);
@@ -1243,7 +1258,9 @@ class LocalFileStore {
       this.write(principalId, name, []);
     }
     this.setPreferences(principalId, {});
-    localOauthStates.length = 0;
+    for (let i = localOauthStates.length - 1; i >= 0; i--) {
+      if (localOauthStates[i]!.principalId === principalId) localOauthStates.splice(i, 1);
+    }
   }
 }
 

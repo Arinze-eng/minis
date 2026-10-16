@@ -71,6 +71,9 @@ export function validateImageBytes(bytes: Uint8Array, declaredMime: string): Ima
 
   const dims = decodeDimensions(bytes, mime);
   if (!dims) return { ok: false, reason: "undecodable_dimensions", mime };
+  // HEIC dimensions are not decoded here (see decodeDimensions); the byte cap
+  // bounds it and the provider reports real dimensions after upload.
+  if (mime === "image/heic") return mimeMatches(declaredMime, mime) ? { ok: true, mime } : { ok: false, reason: "mime_mismatch", mime };
   const { width, height } = dims;
   if (
     width < IMAGE_LIMITS.minDimension || height < IMAGE_LIMITS.minDimension ||
@@ -79,12 +82,16 @@ export function validateImageBytes(bytes: Uint8Array, declaredMime: string): Ima
   ) {
     return { ok: false, reason: "dimensions_out_of_bounds", mime, width, height };
   }
-  // A lying Content-Type is a rejection, not a correction.
-  const decl = declaredMime.split(";")[0]?.trim().toLowerCase() ?? "";
-  if (decl && decl !== mime && decl !== "application/octet-stream") {
+  if (!mimeMatches(declaredMime, mime)) {
     return { ok: false, reason: "mime_mismatch", mime, width, height };
   }
   return { ok: true, mime, width, height };
+}
+
+/** A lying Content-Type is a rejection, not a correction. */
+function mimeMatches(declaredMime: string, mime: string): boolean {
+  const decl = declaredMime.split(";")[0]?.trim().toLowerCase() ?? "";
+  return !decl || decl === mime || decl === "application/octet-stream";
 }
 
 function decodeDimensions(
