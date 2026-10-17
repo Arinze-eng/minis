@@ -397,7 +397,7 @@ Two different things are called "rotation". Only one of them is safe.
 
 | Data | Allowed providers |
 |---|---|
-| Avatar and wardrobe photos, try-on images | Bedrock (no training, not shared with model providers, no human access to inputs/outputs), Gemini **paid** tier |
+| Avatar and wardrobe photos, try-on images | Bedrock (no training, not shared with model providers, no human access to inputs/outputs), Groq (no training, no retention by default; opt out of troubleshooting logs), Gemini **paid** tier |
 | Stylist chat, wardrobe text, Gmail-derived data | Groq (no training; no retention by default; opt out of troubleshooting logs), Bedrock, Gemini paid |
 | Generic, non-personal text | Any, including Gemini free |
 
@@ -406,7 +406,7 @@ Two different things are called "rotation". Only one of them is safe.
 ```ts
 type DataClass = "personal_image" | "personal_text" | "public_text";
 const ALLOWED: Record<DataClass, Provider[]> = {
-  personal_image: ["bedrock", ...(paidGemini ? (["gemini"] as const) : [])],
+  personal_image: ["bedrock", "groq", ...(paidGemini ? (["gemini"] as const) : [])],
   personal_text: ["groq", "bedrock", ...(paidGemini ? (["gemini"] as const) : [])],
   public_text: ["gemini", "groq", "bedrock", "openrouter"],
 };
