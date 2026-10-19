@@ -1,335 +1,189 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { AlertTriangle, CheckCheck, EyeOff, Plus, RotateCcw, Search, Shirt, Trash2, WashingMachine, X } from "lucide-react";
 import Link from "next/link";
-import { Shirt, Layers } from "lucide-react";
-import { principalFromCookies } from "@/lib/server/identity";
-import { getStore } from "@/lib/server/store";
-import { syncSignalsAndNotifications } from "@/lib/server/seed";
-import {
-  costPerWear,
-  filterGarments,
-  availableColors,
-  availableOccasions,
-  CATEGORY_LABELS,
-  type Garment,
-  type GarmentCategory,
-  type WardrobeFilters,
-} from "@/lib/wardrobe";
-import { formatCPW } from "@/lib/format";
-import { GarmentCard } from "./GarmentCard";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { Empty, PageHead, SkeletonGrid, Spinner, useRun } from "@/components/ui";
+import { CATEGORY_OPTIONS, ItemTile, LAUNDRY_LABEL } from "@/components/wardrobe";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
-export const metadata: Metadata = {
-  title: "Wardrobe",
-};
+type Laundry = keyof typeof LAUNDRY_LABEL;
 
-interface SearchParams {
-  category?: string;
-  occasion?: string;
-  color?: string;
-  q?: string;
-}
+function Wardrobe() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const category = params.get("category") ?? "";
+  const laundry = (params.get("laundry") ?? "") as Laundry | "";
+  const [text, setText] = useState("");
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<Id<"items">>>(new Set());
 
-function readFilters(params: SearchParams): WardrobeFilters {
-  const category = (
-    params.category && params.category in CATEGORY_LABELS ? params.category : "all"
-  ) as WardrobeFilters["category"];
-  return {
-    category,
-    occasion: params.occasion ?? "all",
-    color: params.color ?? "all",
-    query: params.q ?? "",
+  const all = useQuery(api.items.list, {});
+  const found = useQuery(api.items.search, text.trim() ? { text } : "skip");
+  const processing = useQuery(api.items.list, { status: "extracting" });
+  const failed = useQuery(api.items.list, { status: "failed" });
+  const setLaundry = useMutation(api.items.setLaundry);
+  const setStatus = useMutation(api.items.setStatus);
+  const remove = useMutation(api.items.remove);
+  const markWorn = useMutation(api.items.markWorn);
+  const retry = useMutation(api.items.retryExtract);
+  const { run, busy } = useRun();
+
+  const items = useMemo(() => {
+    const source = text.trim() ? found : all;
+    return source?.filter((i) => (!category || i.category === category) && (!laundry || i.laundry === laundry));
+  }, [all, found, text, category, laundry]);
+
+  const setFilter = (key: string, value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    router.replace(`/wardrobe${next.size ? `?${next}` : ""}`, { scroll: false });
   };
-}
-
-function buildFilterHref(current: SearchParams, patch: Partial<SearchParams>): string {
-  const merged = { ...current, ...patch };
-  const usp = new URLSearchParams();
-  for (const [k, v] of Object.entries(merged)) {
-    if (v && v !== "all") usp.set(k, v);
-  }
-  const qs = usp.toString();
-  return qs ? `/wardrobe?${qs}` : "/wardrobe";
-}
-
-function toDomainGarment(row: Awaited<ReturnType<typeof getStore>>["store"] extends never ? never : GarmentFromStore): Garment {
-  return {
-    id: row.id,
-    name: row.name,
-    category: row.category as Garment["category"],
-    colors: row.colors,
-    material: row.material ?? undefined,
-    pattern: row.pattern ?? undefined,
-    warmth: row.warmth,
-    formality: row.formality,
-    seasons: row.seasons,
-    occasions: row.occasions,
-    price: row.price ?? undefined,
-    currency: row.currency ?? undefined,
-    wearCount: row.wearCount,
-    status: row.status === "confirmed" ? "confirmed" : "needs_confirmation",
-    analysisProvider: (row.analysisProvider as Garment["analysisProvider"]) ?? "user",
-    imageRef: row.imageRef ?? null,
-    imageAlt: `${row.name}, garment record`,
-    addedAt: row.addedAt,
-    correctionHistory: [],
+  const toggle = (id: Id<"items">) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const finish = () => {
+    setSelected(new Set());
+    setSelecting(false);
   };
-}
-
-type GarmentFromStore = Awaited<ReturnType<typeof listGarmentsSafe>>[number];
-
-async function listGarmentsSafe(principalId: string) {
-  const { store } = getStore();
-  return store.listGarments(principalId);
-}
-
-export default async function WardrobePage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const params = await searchParams;
-  const filters = readFilters(params);
-  const principal = await principalFromCookies();
-
-  // First-run sync: derive signals from whatever exists (idempotent).
-  await syncSignalsAndNotifications(principal.userId);
-
-  const storeGarments = await listGarmentsSafe(principal.userId);
-  const garments = storeGarments.map(toDomainGarment);
-  const pending = garments.filter((g) => g.status === "needs_confirmation");
-  const filtered = filterGarments(garments, filters);
-  const colors = availableColors(garments);
-  const occasions = availableOccasions(garments);
-
-  const hasActiveFilters =
-    filters.category !== "all" ||
-    filters.occasion !== "all" ||
-    filters.color !== "all" ||
-    filters.query !== "";
+  const ids = [...selected];
 
   return (
     <div className="page">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-ink-muted)] uppercase tracking-wider mb-1">
-            <Shirt size={14} aria-hidden="true" />
-            Wardrobe · cost per wear
-          </p>
-          <h1 className="large-title">
-            Your Wardrobe
-          </h1>
-          <p className="mt-1 text-sm text-[var(--color-ink-muted)] max-w-prose">
-            Every piece carries the price and wears you entered — Atlas only
-            composes outfits from garments you confirmed.
-          </p>
+      <PageHead
+        title="Wardrobe"
+        sub={all ? `${all.length} piece${all.length === 1 ? "" : "s"}` : undefined}
+        actions={
+          <>
+            {(all?.length ?? 0) > 0 && (
+              <button type="button" className="btn" onClick={() => (selecting ? finish() : setSelecting(true))}>
+                {selecting ? "Done" : "Select"}
+              </button>
+            )}
+            <Link href="/wardrobe/add" className="btn-primary">
+              <Plus size={16} aria-hidden="true" /> Add clothes
+            </Link>
+          </>
+        }
+      />
+
+      {(processing?.length ?? 0) > 0 && (
+        <div className="notice notice-accent mb-4 flex items-center gap-2">
+          <Spinner /> Cutting out {processing!.length} piece{processing!.length === 1 ? "" : "s"}… they appear here when ready.
         </div>
-        <Link
-          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-          href="/wardrobe/add"
-        >
-          Add garment
-        </Link>
+      )}
+      {(failed?.length ?? 0) > 0 && (
+        <div className="notice notice-warn mb-4 flex items-center gap-2 flex-wrap">
+          <AlertTriangle size={16} aria-hidden="true" /> {failed!.length} piece{failed!.length === 1 ? "" : "s"} couldn't be processed.
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={busy}
+            onClick={() => run(async () => { for (const f of failed!) await retry({ itemId: f._id }); }, "Retrying")}
+          >
+            <RotateCcw size={14} aria-hidden="true" /> Retry
+          </button>
+          <button type="button" className="btn-ghost" disabled={busy} onClick={() => run(() => remove({ itemIds: failed!.map((f) => f._id) }), "Removed")}>
+            Remove
+          </button>
+        </div>
+      )}
+
+      <div className="toolbar">
+        <label className="search">
+          <Search size={16} aria-hidden="true" />
+          <span className="visually-hidden">Search wardrobe</span>
+          <input className="input" type="search" placeholder="Search — “navy linen”, “boots”…" value={text} onChange={(e) => setText(e.target.value)} />
+        </label>
+        <div className="segmented" role="radiogroup" aria-label="Laundry">
+          {([["", "All"], ["clean", "Clean"], ["worn", "Worn"], ["in_wash", "Washing"]] as const).map(([value, label]) => (
+            <button key={value} type="button" role="radio" aria-checked={laundry === value} onClick={() => setFilter("laundry", value)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="chip-row mb-5" role="group" aria-label="Category">
+        <button type="button" className="chip" aria-pressed={!category} onClick={() => setFilter("category", "")}>
+          All
+        </button>
+        {CATEGORY_OPTIONS.map(([value, label]) => (
+          <button key={value} type="button" className="chip" aria-pressed={category === value} onClick={() => setFilter("category", category === value ? "" : value)}>
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Confirmation queue */}
-      {pending.length > 0 ? (
-        <section
-          className="mb-6 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-4"
-          aria-labelledby="queue-h"
-        >
-          <h2 id="queue-h" className="text-sm font-semibold text-[var(--color-ink)] mb-3">
-            Needs your confirmation ({pending.length})
-          </h2>
-          <div className="flex flex-col gap-2">
-            {pending.map((p) => (
-              <Link
-                key={p.id}
-                href={`/wardrobe/add?review=${p.id}`}
-                className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-[var(--color-surface)] border border-[var(--color-line)] hover:border-[var(--color-accent)] transition-colors"
-              >
-                <span className="font-medium text-sm text-[var(--color-ink)]">{p.name}</span>
-                <span className="text-xs text-[var(--color-ink-muted)] hidden sm:block">
-                  Confirm tags to unlock outfit planning
-                </span>
-                <span className="text-xs font-medium text-[var(--color-accent)] shrink-0">
-                  Review tags →
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Filter rail */}
-      {garments.length > 0 ? (
-        <section className="mb-4 flex flex-col gap-3" aria-label="Filters">
-          {/* Category pills */}
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Category">
-            <Link
-              href={buildFilterHref(params, { category: "all" })}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                filters.category === "all"
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                  : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] border-[var(--color-line)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-              }`}
-              aria-pressed={filters.category === "all"}
-            >
-              All
-            </Link>
-            {(Object.keys(CATEGORY_LABELS) as GarmentCategory[])
-              .filter((c) => garments.some((g) => g.category === c))
-              .map((c) => (
-                <Link
-                  key={c}
-                  href={buildFilterHref(params, { category: c })}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    filters.category === c
-                      ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                      : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] border-[var(--color-line)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                  }`}
-                  aria-pressed={filters.category === c}
-                >
-                  {CATEGORY_LABELS[c]}
-                </Link>
-              ))}
-          </div>
-
-          {/* Occasion pills */}
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Occasion">
-            <Link
-              href={buildFilterHref(params, { occasion: "all" })}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                filters.occasion === "all"
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                  : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] border-[var(--color-line)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-              }`}
-            >
-              Any occasion
-            </Link>
-            {occasions.map((o) => (
-              <Link
-                key={o}
-                href={buildFilterHref(params, { occasion: o })}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  filters.occasion === o
-                    ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                    : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] border-[var(--color-line)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                }`}
-              >
-                {o}
-              </Link>
-            ))}
-          </div>
-
-          {/* Color pills */}
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Color">
-            <Link
-              href={buildFilterHref(params, { color: "all" })}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                filters.color === "all"
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                  : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] border-[var(--color-line)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-              }`}
-            >
-              Any color
-            </Link>
-            {colors.map((c) => (
-              <Link
-                key={c}
-                href={buildFilterHref(params, { color: c })}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  filters.color === c
-                    ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                    : "bg-[var(--color-surface)] text-[var(--color-ink-muted)] border-[var(--color-line)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                }`}
-              >
-                {c}
-              </Link>
-            ))}
-          </div>
-
-          {/* Search */}
-          <form className="flex gap-2" action="/wardrobe" method="get" role="search">
-            {params.category && params.category !== "all" ? (
-              <input type="hidden" name="category" value={params.category} />
-            ) : null}
-            <label htmlFor="wardrobe-search" className="sr-only">
-              Search wardrobe
-            </label>
-            <input
-              id="wardrobe-search"
-              type="search"
-              name="q"
-              defaultValue={filters.query}
-              placeholder="Search name, material, color…"
-              className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:border-[var(--color-accent)]"
-            />
-            <button
-              type="submit"
-              className="px-3 py-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] text-sm text-[var(--color-ink-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
-            >
-              Search
-            </button>
-          </form>
-        </section>
-      ) : null}
-
-      {/* Content area */}
-      {garments.length === 0 ? (
-        /* Completely empty wardrobe */
-        <div
-          className="mt-12 flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-[var(--color-line)] p-12 text-center"
-          role="region"
-          aria-label="Empty wardrobe"
-        >
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-surface-raised)] text-[var(--color-ink-muted)]" aria-hidden="true">
-            <Layers size={40} />
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--color-ink)]">Your wardrobe is empty</h2>
-          <p className="text-sm text-[var(--color-ink-muted)] max-w-sm">
-            Add your first garment to start tracking cost per wear and getting
-            outfit suggestions from Atlas.
-          </p>
-          <Link
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-            href="/wardrobe/add"
-          >
-            Add your first garment
-          </Link>
-        </div>
-      ) : filtered.length === 0 ? (
-        /* Garments exist but filters return nothing */
-        <div className="mt-12 flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--color-line)] p-12 text-center">
-          <h2 className="text-xl font-semibold text-[var(--color-ink)]">
-            No garments match these filters
-          </h2>
-          <p className="text-sm text-[var(--color-ink-muted)]">
-            Loosen a filter, or add the piece you are thinking of.
-          </p>
-          <Link
-            className="px-3 py-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] text-sm text-[var(--color-ink-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
-            href={buildFilterHref(params, {
-              category: "all",
-              occasion: "all",
-              color: "all",
-              q: "",
-            })}
-          >
-            Clear filters
-          </Link>
-        </div>
+      {items === undefined ? (
+        <SkeletonGrid />
+      ) : all?.length === 0 ? (
+        <Empty
+          icon={Shirt}
+          title="Your wardrobe is empty"
+          body="Add a few photos of your clothes. Atlas finds every piece, removes the background and tags colour, fabric and season."
+          action={{ href: "/wardrobe/add", label: "Add clothes" }}
+        />
+      ) : items.length === 0 ? (
+        <Empty icon={Search} title="Nothing matches" body="Try another word or clear the filters." />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 mt-6">
-          {filtered.map((g) => (
-            <GarmentCard key={g.id} garment={g} />
+        <div className="tile-grid">
+          {items.map((item) => (
+            <ItemTile key={item._id} item={item} selected={selected.has(item._id)} onToggle={selecting ? () => toggle(item._id) : undefined} />
           ))}
         </div>
       )}
 
-      <p className="mt-8 text-xs text-[var(--color-ink-muted)]">
-        Cost per wear uses confirmed wear events only — never estimates dressed
-        up as data. Prices are what you entered, if you entered them.
-      </p>
+      {selecting && ids.length > 0 && (
+        <div className="action-bar" role="toolbar" aria-label="Selected pieces">
+          <span className="action-bar-count">{ids.length} selected</span>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={busy}
+            onClick={() => run(() => markWorn({ itemIds: ids, idempotencyKey: crypto.randomUUID() }), "Logged as worn today").then(finish)}
+          >
+            <CheckCheck size={16} aria-hidden="true" /> Wore today
+          </button>
+          <button type="button" className="btn" disabled={busy} onClick={() => run(() => setLaundry({ itemIds: ids, laundry: "in_wash" }), "In the wash").then(finish)}>
+            <WashingMachine size={16} aria-hidden="true" /> Wash
+          </button>
+          <button type="button" className="btn" disabled={busy} onClick={() => run(() => setLaundry({ itemIds: ids, laundry: "clean" }), "Marked clean").then(finish)}>
+            Clean
+          </button>
+          <button type="button" className="btn" disabled={busy} onClick={() => run(() => setStatus({ itemIds: ids, status: "hidden" }), "Hidden").then(finish)}>
+            <EyeOff size={16} aria-hidden="true" /> Hide
+          </button>
+          <button
+            type="button"
+            className="btn-danger"
+            disabled={busy}
+            onClick={() => {
+              if (confirm(`Delete ${ids.length} piece${ids.length === 1 ? "" : "s"}? Photos are removed too.`)) void run(() => remove({ itemIds: ids }), "Deleted").then(finish);
+            }}
+          >
+            <Trash2 size={16} aria-hidden="true" /> Delete
+          </button>
+          <button type="button" className="btn-ghost" aria-label="Clear selection" onClick={finish}>
+            <X size={16} aria-hidden="true" />
+          </button>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function WardrobePage() {
+  return (
+    <Suspense fallback={<div className="page"><SkeletonGrid /></div>}>
+      <Wardrobe />
+    </Suspense>
   );
 }

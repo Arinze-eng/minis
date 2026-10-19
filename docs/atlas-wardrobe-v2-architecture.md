@@ -306,7 +306,7 @@ Data access is Convex functions (`uploads.*`, `items.*`, `outfits.*`, `avatars.*
 | 2 Import | batch upload, scan (Bedrock Nova Lite → Groq), review, cutout (bg0 client + Nova fallback), colours, dHash duplicates | 3 photos → choose 4 pieces → 4 ready cutouts with tags |
 | 3 Wardrobe + outfits | grid, filters, search index, bulk actions, detail, laundry state, outfit builder, idempotent wear logging | server rejects foreign/unready/miscategorised items (tests) |
 | 4 Avatars + try-on | consent-gated avatars, Nova Canvas VTO (strategies A/B), renders, lookbook, expiring shares | outfit → 2 images; failures release quota; avatar locked while pending |
-| 5 Stylist | Strands TS agent in Next, tools via user JWT, approvals, threads, page context, skills | brief → proposals → approved try-on; injected text cannot trigger tools |
+| 5 Stylist | Strands TS agent in a Convex Node action (same AI policy, key pool and spend ledger as every other call; tools are internal functions scoped to the thread's owner), approvals, threads | brief → proposals → approved try-on; injected text cannot trigger tools |
 | 6 Atlas-only | receipts → wardrobe, morning drip (+Telegram via convex-py), travel packing, declutter, research | each behind consent, visible in Inbox |
 | 7 Hardening | admin usage view, provider health, load test (k6) at S256 concurrency, accessibility pass | no write-conflict errors under load; p95 job pickup < 5 s |
 

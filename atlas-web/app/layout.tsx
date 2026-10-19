@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { ThemeScript } from "@/components/ThemeScript";
+import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import {
   clerkConfigured,
   clerkPublishableKey,
@@ -70,10 +71,10 @@ export default function RootLayout({
             signUpFallbackRedirectUrl={clerkSignUpFallbackRedirectUrl()}
             afterSignOutUrl="/"
           >
-            {children}
+            <ConvexClientProvider clerk>{children}</ConvexClientProvider>
           </ClerkProvider>
         ) : (
-          children
+          <ConvexClientProvider clerk={false}>{children}</ConvexClientProvider>
         )}
         <ServiceWorkerRegistration />
       </body>

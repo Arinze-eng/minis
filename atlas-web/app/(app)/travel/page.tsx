@@ -1,142 +1,106 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Info, Plane, ShieldCheck } from "lucide-react";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Travel",
-};
+import { useAction, useMutation, useQuery } from "convex/react";
+import { CloudRain, Luggage, Plane, Trash2 } from "lucide-react";
+import { type FormEvent } from "react";
+import { Empty, PageHead, PageLoading, useRun } from "@/components/ui";
+import { ItemTile } from "@/components/wardrobe";
+import { api } from "@/convex/_generated/api";
 
-const PLANNED_BEHAVIOUR = [
-  "Extract bookings from authorized messages — flight, rail, hotel, rental.",
-  "Show check-in and boarding deadlines on a single timeline.",
-  "Surface reminders that respect your quiet hours.",
-  "Prepare the next move; never modify a booking without approval.",
-];
+const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function TravelPage() {
+  const plans = useQuery(api.travel.list);
+  const plan = useAction(api.travel.plan);
+  const remove = useMutation(api.travel.remove);
+  const { run, busy } = useRun();
+  const today = new Date();
+
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const ok = await run(
+      () => plan({ destination: String(f.get("destination") ?? ""), startDate: String(f.get("start") ?? ""), endDate: String(f.get("end") ?? "") }),
+      "Packing list ready",
+    );
+    if (ok) form.reset();
+  };
+
   return (
-    <div className="page page-narrow">
-      {/* Page header */}
-      <div className="mb-8">
-        <p className="inline-flex items-center gap-1.5 mb-3 text-[0.72rem] font-extrabold tracking-[0.13em] uppercase text-[var(--color-accent-deep)]">
-          <Plane size={14} aria-hidden="true" />
-          Operations engine · travel timeline
-        </p>
-        <h1 className="large-title mb-3">
-          Travel obligations, prepared not chased
-        </h1>
-        <p className="m-0 text-base text-[var(--color-ink-muted)] leading-relaxed max-w-[56ch]">
-          When a travel source is connected, Atlas builds booking and boarding
-          timelines from authorized evidence — with check-in and boarding
-          deadlines surfaced before they pass.
-        </p>
-      </div>
+    <div className="page">
+      <PageHead title="Travel" sub="A packing list from your own wardrobe, matched to the forecast." />
 
-      <div className="flex flex-col gap-4">
-        {/* Notice */}
-        <div
-          role="note"
-          className="flex items-start gap-3 px-4 py-3 rounded-xl border border-[var(--color-alert-soft)] bg-[var(--color-alert-soft)] text-[var(--color-ink)]"
-        >
-          <Info
-            size={18}
-            aria-hidden="true"
-            className="text-[var(--color-alert-deep)] mt-0.5 flex-none"
-          />
-          <div>
-            <p className="m-0 font-semibold text-sm">
-              No travel source is connected yet.
-            </p>
-            <p className="m-0 mt-1 text-[0.88rem] text-[var(--color-ink-muted)]">
-              This capability activates when a connector is configured and you
-              grant consent on{" "}
-              <Link
-                href="/sources"
-                className="text-[var(--color-accent-deep)] underline underline-offset-2"
-              >
-                Sources
-              </Link>
-              .
-            </p>
-          </div>
-        </div>
+      <form className="card card-pad section grid gap-3 md:grid-cols-[2fr_1fr_1fr_auto] items-end" onSubmit={submit}>
+        <label className="field">
+          <span className="field-label">Where to?</span>
+          <input className="input" name="destination" required maxLength={80} placeholder="Lisbon" />
+        </label>
+        <label className="field">
+          <span className="field-label">From</span>
+          <input className="input" name="start" type="date" required min={iso(today)} defaultValue={iso(new Date(Date.now() + 7 * 86_400_000))} />
+        </label>
+        <label className="field">
+          <span className="field-label">To</span>
+          <input className="input" name="end" type="date" required min={iso(today)} defaultValue={iso(new Date(Date.now() + 11 * 86_400_000))} />
+        </label>
+        <button type="submit" className="btn-primary" disabled={busy}>
+          <Luggage size={16} aria-hidden="true" /> {busy ? "Planning…" : "Plan"}
+        </button>
+      </form>
 
-        {/* Planned behaviour card */}
-        <section
-          className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl overflow-hidden"
-          aria-labelledby="connected-h"
-        >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-line)]">
-            <h2
-              id="connected-h"
-              className="m-0 text-[0.95rem] font-semibold text-[var(--color-ink)] flex items-center gap-1.5"
-            >
-              <ShieldCheck size={15} aria-hidden="true" />
-              What Atlas will do when connected
-            </h2>
-            <span className="text-[0.72rem] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-[var(--color-line)] text-[var(--color-ink-muted)]">
-              Not active
-            </span>
-          </div>
-          <div className="px-6 py-5">
-            <ul className="m-0 p-0 list-none flex flex-col gap-2.5">
-              {PLANNED_BEHAVIOUR.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-2.5 text-[0.92rem] text-[var(--color-ink-muted)] leading-relaxed"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] flex-none"
-                  />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Upcoming detail card */}
-        <section
-          className="bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl overflow-hidden"
-          aria-labelledby="coming-soon-h"
-        >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-line)]">
-            <h2
-              id="coming-soon-h"
-              className="m-0 text-[0.95rem] font-semibold text-[var(--color-ink)] flex items-center gap-1.5"
-            >
-              <Plane size={15} aria-hidden="true" />
-              Coming soon
-            </h2>
-            <span className="text-[0.72rem] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-[var(--color-alert-soft)] text-[var(--color-alert-deep)]">
-              In progress
-            </span>
-          </div>
-          <div className="px-6 py-5 flex flex-col gap-3">
-            <p className="m-0 text-[0.92rem] text-[var(--color-ink)] leading-relaxed">
-              The travel timeline is under development. Once a travel source is
-              connected, you will see a live view of your upcoming bookings —
-              flights, trains, hotels, and car rentals — with deadlines surfaced
-              before they matter.
-            </p>
-            <p className="m-0 text-[0.88rem] text-[var(--color-ink-muted)] leading-relaxed">
-              Atlas reads only. It never modifies, cancels, or rebooks anything
-              without your explicit approval.
-            </p>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <div className="flex justify-center pt-2">
-          <Link
-            className="inline-flex items-center gap-2 text-sm font-bold px-6 py-3 rounded-[var(--radius-control)] bg-[var(--color-accent)] text-[var(--color-on-accent)] no-underline hover:bg-[var(--color-accent-deep)] active:scale-95 transition-all duration-150"
-            href="/sources"
-          >
-            Connect a travel source
-          </Link>
-        </div>
-      </div>
+      {plans === undefined ? (
+        <PageLoading />
+      ) : plans.length === 0 ? (
+        <Empty icon={Plane} title="No trips yet" body="Tell Atlas where you're going. It checks the weather and picks clean pieces you haven't worn lately." />
+      ) : (
+        plans.map((p) => (
+          <section key={p._id} className="section card card-pad stack-md">
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <h2 className="text-[20px] font-semibold">{p.destination}</h2>
+                <p className="muted">
+                  {new Date(p.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })} –{" "}
+                  {new Date(p.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
+                </p>
+              </div>
+              <button type="button" className="btn-ghost" aria-label={`Delete ${p.destination} trip`} disabled={busy} onClick={() => run(() => remove({ planId: p._id }), "Trip deleted")}>
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
+            </div>
+            {p.forecast.length > 0 && (
+              <div className="chip-row">
+                {p.forecast.map((d) => (
+                  <div key={d.date} className="stat !p-3 flex-none min-w-[88px] text-center">
+                    <span className="stat-label">{new Date(d.date).toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" })}</span>
+                    <span className="font-semibold tabular-nums">
+                      {Math.round(d.maxC)}° / {Math.round(d.minC)}°
+                    </span>
+                    {d.rainChance >= 40 && (
+                      <span className="stat-note flex items-center justify-center gap-1">
+                        <CloudRain size={12} aria-hidden="true" /> {d.rainChance}%
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {p.notes.map((n) => (
+              <p key={n} className="muted">
+                {n}
+              </p>
+            ))}
+            {p.items.length > 0 && (
+              <div className="tile-grid">
+                {p.items.map((i) => (
+                  <ItemTile key={i._id} item={i} />
+                ))}
+              </div>
+            )}
+            {p.gaps.length > 0 && <p className="notice notice-warn">Missing from your wardrobe: {p.gaps.join(", ")}.</p>}
+          </section>
+        ))
+      )}
     </div>
   );
 }

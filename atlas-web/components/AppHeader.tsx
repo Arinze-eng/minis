@@ -1,39 +1,59 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
 import { Bell } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { NotificationDrawer } from "@/components/NotificationDrawer";
 import { RouteMark } from "@/components/RouteMark";
-import { unreadCount, type AgentNotification } from "@/lib/notifications";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import type { AgentNotification } from "@/lib/notifications";
 
 const TITLES: Array<{ match: RegExp; title: string }> = [
-  { match: /^\/inbox/,              title: "Overview"        },
-  { match: /^\/ask/,                title: "Ask Atlas"       },
-  { match: /^\/wardrobe\/add/,      title: "Add garment"     },
-  { match: /^\/wardrobe/,           title: "Wardrobe"        },
-  { match: /^\/looks/,              title: "Looks"           },
-  { match: /^\/money/,              title: "Money"           },
-  { match: /^\/travel/,             title: "Travel"          },
-  { match: /^\/tasks/,              title: "Tasks"           },
-  { match: /^\/signals/,            title: "Signal"          },
-  { match: /^\/sources/,            title: "Sources"         },
-  { match: /^\/settings\/privacy/,  title: "Privacy & data"  },
-  { match: /^\/settings\/preferences/, title: "Notifications" },
-  { match: /^\/settings/,           title: "Settings"        },
+  { match: /^\/inbox/, title: "Today" },
+  { match: /^\/ask/, title: "Stylist" },
+  { match: /^\/wardrobe\/add/, title: "Add clothes" },
+  { match: /^\/wardrobe/, title: "Wardrobe" },
+  { match: /^\/looks/, title: "Looks" },
+  { match: /^\/money/, title: "Money" },
+  { match: /^\/travel/, title: "Travel" },
+  { match: /^\/tasks/, title: "Tasks" },
+  { match: /^\/signals/, title: "Signal" },
+  { match: /^\/sources/, title: "Sources" },
+  { match: /^\/settings\/privacy/, title: "Privacy & data" },
+  { match: /^\/settings\/preferences/, title: "Preferences" },
+  { match: /^\/settings\/photos/, title: "Your photos" },
+  { match: /^\/settings/, title: "Settings" },
+  { match: /^\/admin/, title: "Admin" },
 ];
+
+const URGENCY: Record<string, AgentNotification["urgency"]> = { high: "urgent", urgent: "urgent", review: "review" };
 
 export function AppHeader({ authControls }: { authControls?: ReactNode }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AgentNotification[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const unread = unreadCount(notifications);
+  const rows = useQuery(api.inbox.notifications);
+  const markRead = useMutation(api.inbox.markRead);
   const title = TITLES.find((t) => t.match.test(pathname))?.title ?? "Atlas";
 
-  // Large-title pattern: the bar shows the title only once the page's own
-  // large title has scrolled away (or when the page has none).
+  const notifications = useMemo<AgentNotification[]>(
+    () =>
+      (rows ?? []).map((n) => ({
+        id: n._id,
+        category: n.category,
+        title: n.title,
+        detail: n.detail,
+        action: { kind: "link", label: n.action.label, href: n.action.href },
+        createdAt: new Date(n.createdAt).toISOString(),
+        read: n.read,
+        urgency: URGENCY[n.urgency] ?? "normal",
+      })),
+    [rows],
+  );
+  const unread = notifications.filter((n) => !n.read).length;
+
+  // Large-title pattern: the bar shows the title once the page's own large title scrolls away.
   const [showTitle, setShowTitle] = useState(false);
   useEffect(() => {
     const hasLargeTitle = Boolean(document.querySelector("main h1"));
@@ -42,42 +62,6 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, [pathname]);
-
-  const load = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      const res = await fetch("/api/notifications", { cache: "no-store" });
-      if (res.ok) {
-        const data = (await res.json()) as { notifications?: AgentNotification[] };
-        if (Array.isArray(data.notifications)) setNotifications(data.notifications);
-      }
-    } catch { /* preserve the last server-confirmed state while offline */ } finally {
-      setLoaded(true);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => { if (!loaded) void load(); }, [loaded, load]);
-  useEffect(() => {
-    const timer = window.setInterval(() => { void load(); }, 30_000);
-    return () => window.clearInterval(timer);
-  }, [load]);
-
-  // Optimistic mark-read; roll back if the server does not confirm it.
-  const onDismiss = useCallback(async (id: string) => {
-    const previous = notifications;
-    setNotifications((items) => items.map((n) => n.id === id ? { ...n, read: true } : n));
-    try {
-      const res = await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) throw new Error("notification update failed");
-    } catch {
-      setNotifications(previous);
-    }
-  }, [notifications]);
 
   return (
     <>
@@ -91,8 +75,7 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
             <RouteMark size={24} />
           </span>
           <p
-            className="m-0 truncate text-[17px] font-semibold tracking-tight text-[var(--color-ink)]
-                       transition-opacity duration-200"
+            className="m-0 truncate text-[17px] font-semibold tracking-tight text-[var(--color-ink)] transition-opacity duration-200"
             style={{ opacity: showTitle ? 1 : 0 }}
             aria-hidden={!showTitle}
           >
@@ -101,29 +84,23 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden lg:inline-flex badge badge-good" title="Atlas only reads; it never acts without asking">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-good)]" aria-hidden="true" />
-            Read-only
-          </span>
           {authControls}
           <button
             type="button"
-            onClick={() => { setDrawerOpen(true); void load(); }}
+            onClick={() => setDrawerOpen(true)}
             aria-label={`Notifications (${unread} unread)`}
             aria-haspopup="dialog"
             className="press relative grid place-items-center w-11 h-11 lg:w-9 lg:h-9 rounded-full
-                       bg-transparent border-0 text-[var(--color-accent)]
-                       hover:bg-[var(--color-fill)] transition-colors duration-150"
+                       bg-transparent border-0 text-[var(--color-accent)] hover:bg-[var(--color-fill)] transition-colors duration-150"
           >
             <Bell size={20} aria-hidden="true" />
             {unread > 0 && (
               <span
                 className="absolute top-1 right-1 lg:-top-0.5 lg:-right-0.5 min-w-[18px] h-[18px] rounded-full
-                           bg-[var(--color-danger)] text-white text-[11px] font-semibold
-                           grid place-items-center px-1"
+                           bg-[var(--color-danger)] text-white text-[11px] font-semibold grid place-items-center px-1"
                 aria-hidden="true"
               >
-                {unread}
+                {unread > 9 ? "9+" : unread}
               </span>
             )}
           </button>
@@ -134,9 +111,7 @@ export function AppHeader({ authControls }: { authControls?: ReactNode }) {
         open={drawerOpen}
         notifications={notifications}
         onClose={() => setDrawerOpen(false)}
-        onDismiss={onDismiss}
-        refreshing={refreshing}
-        onRefresh={() => void load()}
+        onDismiss={(id) => void markRead({ notificationId: id as Id<"notifications"> })}
       />
     </>
   );

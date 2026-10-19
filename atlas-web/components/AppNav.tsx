@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Inbox, MessageCircle, Shirt, Layers, Wallet, Plane, CheckSquare,
-  Radio, Shield, Bell, Settings, Plus,
+  Radio, Shield, Bell, Settings, Plus, Camera,
 } from "lucide-react";
 import { RouteMark } from "@/components/RouteMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -23,17 +23,22 @@ type Item = { href: string; label: string; icon: typeof Inbox; also?: string[] }
 const SIDEBAR: { label?: string; items: Item[] }[] = [
   {
     items: [
-      { href: "/inbox", label: "Overview", icon: Inbox, also: ["/signals"] },
-      { href: "/ask", label: "Ask Atlas", icon: MessageCircle },
+      { href: "/inbox", label: "Today", icon: Inbox, also: ["/signals"] },
+      { href: "/ask", label: "Stylist", icon: MessageCircle },
+    ],
+  },
+  {
+    label: "Closet",
+    items: [
+      { href: "/wardrobe", label: "Wardrobe", icon: Shirt },
+      { href: "/looks", label: "Looks", icon: Layers },
+      { href: "/travel", label: "Travel", icon: Plane },
     ],
   },
   {
     label: "Life",
     items: [
-      { href: "/wardrobe", label: "Wardrobe", icon: Shirt },
-      { href: "/looks", label: "Looks", icon: Layers },
       { href: "/money", label: "Money", icon: Wallet },
-      { href: "/travel", label: "Travel", icon: Plane },
       { href: "/tasks", label: "Tasks", icon: CheckSquare },
     ],
   },
@@ -41,19 +46,20 @@ const SIDEBAR: { label?: string; items: Item[] }[] = [
     label: "Settings",
     items: [
       { href: "/settings", label: "General", icon: Settings },
+      { href: "/settings/photos", label: "Your photos", icon: Camera },
       { href: "/sources", label: "Sources", icon: Radio },
       { href: "/settings/privacy", label: "Privacy & data", icon: Shield },
-      { href: "/settings/preferences", label: "Notifications", icon: Bell },
+      { href: "/settings/preferences", label: "Preferences", icon: Bell },
     ],
   },
 ];
 
 const TABS: Item[] = [
-  { href: "/inbox", label: "Home", icon: Inbox, also: ["/signals"] },
-  { href: "/ask", label: "Ask", icon: MessageCircle },
-  { href: "/wardrobe", label: "Wardrobe", icon: Shirt, also: ["/looks"] },
-  { href: "/money", label: "Money", icon: Wallet },
-  { href: "/settings", label: "Settings", icon: Settings, also: ["/sources", "/travel", "/tasks"] },
+  { href: "/inbox", label: "Today", icon: Inbox, also: ["/signals"] },
+  { href: "/wardrobe", label: "Wardrobe", icon: Shirt },
+  { href: "/looks", label: "Looks", icon: Layers },
+  { href: "/ask", label: "Stylist", icon: MessageCircle },
+  { href: "/settings", label: "Settings", icon: Settings, also: ["/sources", "/travel", "/tasks", "/money", "/admin"] },
 ];
 
 function under(pathname: string, href: string): boolean {
@@ -93,7 +99,7 @@ export function AppNav() {
         <div className="px-3 pb-3 shrink-0">
           <Link href="/wardrobe/add" className="btn-primary w-full">
             <Plus size={16} aria-hidden="true" />
-            Add garment
+            Add clothes
           </Link>
         </div>
 

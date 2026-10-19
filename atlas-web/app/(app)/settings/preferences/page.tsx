@@ -1,242 +1,151 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertCircle, Bell, Check, Moon, Save, ShieldCheck, Sliders } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { type FormEvent } from "react";
+import { PageHead, PageLoading, useRun } from "@/components/ui";
+import { api } from "@/convex/_generated/api";
 
-/**
- * Delivery preferences, persisted server-side per verified principal. The
- * save button reflects the real request result — success, validation error, or
- * failure — and never claims a save that did not happen.
- */
-
-interface Preferences {
-  quietHoursEnabled?: boolean;
-  quietStart?: string;
-  quietEnd?: string;
-  webuiNotifications?: boolean;
-  telegramDelivery?: boolean;
-}
-
-type SaveState =
-  | { kind: "idle" }
-  | { kind: "saving" }
-  | { kind: "saved" }
-  | { kind: "error"; message: string };
+const PRESENTATIONS = [
+  ["feminine", "Feminine"],
+  ["masculine", "Masculine"],
+  ["neutral", "Neutral"],
+] as const;
+const FITS = ["slim", "regular", "relaxed", "oversized"] as const;
 
 export default function PreferencesPage() {
-  const [quietHoursEnabled, setQuietHoursEnabled] = useState(true);
-  const [quietStart, setQuietStart] = useState("22:00");
-  const [quietEnd, setQuietEnd] = useState("07:30");
-  const [webuiNotifications, setWebuiNotifications] = useState(true);
-  const [telegramDelivery, setTelegramDelivery] = useState(false);
-  const [telegramStatus, setTelegramStatus] = useState<{ configured: boolean; healthy: boolean; username?: string | null } | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
+  const me = useQuery(api.users.me);
+  const update = useMutation(api.users.updatePrefs);
+  const { run, busy } = useRun();
+  if (me === undefined || me === null) return <PageLoading />;
+  const p = me.prefs;
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/preferences");
-        if (!res.ok) throw new Error(String(res.status));
-        const body = (await res.json()) as { preferences?: Preferences };
-        const p = body.preferences ?? {};
-        if (typeof p.quietHoursEnabled === "boolean") setQuietHoursEnabled(p.quietHoursEnabled);
-        if (typeof p.quietStart === "string") setQuietStart(p.quietStart);
-        if (typeof p.quietEnd === "string") setQuietEnd(p.quietEnd);
-        if (typeof p.webuiNotifications === "boolean") setWebuiNotifications(p.webuiNotifications);
-        if (typeof p.telegramDelivery === "boolean") setTelegramDelivery(p.telegramDelivery);
-        const telegram = await fetch("/api/telegram/status", { cache: "no-store" });
-        if (telegram.ok) setTelegramStatus((await telegram.json()) as { configured: boolean; healthy: boolean; username?: string | null });
-      } catch {
-        setLoadFailed(true);
-      }
-    })();
-  }, []);
+  const save = (patch: Parameters<typeof update>[0]["patch"]) => run(() => update({ patch }), "Saved");
 
-  const handleSave = async (e: React.FormEvent) => {
+  const submitStyle = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSaveState({ kind: "saving" });
-    try {
-      const res = await fetch("/api/preferences", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quietHoursEnabled,
-          quietStart,
-          quietEnd,
-          webuiNotifications,
-          telegramDelivery,
-        }),
-      });
-      if (res.ok) {
-        setSaveState({ kind: "saved" });
-        setTimeout(() => setSaveState({ kind: "idle" }), 2500);
-      } else {
-        const body = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
-        setSaveState({
-          kind: "error",
-          message: body.message ?? body.error ?? `Save failed (${res.status}).`,
-        });
-      }
-    } catch {
-      setSaveState({ kind: "error", message: "Network error — preferences were not saved." });
-    }
+    const f = new FormData(e.currentTarget);
+    void save({
+      homeCity: String(f.get("homeCity") ?? "").trim() || undefined,
+      avoidColours: String(f.get("avoid") ?? "")
+        .split(",")
+        .map((c) => c.trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 12),
+    });
   };
 
   return (
     <div className="page page-narrow">
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">
-            <Sliders size={14} aria-hidden="true" />
-            Settings · preferences &amp; quiet hours
-          </p>
-          <h1>Delivery preferences &amp; controls</h1>
-          <p className="page-sub">
-            Configure quiet-hours windows and notification delivery channels.
-            Atlas never sends unauthorized external messages during quiet hours.
-          </p>
-        </div>
-      </div>
+      <PageHead title="Style & notifications" crumb={{ href: "/settings", label: "Settings" }} />
 
-      {loadFailed ? (
-        <div className="notice notice-warn" role="alert">
-          <AlertCircle size={18} aria-hidden="true" />
-          <p>
-            Current preferences could not be loaded. The values shown are
-            defaults — saving will store them for real once the connection
-            works.
-          </p>
-        </div>
-      ) : null}
-
-      <form onSubmit={handleSave} className="stack-md">
-        <section className="card" aria-labelledby="quiet-h">
-          <div className="card-head">
-            <h2 id="quiet-h">
-              <Moon size={15} aria-hidden="true" /> Quiet hours window
-            </h2>
-            <span className="badge">Local time</span>
+      <section className="grouped">
+        <h2 className="section-header">Style</h2>
+        <div className="grouped-list p-4 form-stack">
+          <div className="field">
+            <span className="field-label">Dress for</span>
+            <div className="segmented" role="radiogroup" aria-label="Style presentation">
+              {PRESENTATIONS.map(([v, l]) => (
+                <button key={v} type="button" role="radio" aria-checked={p.presentation === v} disabled={busy} onClick={() => save({ presentation: v })}>
+                  {l}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="card-pad stack-md">
-            <label className="check-row">
-              <span>
-                <span className="row-title">Enable quiet-hours policy</span>
-                <span className="row-detail">
-                  Suppress non-urgent delivery notifications during rest hours.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={quietHoursEnabled}
-                onChange={(e) => setQuietHoursEnabled(e.target.checked)}
-              />
+          <div className="field">
+            <span className="field-label">Preferred fit</span>
+            <div className="segmented" role="radiogroup" aria-label="Preferred fit">
+              {FITS.map((v) => (
+                <button key={v} type="button" role="radio" aria-checked={p.fit === v} disabled={busy} onClick={() => save({ fit: v })} className="capitalize">
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+          <form className="form-stack" onSubmit={submitStyle}>
+            <label className="field">
+              <span className="field-label">Colours to avoid</span>
+              <input className="input" name="avoid" defaultValue={p.avoidColours.join(", ")} placeholder="mustard, neon green" />
             </label>
-
-            {quietHoursEnabled ? (
-              <div className="form-grid">
-                <div className="field">
-                  <label className="field-label" htmlFor="quiet-start">
-                    Start time
-                  </label>
-                  <input
-                    id="quiet-start"
-                    className="input tabular"
-                    type="time"
-                    value={quietStart}
-                    onChange={(e) => setQuietStart(e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label className="field-label" htmlFor="quiet-end">
-                    End time
-                  </label>
-                  <input
-                    id="quiet-end"
-                    className="input tabular"
-                    type="time"
-                    value={quietEnd}
-                    onChange={(e) => setQuietEnd(e.target.value)}
-                  />
-                </div>
-              </div>
-            ) : null}
-          </div>
-          <p className="card-foot">
-            Overnight windows are normal — a 22:00 → 07:30 window wraps midnight.
-          </p>
-        </section>
-
-        <section className="card" aria-labelledby="channels-h">
-          <div className="card-head">
-            <h2 id="channels-h">
-              <Bell size={15} aria-hidden="true" /> Delivery channels
-            </h2>
-          </div>
-          <div className="card-pad stack-sm">
-            <label className="check-row">
-              <span>
-                <span className="row-title">Browser / WebUI notifications</span>
-                <span className="row-detail">
-                  Signal cards and reminders surface in this app.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={webuiNotifications}
-                onChange={(e) => setWebuiNotifications(e.target.checked)}
-              />
+            <label className="field">
+              <span className="field-label">Home city</span>
+              <input className="input" name="homeCity" defaultValue={p.homeCity} placeholder="London" maxLength={80} />
             </label>
-
-            <label className="check-row">
-              <span>
-                <span className="row-title">Telegram delivery gate</span>
-                <span className="row-detail">
-                  {telegramStatus?.healthy
-                    ? `Bot @${telegramStatus.username ?? "configured"} is reachable. Delivery still requires Atlas consent and policy checks.`
-                    : "Save your preference here. Delivery remains unavailable until the server has a valid Telegram bot token and the Atlas consent and policy checks pass."}
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={telegramDelivery}
-                onChange={(e) => setTelegramDelivery(e.target.checked)}
-                aria-label="Enable Telegram delivery gate"
-              />
-            </label>
-          </div>
-        </section>
-
-        <div className="form-submit">
-          <div>
-            {saveState.kind === "saved" ? (
-              <span className="notice notice-good" role="status">
-                <Check size={16} aria-hidden="true" />
-                <span>Preferences saved to your account</span>
-              </span>
-            ) : null}
-            {saveState.kind === "error" ? (
-              <span className="notice notice-warn" role="alert">
-                <AlertCircle size={16} aria-hidden="true" />
-                <span>{saveState.message}</span>
-              </span>
-            ) : null}
-          </div>
-          <button type="submit" className="btn-primary" disabled={saveState.kind === "saving"}>
-            {saveState.kind === "saving" ? (
-              <>
-                <Save size={15} aria-hidden="true" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <ShieldCheck size={15} aria-hidden="true" />
-                Save preferences
-              </>
-            )}
-          </button>
+            <div className="form-submit">
+              <button type="submit" className="btn-primary" disabled={busy}>
+                Save
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+        <p className="section-footer">The stylist uses these when suggesting looks.</p>
+      </section>
+
+      <section className="grouped">
+        <h2 className="section-header">Morning outfit</h2>
+        <ul className="grouped-list">
+          <li>
+            <label className="check-row !px-4">
+              <span className="flex-1">
+                <span className="row-title">Suggest an outfit each morning</span>
+                <span className="row-detail">From clean pieces you haven&apos;t worn lately. Appears in Today.</span>
+              </span>
+              <input type="checkbox" className="switch" checked={p.morningOutfit} disabled={busy} onChange={(e) => save({ morningOutfit: e.target.checked })} />
+            </label>
+          </li>
+          <li>
+            <label className="check-row !px-4">
+              <span className="flex-1 row-title">Time</span>
+              <select className="input !w-auto" value={p.morningHour} disabled={busy || !p.morningOutfit} onChange={(e) => save({ morningHour: Number(e.target.value) })}>
+                {Array.from({ length: 24 }, (_, h) => (
+                  <option key={h} value={h}>
+                    {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric" })}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </li>
+          <li>
+            <div className="check-row !px-4">
+              <span className="flex-1">
+                <span className="row-title">Time zone</span>
+                <span className="row-detail">{p.timezone ?? "Not set — using UTC"}</span>
+              </span>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => save({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
+              >
+                Use this device&apos;s
+              </button>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section className="grouped">
+        <h2 className="section-header">Quiet hours</h2>
+        <ul className="grouped-list">
+          <li>
+            <label className="check-row !px-4">
+              <span className="flex-1 row-title">Hold notifications overnight</span>
+              <input type="checkbox" className="switch" checked={p.quietHoursEnabled} disabled={busy} onChange={(e) => save({ quietHoursEnabled: e.target.checked })} />
+            </label>
+          </li>
+          <li>
+            <div className="check-row !px-4">
+              <span className="flex-1 row-title">From</span>
+              <input type="time" className="input !w-auto" defaultValue={p.quietStart} disabled={busy || !p.quietHoursEnabled} onBlur={(e) => e.target.value !== p.quietStart && save({ quietStart: e.target.value })} />
+            </div>
+          </li>
+          <li>
+            <div className="check-row !px-4">
+              <span className="flex-1 row-title">Until</span>
+              <input type="time" className="input !w-auto" defaultValue={p.quietEnd} disabled={busy || !p.quietHoursEnabled} onBlur={(e) => e.target.value !== p.quietEnd && save({ quietEnd: e.target.value })} />
+            </div>
+          </li>
+        </ul>
+      </section>
     </div>
   );
 }

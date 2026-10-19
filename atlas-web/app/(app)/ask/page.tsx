@@ -1,241 +1,218 @@
 "use client";
 
-import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { ArrowUp, Bookmark, Check, MessageCircle, Plus, Trash2, Wand2, X } from "lucide-react";
 import Link from "next/link";
-import {
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  Clock,
-  AlertCircle,
-} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { PageHead, PageLoading, relativeTime, Spinner, useRun } from "@/components/ui";
+import { OutfitStrip } from "@/components/wardrobe";
+import { api } from "@/convex/_generated/api";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
-/**
- * Ask Atlas. The server returns either a deterministic proposal from the
- * user's confirmed wardrobe or an honest no-candidate/unavailable state —
- * this surface never fabricates a response locally (product contract §7).
- */
+const STARTERS = ["What should I wear to work tomorrow?", "Put together a weekend brunch look", "Something warm for a rainy day", "What goes with my favourite jeans?"];
 
-interface AskResponse {
-  capability?: "prepare" | "advise";
-  title?: string;
-  implication?: string;
-  pieces?: string[];
-  evidence?: string[];
-  boundaries?: string[];
-  error?: string;
-  message?: string;
+type Proposal = { _id: Id<"outfits">; name: string; reasoning?: string; savedAt?: number; pieces: { _id: string; name: string; url: string | null }[] };
+
+function ProposalCard({ outfit }: { outfit: Proposal }) {
+  const save = useMutation(api.outfits.save);
+  const { run, busy } = useRun();
+  return (
+    <div className="card card-pad stack-sm">
+      <div className="flex items-center gap-2">
+        <Link href={`/looks/${outfit._id}`} className="list-title flex-1 no-underline text-[var(--color-ink)] hover:underline">
+          {outfit.name}
+        </Link>
+        {outfit.savedAt ? (
+          <span className="badge badge-good">
+            <Check size={12} aria-hidden="true" /> Saved
+          </span>
+        ) : (
+          <button type="button" className="btn-secondary" disabled={busy} onClick={() => run(() => save({ outfitId: outfit._id }), "Saved to Looks")}>
+            <Bookmark size={15} aria-hidden="true" /> Save
+          </button>
+        )}
+      </div>
+      <OutfitStrip pieces={outfit.pieces} />
+      {outfit.reasoning && <p className="list-sub">{outfit.reasoning}</p>}
+    </div>
+  );
 }
 
-export default function AskAtlasPage() {
-  const [requestText, setRequestText] = useState("");
-  const [occasion, setOccasion] = useState("");
-  const [location, setLocation] = useState("Local");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [responseResult, setResponseResult] = useState<AskResponse | null>(null);
-  const [requestFailed, setRequestFailed] = useState(false);
+function ApprovalCard({ approval }: { approval: Doc<"approvals"> }) {
+  const decide = useMutation(api.approvals.decide);
+  const { run, busy } = useRun();
+  const expired = approval.status === "pending" && approval.expiresAt <= Date.now();
+  return (
+    <div className="card card-pad stack-sm border-l-4 border-[var(--color-accent)]">
+      <p className="list-title flex items-center gap-2">
+        <Wand2 size={16} aria-hidden="true" /> Try this on?
+      </p>
+      <p className="list-sub">{approval.summary}</p>
+      {approval.status === "pending" && !expired ? (
+        <div className="flex gap-2">
+          <button type="button" className="btn-primary" disabled={busy} onClick={() => run(() => decide({ approvalId: approval._id, approve: true }), "Try-on started — it'll appear in the look")}>
+            Approve
+          </button>
+          <button type="button" className="btn" disabled={busy} onClick={() => run(() => decide({ approvalId: approval._id, approve: false }))}>
+            <X size={15} aria-hidden="true" /> No thanks
+          </button>
+        </div>
+      ) : (
+        <p className="list-sub">
+          {approval.status === "approved" ? (
+            <Link href={`/looks/${approval.outfitId}`} className="inline-link">
+              Approved — see the try-on
+            </Link>
+          ) : approval.status === "rejected" ? (
+            "Declined."
+          ) : (
+            "Expired. Ask again if you still want it."
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
+function Chat() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const threadId = params.get("t");
+  const threads = useQuery(api.stylist.threads);
+  const thread = useQuery(api.stylist.thread, threadId ? { threadId } : "skip");
+  const send = useMutation(api.stylist.send);
+  const removeThread = useMutation(api.stylist.removeThread);
+  const { run, busy } = useRun();
+  const [text, setText] = useState("");
+  const bottom = useRef<HTMLDivElement>(null);
+  const answering = thread?.thread.busy ?? false;
+
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [thread?.messages.length, answering]);
+
+  const submit = async (body: string) => {
+    const message = body.trim();
+    if (!message || busy || answering) return;
+    setText("");
+    const id = await run(() => send({ threadId: (thread?.thread._id ?? undefined) as Id<"threads"> | undefined, text: message }));
+    if (!id) setText(message);
+    else if (id !== threadId) router.replace(`/ask?t=${id}`, { scroll: false });
+  };
+  const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!requestText.trim()) return;
-    setIsSubmitting(true);
-    setResponseResult(null);
-    setRequestFailed(false);
-
-    try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: occasion ? `${requestText} (${occasion})` : requestText,
-          location,
-        }),
-      });
-
-      if (res.ok) {
-        setResponseResult((await res.json()) as AskResponse);
-      } else {
-        // Real failure (auth, store unavailable) — surface it, never fake it.
-        setRequestFailed(true);
-      }
-    } catch {
-      setRequestFailed(true);
-    } finally {
-      setIsSubmitting(false);
+    void submit(text);
+  };
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      void submit(text);
     }
   };
 
+  if (threadId && thread === undefined) return <PageLoading />;
+
   return (
-    <div className="page page-narrow">
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">
-            <Sparkles size={14} aria-hidden="true" />
-            Ask Atlas · bounded request
-          </p>
-          <h1>What deserves your attention next?</h1>
-          <p className="page-sub">
-            Atlas prepares the next move from evidence it actually holds: your
-            confirmed wardrobe. It proposes — you decide.
-          </p>
+    <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside className="hidden lg:block" aria-label="Conversations">
+        <Link href="/ask" className="btn w-full mb-3">
+          <Plus size={16} aria-hidden="true" /> New chat
+        </Link>
+        <div className="list-card">
+          {(threads ?? []).map((t) => (
+            <Link key={t._id} href={`/ask?t=${t._id}`} className={`list-row !py-2.5 ${t._id === threadId ? "bg-[var(--color-accent-soft)]" : ""}`}>
+              <div className="list-main">
+                <div className="text-[14px] font-medium truncate">{t.title}</div>
+                <div className="list-sub">{relativeTime(t.lastMessageAt)}</div>
+              </div>
+            </Link>
+          ))}
+          {threads?.length === 0 && <p className="muted p-4 text-[13px]">No conversations yet.</p>}
         </div>
-      </div>
+      </aside>
 
-      <div className="card card-pad">
-        <form onSubmit={handleSubmit} className="form-stack">
-          <div className="field">
-            <label className="field-label" htmlFor="ask-prompt">
-              Your request
-            </label>
-            <textarea
-              id="ask-prompt"
-              className="textarea"
-              value={requestText}
-              onChange={(e) => setRequestText(e.target.value)}
-              placeholder="e.g. Recommend an outfit for an afternoon coffee meeting in London (18°C clear)…"
-              rows={4}
-              required
-            />
-          </div>
-
-          <div className="form-grid">
-            <div className="field">
-              <label className="field-label" htmlFor="ask-occasion">
-                Occasion / vibe (optional)
-              </label>
-              <input
-                id="ask-occasion"
-                className="input"
-                type="text"
-                value={occasion}
-                onChange={(e) => setOccasion(e.target.value)}
-                placeholder="Smart casual, client dinner, travel"
-              />
-            </div>
-            <div className="field">
-              <label className="field-label" htmlFor="ask-location">
-                Location context
-              </label>
-              <input
-                id="ask-location"
-                className="input"
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="London, UK or Local"
-              />
+      <div className="min-w-0 flex flex-col min-h-[60vh]">
+        {!thread ? (
+          <div className="flex-1 grid place-items-center text-center py-10">
+            <div className="stack-md justify-items-center">
+              <span className="empty-icon" aria-hidden="true">
+                <MessageCircle size={26} />
+              </span>
+              <h2 className="empty-title">What are we dressing for?</h2>
+              <p className="empty-body">The stylist only uses clothes you own. It can suggest looks and ask before any try-on.</p>
+              <div className="pill-row justify-center">
+                {STARTERS.map((s) => (
+                  <button key={s} type="button" className="chip" disabled={busy} onClick={() => submit(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+        ) : (
+          <div className="chat flex-1">
+            <div className="flex justify-end lg:hidden">
+              <Link href="/ask" className="btn-ghost">
+                <Plus size={16} aria-hidden="true" /> New chat
+              </Link>
+            </div>
+            {thread.messages.map((m) => (
+              <div key={m._id} className="contents">
+                <div className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-bot"}`}>{m.text}</div>
+                {(m.outfits.length > 0 || m.approval) && (
+                  <div className="bot-extra">
+                    {m.outfits.map((o) => (
+                      <ProposalCard key={o._id} outfit={o} />
+                    ))}
+                    {m.approval && <ApprovalCard approval={m.approval} />}
+                  </div>
+                )}
+              </div>
+            ))}
+            {answering && (
+              <div className="bubble bubble-bot flex items-center gap-2 text-[var(--color-ink-muted)]">
+                <Spinner /> Looking through your wardrobe…
+              </div>
+            )}
+            <div ref={bottom} />
+          </div>
+        )}
 
-          <div className="form-submit">
-            <p className="policy-line">
-              <ShieldCheck size={15} aria-hidden="true" />
-              Atlas policy active · no unauthorized side effects
-            </p>
+        <form className="composer" onSubmit={onSubmit}>
+          <label className="flex-1">
+            <span className="visually-hidden">Message the stylist</span>
+            <textarea className="textarea" rows={1} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} placeholder="Ask for a look…" maxLength={2000} />
+          </label>
+          <button type="submit" className="btn-primary !rounded-full !w-11 !h-11 !p-0" aria-label="Send" disabled={!text.trim() || busy || answering}>
+            <ArrowUp size={20} aria-hidden="true" />
+          </button>
+          {thread && (
             <button
-              type="submit"
-              className="btn-primary"
-              disabled={isSubmitting || !requestText.trim()}
+              type="button"
+              className="btn-ghost !w-11 !h-11 !p-0"
+              aria-label="Delete conversation"
+              disabled={busy || answering}
+              onClick={() => {
+                if (confirm("Delete this conversation? Saved looks stay.")) void run(() => removeThread({ threadId: thread.thread._id })).then((r) => r !== undefined && router.replace("/ask"));
+              }}
             >
-              {isSubmitting ? (                <><Clock size={15} className="spin" aria-hidden="true" />
-                  Evaluating context…
-                </>
-              ) : (
-                <>
-                  <Sparkles size={15} aria-hidden="true" />
-                  Ask Atlas
-                </>
-              )}
+              <Trash2 size={18} aria-hidden="true" />
             </button>
-          </div>
+          )}
         </form>
       </div>
+    </div>
+  );
+}
 
-      {requestFailed ? (
-        <div className="notice notice-warn stack-md" role="alert">
-          <AlertCircle size={18} aria-hidden="true" />
-          <div>
-            <p>
-              <strong>Atlas could not complete that request.</strong>
-            </p>
-            <p className="muted">
-              The request failed server-side (authentication or store
-              unavailable). Nothing was invented in its place — try again.
-            </p>
-          </div>
-        </div>
-      ) : null}
-
-      {responseResult?.error === "no_candidate" ? (
-        <div className="notice notice-warn stack-md" role="status">
-          <AlertCircle size={18} aria-hidden="true" />
-          <div>
-            <p>
-              <strong>Nothing to propose yet — honestly.</strong>
-            </p>
-            <p className="muted">{responseResult.message}</p>              <Link className="inline-link" href="/wardrobe/add">
-              Add your first garment <ArrowRight size={13} aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
-      {responseResult && !responseResult.error ? (
-        <section className="card stack-md" aria-live="polite">
-          <div className="card-head">
-            <div className="result-head">
-              <span className="badge badge-accent">
-                {responseResult.capability ?? "prepare"}
-              </span>
-              <h2>{responseResult.title}</h2>
-            </div>
-            <span className="muted">Just now</span>
-          </div>
-          <div className="card-pad stack-md">
-            <p>{responseResult.implication}</p>
-
-            {responseResult.pieces?.length ? (
-              <div className="stack-sm">
-                <p className="field-label">From your confirmed wardrobe</p>
-                <div className="pill-row">
-                  {responseResult.pieces.map((piece) => (
-                    <span className="pill" key={piece}>
-                      {piece}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {responseResult.evidence?.length ? (
-              <div className="stack-sm">
-                <p className="field-label">Supporting evidence</p>
-                <ul className="prose-list">
-                  {responseResult.evidence.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {responseResult.boundaries?.length ? (
-              <div className="stack-sm">
-                <p className="field-label">What Atlas did not do</p>
-                <ul className="prose-list">
-                  {responseResult.boundaries.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-          <div className="card-foot">
-            <Link className="inline-link" href="/looks">
-              View in the outfit planner <ArrowRight size={13} aria-hidden="true" />
-            </Link>
-          </div>
-        </section>
-      ) : null}
+export default function AskPage() {
+  return (
+    <div className="page">
+      <PageHead title="Stylist" sub="Looks from clothes you already own." />
+      <Suspense fallback={<PageLoading />}>
+        <Chat />
+      </Suspense>
     </div>
   );
 }

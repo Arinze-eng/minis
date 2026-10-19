@@ -7,6 +7,9 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app/atlas-web
 COPY --from=deps /app/atlas-web/node_modules ./node_modules
 COPY atlas-web/ ./
+# Inlined into the client bundle at build time (Render passes env vars as build args).
+ARG NEXT_PUBLIC_CONVEX_URL
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run typecheck && npm test && npm run build
 
@@ -19,7 +22,5 @@ COPY --from=builder /app/atlas-web/node_modules ./node_modules
 COPY --from=builder /app/atlas-web/.next ./.next
 COPY --from=builder /app/atlas-web/public ./public
 COPY --from=builder /app/atlas-web/next.config.ts ./next.config.ts
-# Read at runtime by the Postgres store (lib/server/store.ts runMigrations).
-COPY --from=builder /app/atlas-web/lib/server/migrations ./lib/server/migrations
 EXPOSE 3000
 CMD ["npm", "run", "start"]
