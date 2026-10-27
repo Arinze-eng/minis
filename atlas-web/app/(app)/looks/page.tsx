@@ -16,7 +16,8 @@ export default function LooksPage() {
   return (
     <div className="page">
       <PageHead
-        title="Looks"
+        eyebrow="Looks"
+        title="Outfits and try-ons."
         actions={
           <>
             <Link href="/ask" className="btn">

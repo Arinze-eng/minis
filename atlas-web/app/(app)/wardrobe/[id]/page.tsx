@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { CheckCheck, Copy, EyeOff, Pencil, Trash2 } from "lucide-react";
+import { CheckCheck, Copy, EyeOff, Pencil, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { useStylistPanel } from "@/components/StylistPanel";
 import { Empty, PageHead, PageLoading, relativeTime, useRun } from "@/components/ui";
 import { CATEGORY_OPTIONS, ItemImage, LAUNDRY_LABEL } from "@/components/wardrobe";
 import { api } from "@/convex/_generated/api";
@@ -149,6 +150,7 @@ export default function ItemPage() {
   const dismissDuplicate = useMutation(api.items.dismissDuplicate);
   const { run, busy } = useRun();
   const [editing, setEditing] = useState(false);
+  const stylist = useStylistPanel();
 
   if (data === undefined) return <PageLoading />;
   if (data === null) {
@@ -288,9 +290,9 @@ export default function ItemPage() {
                 <Link href={`/looks/new?with=${item._id}`} className="btn-secondary">
                   Style this piece
                 </Link>
-                <Link href={`/ask?about=item:${item._id}`} className="btn">
-                  Ask the stylist
-                </Link>
+                <button type="button" className="btn" onClick={() => stylist.ask({ kind: "item", id: item._id })}>
+                  <Sparkles size={16} aria-hidden="true" /> Ask the stylist
+                </button>
                 <button type="button" className="btn" disabled={busy} onClick={() => run(() => setStatus({ itemIds: [item._id], status: "hidden" }), "Hidden from your wardrobe").then((r) => r !== undefined && router.push("/wardrobe"))}>
                   <EyeOff size={16} aria-hidden="true" /> Hide
                 </button>

@@ -34,7 +34,7 @@ export default function TodayPage() {
   if (counts === undefined || signals === undefined) {
     return (
       <div className="page">
-        <PageHead title={greeting()} sub={date} />
+        <PageHead eyebrow={date} title={`${greeting()}.`} />
         <SkeletonGrid count={4} />
       </div>
     );
@@ -43,8 +43,8 @@ export default function TodayPage() {
   return (
     <div className="page">
       <PageHead
-        title={greeting(me?.name)}
-        sub={date}
+        eyebrow={date}
+        title={`${greeting(me?.name)}.`}
         actions={
           <button type="button" className="btn" disabled={busy} onClick={() => run(() => refresh({}), "Up to date")}>
             <RefreshCw size={16} className={busy ? "spin" : undefined} aria-hidden="true" /> Refresh
@@ -61,7 +61,7 @@ export default function TodayPage() {
             you actually wear.
           </p>
           <div className="mt-5 flex gap-2 flex-wrap">
-            <Link href="/wardrobe/add" className="btn-primary !bg-white !text-[#0071e3]">
+            <Link href="/wardrobe/add" className="btn-primary">
               <Camera size={16} aria-hidden="true" /> Add clothes
             </Link>
             <Link href="/sources" className="btn">

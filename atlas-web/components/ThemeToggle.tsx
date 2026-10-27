@@ -31,7 +31,7 @@ function apply(choice: ThemeChoice) {
   // Tailwind's dark: variant keys off this class (see globals.css).
   root.classList.toggle("dark", dark);
   for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
-    meta.content = dark ? "#000000" : "#f2f2f7";
+    meta.content = dark ? "#0a0a0a" : "#fafafa";
   }
 }
 
@@ -112,32 +112,15 @@ export function AppearanceControl() {
   );
 }
 
-/** Compact icon-only variant for toolbars and the landing header. */
+/** Compact one-button toggle for the top bar: flips between light and dark (Settings offers System). */
 export function ThemeToggle() {
   const [choice, select] = useAppearance();
+  const [systemDark, setSystemDark] = useState(false);
+  useEffect(() => setSystemDark(window.matchMedia("(prefers-color-scheme: dark)").matches), []);
+  const dark = choice === "dark" || (choice === "system" && systemDark);
   return (
-    <div
-      role="radiogroup"
-      aria-label="Appearance"
-      className="segmented"
-      onKeyDown={(e) => onArrow(e, choice, select)}
-    >
-      {OPTIONS.map(({ value, label, Icon }) => (
-        <button
-          key={value}
-          type="button"
-          role="radio"
-          data-value={value}
-          aria-checked={choice === value}
-          aria-label={label}
-          title={label}
-          tabIndex={choice === value ? 0 : -1}
-          onClick={() => select(value)}
-          style={{ paddingInline: 10 }}
-        >
-          <Icon size={15} aria-hidden="true" />
-        </button>
-      ))}
-    </div>
+    <button type="button" className="icon-btn" aria-label={dark ? "Use light appearance" : "Use dark appearance"} title="Appearance" onClick={() => select(dark ? "light" : "dark")}>
+      {dark ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
+    </button>
   );
 }

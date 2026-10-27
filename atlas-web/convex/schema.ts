@@ -36,6 +36,7 @@ export default defineSchema({
     role: v.union(v.literal("user"), v.literal("admin")),
     prefs: v.optional(vPrefs),
     defaultAvatarId: v.optional(v.id("avatars")),
+    onboardedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_clerkId", ["clerkId"]),
 
@@ -249,6 +250,8 @@ export default defineSchema({
     wearCount: v.number(),
     lastWornAt: v.optional(v.number()),
     phash: v.optional(v.string()),
+    /** Illustrated sample piece (no photo): shown and styled, never sent to try-on. */
+    sample: v.optional(v.boolean()),
     duplicateOfId: v.optional(v.id("items")),
     analysisProvider: v.string(),
     searchText: v.string(),

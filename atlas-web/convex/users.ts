@@ -12,6 +12,7 @@ const vMe = v.object({
   imageUrl: v.optional(v.string()),
   role: v.union(v.literal("user"), v.literal("admin")),
   prefs: vPrefs,
+  onboardedAt: v.optional(v.number()),
   createdAt: v.number(),
 });
 
@@ -29,6 +30,7 @@ export const me = query({
       imageUrl: user.imageUrl,
       role: user.role,
       prefs: { ...DEFAULT_PREFS, ...user.prefs },
+      onboardedAt: user.onboardedAt,
       createdAt: user.createdAt,
     };
   },
@@ -110,3 +112,26 @@ export const updatePrefs = mutation({
   },
 });
 
+
+/** End of the welcome flow. Idempotent; the time zone comes from the device that finished it. */
+export const completeOnboarding = mutation({
+  args: { timezone: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, { timezone }) => {
+    const user = await requireUser(ctx);
+    if (user.onboardedAt) return null;
+    let tz: string | undefined;
+    try {
+      if (timezone) {
+        new Intl.DateTimeFormat("en", { timeZone: timezone });
+        tz = timezone;
+      }
+    } catch {
+      tz = undefined;
+    }
+    const prefs = { ...DEFAULT_PREFS, ...user.prefs, ...(tz && !user.prefs?.timezone ? { timezone: tz } : {}) };
+    await ctx.db.patch(user._id, { onboardedAt: Date.now(), prefs });
+    await audit(ctx, user._id, "onboarding_completed");
+    return null;
+  },
+});

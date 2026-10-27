@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { AlertTriangle, CheckCheck, EyeOff, Plus, RotateCcw, Search, Shirt, Trash2, WashingMachine, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -31,6 +31,8 @@ function Wardrobe() {
   const remove = useMutation(api.items.remove);
   const markWorn = useMutation(api.items.markWorn);
   const retry = useMutation(api.items.retryExtract);
+  const addSamples = useAction(api.samples.add);
+  const sampleIds = (all ?? []).filter((i) => i.sample).map((i) => i._id);
   const { run, busy } = useRun();
 
   const items = useMemo(() => {
@@ -67,7 +69,8 @@ function Wardrobe() {
   return (
     <div className="page">
       <PageHead
-        title="Wardrobe"
+        eyebrow="Wardrobe"
+        title="Everything you own."
         sub={all ? `${all.length} piece${all.length === 1 ? "" : "s"}` : undefined}
         actions={
           <>
@@ -83,6 +86,16 @@ function Wardrobe() {
         }
       />
 
+      {sampleIds.length > 0 && (
+        <div className="notice notice-accent mb-4 flex items-center gap-3 flex-wrap">
+          <span className="flex-1">
+            {sampleIds.length} sample piece{sampleIds.length === 1 ? "" : "s"} are illustrations to explore with. Add your own photos to try looks on.
+          </span>
+          <button type="button" className="btn !min-h-8" disabled={busy} onClick={() => run(() => remove({ itemIds: sampleIds }), "Sample pieces removed")}>
+            Remove samples
+          </button>
+        </div>
+      )}
       {(processing?.length ?? 0) > 0 && (
         <div className="notice notice-accent mb-4 flex items-center gap-2">
           <Spinner /> Cutting out {processing!.length} piece{processing!.length === 1 ? "" : "s"}… they appear here when ready.
@@ -145,7 +158,11 @@ function Wardrobe() {
           title="Your wardrobe is empty"
           body="Add a few photos of your clothes. Atlas finds every piece, removes the background and tags colour, fabric and season."
           action={{ href: "/wardrobe/add", label: "Add clothes" }}
-        />
+        >
+          <button type="button" className="btn" disabled={busy} onClick={() => run(() => addSamples({}), "Sample wardrobe added")}>
+            Try a sample wardrobe
+          </button>
+        </Empty>
       ) : items.length === 0 ? (
         <Empty icon={Search} title="Nothing matches" body="Try another word or clear the filters." />
       ) : (

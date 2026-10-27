@@ -205,3 +205,36 @@ describe("Google sign-in linking", () => {
     expect(await t.mutation(internal.sources.linkViaClerk, { userId: alice, providers: ["gmail"] })).toEqual(["gmail"]);
   });
 });
+
+describe("sample wardrobe", () => {
+  it("fits the chosen presentation and ships valid standalone SVGs", async () => {
+    const { samplesFor } = await import("./model/samples");
+    const keys = (p: string) => samplesFor(p).map((s) => s.key);
+    expect(keys("feminine")).toContain("dress");
+    expect(keys("feminine")).not.toContain("cap");
+    expect(keys("masculine")).not.toContain("dress");
+    for (const s of samplesFor("neutral")) {
+      expect(s.svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
+      expect(s.svg).not.toMatch(/<script|on\w+=/i);
+    }
+  });
+
+  it("are never sent to try-on", async () => {
+    const t = setup();
+    const alice = await t.withIdentity(ALICE).mutation(api.users.ensure, {});
+    const asAlice = t.withIdentity(ALICE);
+    await asAlice.mutation(api.consent.set, { scope: "person_image_use", granted: true });
+    const top = await addItem(t, alice, { sample: true, storageId: await t.run((ctx) => ctx.storage.store(new Blob(["<svg/>"]))) });
+    const outfitId = await asAlice.mutation(api.outfits.create, { name: "Sample look", slots: { top, accessories: [] } });
+    vi.stubEnv("ATLAS_ALLOW_PAID_AI", "true");
+    vi.stubEnv("AWS_REGION", "us-east-1");
+    vi.stubEnv("ATLAS_MAX_DAILY_SPEND_USD", "5");
+    await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob(["png"]));
+      const avatarId = await ctx.db.insert("avatars", { userId: alice, storageId, label: "me", createdAt: 1 });
+      await ctx.db.patch(alice, { defaultAvatarId: avatarId });
+    });
+    await expect(asAlice.mutation(api.renders.start, { outfitId })).rejects.toThrow(/sample pieces are illustrations/);
+    vi.unstubAllEnvs();
+  });
+});

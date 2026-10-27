@@ -37,7 +37,7 @@ export default function TravelPage() {
 
   return (
     <div className="page">
-      <PageHead title="Travel" sub="A packing list from your own wardrobe, matched to the forecast." />
+      <PageHead eyebrow="Travel" title="Pack from your wardrobe." sub="A packing list from your own wardrobe, matched to the forecast." />
 
       <form className="card card-pad section grid gap-3 md:grid-cols-[1.4fr_1.4fr_1fr_1fr_auto] items-end" onSubmit={submit}>
         <label className="field">

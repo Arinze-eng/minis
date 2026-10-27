@@ -91,7 +91,7 @@ export function RequireUser({ children }: { children: ReactNode }) {
 
 // ---- Layout pieces ---------------------------------------------------------------------------
 
-export function PageHead({ title, sub, actions, crumb }: { title: string; sub?: ReactNode; actions?: ReactNode; crumb?: { href: string; label: string } }) {
+export function PageHead({ title, sub, actions, crumb, eyebrow }: { title: string; sub?: ReactNode; actions?: ReactNode; crumb?: { href: string; label: string }; eyebrow?: ReactNode }) {
   return (
     <header className="page-head page-head-row">
       <div className="min-w-0">
@@ -100,6 +100,7 @@ export function PageHead({ title, sub, actions, crumb }: { title: string; sub?: 
             <Link href={crumb.href}>‹ {crumb.label}</Link>
           </p>
         )}
+        {eyebrow && <p className="kicker">{eyebrow}</p>}
         <h1>{title}</h1>
         {sub && <p className="page-sub">{sub}</p>}
       </div>

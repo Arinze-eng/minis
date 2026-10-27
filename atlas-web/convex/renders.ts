@@ -31,8 +31,8 @@ export async function startTryOn(ctx: MutationCtx, user: Doc<"users">, outfitId:
   await validateSlots(ctx, user, outfit.slots);
   const reason = await blocker(ctx, user);
   if (reason) throw appError("CONFLICT", reason);
-  const garments = (await layered(ctx, outfit.slots)).filter(({ slot, item }) => slot !== "accessories" && item.storageId);
-  if (garments.length === 0) throw appError("INVALID_INPUT", "None of these pieces has a photo yet.");
+  const garments = (await layered(ctx, outfit.slots)).filter(({ slot, item }) => slot !== "accessories" && item.storageId && !item.sample);
+  if (garments.length === 0) throw appError("INVALID_INPUT", "Try-on needs photos of your own clothes — sample pieces are illustrations.");
   await assertBelowJobLimit(ctx, user._id);
   const { ok } = await limits.limit(ctx, "tryOnsPerUser", { key: user._id });
   if (!ok) throw appError("RATE_LIMITED", "You've reached today's try-on limit. Try again tomorrow.");
@@ -90,7 +90,7 @@ export const renderContext = internalQuery({
     const outfit = render ? await ctx.db.get(render.outfitId) : null;
     if (!render || !avatar || !outfit) return null;
     const garments = (await layered(ctx, outfit.slots))
-      .filter(({ slot, item }) => slot !== "accessories" && item.storageId)
+      .filter(({ slot, item }) => slot !== "accessories" && item.storageId && !item.sample)
       .map(({ slot, item }) => ({ slot, storageId: item.storageId!, name: item.name }));
     return { userId: render.userId, jobId: render.jobId, avatar: avatar.storageId, garments };
   },

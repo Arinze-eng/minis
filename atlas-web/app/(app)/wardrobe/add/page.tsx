@@ -159,7 +159,7 @@ function AddClothes() {
 
   return (
     <div className="page">
-      <PageHead title="Add clothes" crumb={{ href: "/wardrobe", label: "Wardrobe" }} sub="Several pieces per photo is fine — a pile on the bed works." />
+      <PageHead eyebrow="Add clothes" title="Photograph, review, done." crumb={{ href: "/wardrobe", label: "Wardrobe" }} sub="Several pieces per photo is fine — a pile on the bed works." />
 
       {!allowed ? (
         <div className="card card-pad stack-md section">

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Geist, Geist_Mono } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { ThemeScript } from "@/components/ThemeScript";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
@@ -14,6 +15,10 @@ import {
 import "./globals.css";
 import "./ui-fixes.css";
 import "./auth.css";
+import "./studio.css";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 // Clerk credentials are supplied by the runtime in production. Do not let
 // Next.js prerender this layout during the image build, when Render's runtime
@@ -22,11 +27,11 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
-    default: "Atlas — the quiet map of your next move",
+    default: "Atlas — your wardrobe, styled",
     template: "%s · Atlas",
   },
   description:
-    "Atlas notices the work you are avoiding, prepares the next move, and asks before it acts.",
+    "Your wardrobe, styled. Atlas catalogues your clothes from photos, builds outfits for the weather, packs your trips and watches your subscriptions.",
   applicationName: "Atlas",
   appleWebApp: {
     capable: true,
@@ -38,8 +43,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
 };
 
@@ -57,7 +62,7 @@ export default function RootLayout({
   const withClerk = clerkConfigured();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${geistMono.variable}`}>
       <head>
         <ThemeScript />
       </head>

@@ -42,7 +42,7 @@ export default function SettingsPage() {
 
   return (
     <div className="page page-narrow">
-      <PageHead title="Settings" sub={me?.email} />
+      <PageHead eyebrow="Settings" title="Your account." sub={me?.email} />
 
       <section className="grouped" aria-labelledby="appearance-h">
         <h2 id="appearance-h" className="section-header">

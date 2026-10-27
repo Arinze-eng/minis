@@ -1,11 +1,12 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Bookmark, CheckCheck, Link2, Link2Off, Pencil, Trash2, Wand2 } from "lucide-react";
+import { Bookmark, CheckCheck, Link2, Link2Off, Pencil, Sparkles, Trash2, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { OutfitBuilder } from "@/components/OutfitBuilder";
+import { useStylistPanel } from "@/components/StylistPanel";
 import { Empty, JobProgress, PageHead, PageLoading, relativeTime, toast, useRun } from "@/components/ui";
 import { ItemTile } from "@/components/wardrobe";
 import { api } from "@/convex/_generated/api";
@@ -104,6 +105,7 @@ export default function LookPage() {
   const markWorn = useMutation(api.items.markWorn);
   const { run, busy } = useRun();
   const [editing, setEditing] = useState(false);
+  const stylist = useStylistPanel();
 
   if (outfit === undefined) return <PageLoading />;
   if (outfit === null) {
@@ -162,9 +164,9 @@ export default function LookPage() {
       <TryOns outfitId={outfit._id} />
 
       <div className="flex gap-2 flex-wrap">
-        <Link href={`/ask?about=outfit:${outfit._id}`} className="btn">
-          Ask the stylist
-        </Link>
+        <button type="button" className="btn" onClick={() => stylist.ask({ kind: "outfit", id: outfit._id })}>
+          <Sparkles size={16} aria-hidden="true" /> Ask the stylist
+        </button>
         <button type="button" className="btn" onClick={() => setEditing(true)}>
           <Pencil size={16} aria-hidden="true" /> Edit
         </button>

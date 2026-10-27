@@ -1,7 +1,8 @@
-import { AppNav } from "@/components/AppNav";
-import { AppHeader } from "@/components/AppHeader";
 import { AuthControls } from "@/components/AuthControls";
 import { NetworkBanner } from "@/components/NetworkBanner";
+import { OnboardingGate } from "@/components/OnboardingGate";
+import { StylistProvider } from "@/components/StylistPanel";
+import { Topbar } from "@/components/Topbar";
 import { RequireUser, Toaster } from "@/components/ui";
 import { assertSignedIn } from "@/lib/server/identity";
 
@@ -9,21 +10,21 @@ export default async function AppLayout({ children }: Readonly<{ children: React
   await assertSignedIn();
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      <a href="#main" className="absolute -top-14 left-4 z-[200] btn-primary focus-visible:top-2 transition-[top] duration-150">
+    <div className="studio">
+      <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <AppNav />
-      {/* Content sits right of the desktop sidebar and above the phone tab bar */}
-      <div className="lg:ml-[260px] flex flex-col min-h-screen pb-[calc(51px+env(safe-area-inset-bottom,0px))] lg:pb-0">
-        <RequireUser>
-          <AppHeader authControls={<AuthControls />} />
-          <NetworkBanner />
-          <main id="main" className="flex-1">
-            {children}
-          </main>
-        </RequireUser>
-      </div>
+      <RequireUser>
+        <OnboardingGate>
+          <StylistProvider>
+            <Topbar account={<AuthControls />} />
+            <NetworkBanner />
+            <main id="main" className="studio-main">
+              {children}
+            </main>
+          </StylistProvider>
+        </OnboardingGate>
+      </RequireUser>
       <Toaster />
     </div>
   );

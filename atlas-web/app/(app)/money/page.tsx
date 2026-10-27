@@ -69,7 +69,7 @@ export default function MoneyPage() {
 
   return (
     <div className="page page-narrow">
-      <PageHead title="Money" sub="Subscriptions and price changes found in your receipts. Atlas never cancels or pays anything — you stay in charge." />
+      <PageHead eyebrow="Money" title="Subscriptions, watched." sub="Subscriptions and price changes found in your receipts. Atlas never cancels or pays anything — you stay in charge." />
       {findings.length === 0 ? (
         <Empty icon={Wallet} title="No subscriptions found yet" body="Connect Gmail and Atlas reads receipt headers (read-only) to find renewals, trials and price rises.">
           <Link href="/sources" className="btn-primary">
