@@ -1,16 +1,18 @@
 "use client";
 
 import { useAction, useMutation, useQuery } from "convex/react";
-import { CloudRain, Luggage, Plane, Trash2 } from "lucide-react";
+import { CloudRain, ExternalLink, Luggage, Plane, Trash2 } from "lucide-react";
 import { type FormEvent } from "react";
 import { Empty, PageHead, PageLoading, useRun } from "@/components/ui";
 import { ItemTile } from "@/components/wardrobe";
 import { api } from "@/convex/_generated/api";
+import { googleFlightsUrl, googleHotelsUrl } from "@/lib/travelLinks";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function TravelPage() {
   const plans = useQuery(api.travel.list);
+  const me = useQuery(api.users.me);
   const plan = useAction(api.travel.plan);
   const remove = useMutation(api.travel.remove);
   const { run, busy } = useRun();
@@ -21,7 +23,13 @@ export default function TravelPage() {
     const form = e.currentTarget;
     const f = new FormData(form);
     const ok = await run(
-      () => plan({ destination: String(f.get("destination") ?? ""), startDate: String(f.get("start") ?? ""), endDate: String(f.get("end") ?? "") }),
+      () =>
+        plan({
+          destination: String(f.get("destination") ?? ""),
+          origin: String(f.get("origin") ?? "") || undefined,
+          startDate: String(f.get("start") ?? ""),
+          endDate: String(f.get("end") ?? ""),
+        }),
       "Packing list ready",
     );
     if (ok) form.reset();
@@ -31,17 +39,21 @@ export default function TravelPage() {
     <div className="page">
       <PageHead title="Travel" sub="A packing list from your own wardrobe, matched to the forecast." />
 
-      <form className="card card-pad section grid gap-3 md:grid-cols-[2fr_1fr_1fr_auto] items-end" onSubmit={submit}>
+      <form className="card card-pad section grid gap-3 md:grid-cols-[1.4fr_1.4fr_1fr_1fr_auto] items-end" onSubmit={submit}>
+        <label className="field">
+          <span className="field-label">From</span>
+          <input className="input" name="origin" maxLength={80} placeholder="London" defaultValue={me?.prefs.homeCity} key={me?.prefs.homeCity ?? ""} />
+        </label>
         <label className="field">
           <span className="field-label">Where to?</span>
           <input className="input" name="destination" required maxLength={80} placeholder="Lisbon" />
         </label>
         <label className="field">
-          <span className="field-label">From</span>
+          <span className="field-label">Leaving</span>
           <input className="input" name="start" type="date" required min={iso(today)} defaultValue={iso(new Date(Date.now() + 7 * 86_400_000))} />
         </label>
         <label className="field">
-          <span className="field-label">To</span>
+          <span className="field-label">Back</span>
           <input className="input" name="end" type="date" required min={iso(today)} defaultValue={iso(new Date(Date.now() + 11 * 86_400_000))} />
         </label>
         <button type="submit" className="btn-primary" disabled={busy}>
@@ -98,6 +110,15 @@ export default function TravelPage() {
               </div>
             )}
             {p.gaps.length > 0 && <p className="notice notice-warn">Missing from your wardrobe: {p.gaps.join(", ")}.</p>}
+            <div className="flex gap-2 flex-wrap items-center">
+              <a className="btn-primary" href={googleFlightsUrl(p)} target="_blank" rel="noopener noreferrer">
+                <Plane size={16} aria-hidden="true" /> Search flights <ExternalLink size={13} aria-hidden="true" />
+              </a>
+              <a className="btn" href={googleHotelsUrl(p)} target="_blank" rel="noopener noreferrer">
+                Find a place to stay <ExternalLink size={13} aria-hidden="true" />
+              </a>
+              <span className="policy-line">Opens Google with your route and dates. You book and pay there; Atlas never takes payment.</span>
+            </div>
           </section>
         ))
       )}

@@ -315,6 +315,25 @@ Data access is Convex functions (`uploads.*`, `items.*`, `outfits.*`, `avatars.*
 
 ---
 
+### Sign in with Google = Gmail and Tasks connected
+
+Users who sign in with Google through Clerk get Gmail and Google Tasks linked without a second
+OAuth flow. Clerk holds and refreshes the Google grant; Convex reads a short-lived access token from
+Clerk's Backend API (`/v1/users/{id}/oauth_access_tokens/oauth_google`) when it scans. Setup:
+
+1. Clerk dashboard → SSO connections → Google → use custom credentials (the same Google OAuth client).
+2. Add scopes `https://www.googleapis.com/auth/gmail.readonly` and `https://www.googleapis.com/auth/tasks.readonly`
+   to sign in for everyone, or leave them off: the Sources page then asks for each one on demand
+   (Clerk `externalAccount.reauthorize({ additionalScopes })`, incremental authorization).
+3. `npx convex env set CLERK_SECRET_KEY sk_...`.
+
+A user who disconnects a source is never re-linked automatically; pressing Connect again re-enables it.
+`gmail.readonly` is a Google *restricted* scope: production use beyond 100 test users needs Google's
+OAuth verification and an annual third-party security assessment (CASA). Plan for it before launch.
+
+Travel hands off to Google Flights and Google Hotels with the route and dates filled in. Atlas never
+books or takes payment.
+
 ## 13. Environment variables
 
 ```dotenv
@@ -326,6 +345,7 @@ AWS_REGION=us-east-1  AWS_ACCESS_KEY_ID=  AWS_SECRET_ACCESS_KEY=     # agent Bed
 # Convex deployment (npx convex env set ...)
 CLERK_JWT_ISSUER_DOMAIN=       CLERK_WEBHOOK_SECRET=   ENCRYPTION_KEY=   ENCRYPTION_KEY_PREVIOUS=
 GOOGLE_CLIENT_ID=  GOOGLE_CLIENT_SECRET=          # Gmail + Google Tasks (read-only scopes)
+CLERK_SECRET_KEY=                                 # lets Convex read the Google token of users who signed in with Google
 GEMINI_API_KEY=  GEMINI_PAID=false                 # free tier = public_text only
 GROQ_API_KEYS=   AWS_REGION=  AWS_ACCESS_KEY_ID=  AWS_SECRET_ACCESS_KEY=
 ATLAS_AI_CHAIN_DETECT=bedrock,groq   ATLAS_AI_CHAIN_TEXT_PUBLIC=gemini,groq

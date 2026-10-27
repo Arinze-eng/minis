@@ -1,9 +1,9 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { action, internalAction, internalMutation, internalQuery, mutation, query, type ActionCtx } from "./_generated/server";
+import { action, internalAction, internalMutation, internalQuery, mutation, query, type ActionCtx, type MutationCtx } from "./_generated/server";
 import { requireUser } from "./lib/auth";
-import { appError } from "./lib/errors";
+import { appError, isAppError } from "./lib/errors";
 import {
   GOOGLE_SCOPES,
   accessToken,
@@ -14,6 +14,7 @@ import {
   googleJson,
   revoke,
 } from "./lib/google";
+import { clerkConfiguredOnServer, clerkGoogleToken } from "./lib/clerkGoogle";
 import { decryptSecret, encryptSecret, encryptionConfigured, pkceChallenge, randomToken } from "./lib/secretBox";
 import { audit } from "./model/core";
 import { extractFinding } from "./model/email";
@@ -54,11 +55,17 @@ export const status = query({
       await ctx.db.query("jobs").withIndex("by_user", (q) => q.eq("userId", user._id)).order("desc").take(20)
     ).find((job) => job.type === "gmail_scan");
     return {
-      configured: { google: googleConfigured(), encryption: encryptionConfigured(), telegram: Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()) },
+      configured: {
+        google: googleConfigured(),
+        encryption: encryptionConfigured(),
+        clerk: clerkConfiguredOnServer(),
+        telegram: Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()),
+      },
       // Never return token material: only the fields a status card needs.
       connections: rows.filter((r) => r !== null).map((r) => ({
         provider: r.provider,
         status: r.status,
+        via: r.via ?? "oauth",
         connectedAt: r.connectedAt,
         lastScanAt: r.lastScanAt,
         lastError: r.lastError,
@@ -136,27 +143,124 @@ export const saveConnection = internalMutation({
   handler: async (ctx, { userId, provider, scopes, encryptedRefreshToken }) => {
     const now = Date.now();
     const existing = await ctx.db.query("sourceConnections").withIndex("by_user_provider", (q) => q.eq("userId", userId).eq("provider", provider)).unique();
-    const row = { status: "connected" as const, scopes, encryptedRefreshToken, connectedAt: now, lastError: undefined, updatedAt: now };
+    const row = { status: "connected" as const, via: "oauth" as const, autoConnect: true, scopes, encryptedRefreshToken, connectedAt: now, lastError: undefined, updatedAt: now };
     if (existing) await ctx.db.patch(existing._id, row);
     else await ctx.db.insert("sourceConnections", { userId, provider, ...row });
-    if (provider === "gmail") {
-      const consent = await ctx.db.query("consentGrants").withIndex("by_user_scope", (q) => q.eq("userId", userId).eq("scope", "gmail_read")).unique();
-      if (consent) await ctx.db.patch(consent._id, { granted: true, grantedAt: now, revokedAt: undefined });
-      else await ctx.db.insert("consentGrants", { userId, scope: "gmail_read", granted: true, grantedAt: now, consentVersion: "v1" });
-    }
+    if (provider === "gmail") await grantGmailConsent(ctx, userId, now);
     await audit(ctx, userId, `${provider}_connected`);
     return null;
   },
 });
 
-export const connectionToken = internalQuery({
-  args: { userId: v.id("users"), provider: vProvider },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { userId, provider }) => {
-    const row = await ctx.db.query("sourceConnections").withIndex("by_user_provider", (q) => q.eq("userId", userId).eq("provider", provider)).unique();
-    return row?.status === "connected" ? (row.encryptedRefreshToken ?? null) : null;
+async function grantGmailConsent(ctx: MutationCtx, userId: Id<"users">, now: number) {
+  const consent = await ctx.db.query("consentGrants").withIndex("by_user_scope", (q) => q.eq("userId", userId).eq("scope", "gmail_read")).unique();
+  if (consent) await ctx.db.patch(consent._id, { granted: true, grantedAt: now, revokedAt: undefined });
+  else await ctx.db.insert("consentGrants", { userId, scope: "gmail_read", granted: true, grantedAt: now, consentVersion: "v1" });
+}
+
+// ---- Sign in with Google (Clerk) ----------------------------------------------------------------
+
+/**
+ * Called after sign-in and on the Sources page. If the user signed in with Google and granted the
+ * Gmail / Tasks read-only scopes on Google's own consent screen, link those sources automatically,
+ * unless the user disconnected one before; that choice sticks until they reconnect it themselves.
+ */
+export const syncGoogleSignIn = action({
+  args: {},
+  returns: v.object({ signedInWithGoogle: v.boolean(), linked: v.array(vProvider), missing: v.array(vProvider) }),
+  handler: async (ctx): Promise<{ signedInWithGoogle: boolean; linked: ("gmail" | "google_tasks")[]; missing: ("gmail" | "google_tasks")[] }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw appError("UNAUTHENTICATED", "Sign in to continue.");
+    const userId = await callerId(ctx);
+    let google: Awaited<ReturnType<typeof clerkGoogleToken>> = null;
+    try {
+      google = await clerkGoogleToken(identity.subject);
+    } catch {
+      return { signedInWithGoogle: false, linked: [], missing: [] };
+    }
+    if (!google) return { signedInWithGoogle: false, linked: [], missing: [] };
+    const scopes = google.scopes;
+    const granted = (["gmail", "google_tasks"] as const).filter((p) => scopes.includes(GOOGLE_SCOPES[p]));
+    const linked: ("gmail" | "google_tasks")[] = await ctx.runMutation(internal.sources.linkViaClerk, { userId, providers: granted });
+    return { signedInWithGoogle: true, linked, missing: (["gmail", "google_tasks"] as const).filter((p) => !granted.includes(p)) };
   },
 });
+
+export const linkViaClerk = internalMutation({
+  args: { userId: v.id("users"), providers: v.array(vProvider) },
+  returns: v.array(vProvider),
+  handler: async (ctx, { userId, providers }) => {
+    const now = Date.now();
+    const linked: ("gmail" | "google_tasks")[] = [];
+    for (const provider of providers) {
+      const existing = await ctx.db.query("sourceConnections").withIndex("by_user_provider", (q) => q.eq("userId", userId).eq("provider", provider)).unique();
+      if (existing?.status === "connected") {
+        linked.push(provider);
+        continue;
+      }
+      if (existing?.autoConnect === false) continue; // the user disconnected it; respect that
+      const row = {
+        status: "connected" as const,
+        via: "clerk" as const,
+        autoConnect: true,
+        scopes: [GOOGLE_SCOPES[provider]],
+        encryptedRefreshToken: undefined,
+        connectedAt: now,
+        lastError: undefined,
+        updatedAt: now,
+      };
+      if (existing) await ctx.db.patch(existing._id, row);
+      else await ctx.db.insert("sourceConnections", { userId, provider, ...row });
+      if (provider === "gmail") await grantGmailConsent(ctx, userId, now);
+      await audit(ctx, userId, `${provider}_connected`, undefined, { via: "google_sign_in" });
+      linked.push(provider);
+    }
+    return linked;
+  },
+});
+
+/** The user pressed Connect after a disconnect: allow Google sign-in to link this source again. */
+export const allowAutoConnect = mutation({
+  args: { provider: vProvider },
+  returns: v.null(),
+  handler: async (ctx, { provider }) => {
+    const user = await requireUser(ctx);
+    const existing = await ctx.db.query("sourceConnections").withIndex("by_user_provider", (q) => q.eq("userId", user._id).eq("provider", provider)).unique();
+    if (existing && existing.autoConnect === false) await ctx.db.patch(existing._id, { autoConnect: true, updatedAt: Date.now() });
+    return null;
+  },
+});
+
+export const connection = internalQuery({
+  args: { userId: v.id("users"), provider: vProvider },
+  returns: v.union(
+    v.null(),
+    v.object({ via: v.union(v.literal("oauth"), v.literal("clerk")), envelope: v.optional(v.string()), clerkId: v.string() }),
+  ),
+  handler: async (ctx, { userId, provider }) => {
+    const row = await ctx.db.query("sourceConnections").withIndex("by_user_provider", (q) => q.eq("userId", userId).eq("provider", provider)).unique();
+    const user = await ctx.db.get(userId);
+    if (row?.status !== "connected" || !user) return null;
+    return { via: row.via ?? "oauth", envelope: row.encryptedRefreshToken, clerkId: user.clerkId };
+  },
+});
+
+/** A short-lived Google access token for this source: from Clerk (Google sign-in) or Atlas's own grant. */
+async function googleToken(ctx: ActionCtx, userId: Id<"users">, provider: "gmail" | "google_tasks"): Promise<string> {
+  const conn = await ctx.runQuery(internal.sources.connection, { userId, provider });
+  const name = provider === "gmail" ? "Gmail" : "Google Tasks";
+  if (!conn) throw appError("INVALID_INPUT", `Connect ${name} first.`);
+  if (conn.via === "clerk") {
+    const google = await clerkGoogleToken(conn.clerkId);
+    if (!google || !google.scopes.includes(GOOGLE_SCOPES[provider])) {
+      throw appError("UPSTREAM_FAILED", `Google no longer grants ${name} access. Connect it again from Sources.`);
+    }
+    return google.token;
+  }
+  const refresh = conn.envelope ? await decryptSecret(conn.envelope) : null;
+  if (!refresh) throw appError("UPSTREAM_FAILED", `Stored ${name} access can't be read. Reconnect ${name}.`);
+  return accessToken(refresh);
+}
 
 /** Revoke at Google (best effort), then delete the token and everything derived from that source. */
 export const disconnect = action({
@@ -164,10 +268,11 @@ export const disconnect = action({
   returns: v.object({ revokedAtGoogle: v.boolean() }),
   handler: async (ctx, { provider }) => {
     const userId = await callerId(ctx);
-    const envelope = await ctx.runQuery(internal.sources.connectionToken, { userId, provider });
+    const conn = await ctx.runQuery(internal.sources.connection, { userId, provider });
     let revokedAtGoogle = false;
-    if (envelope && encryptionConfigured()) {
-      const token = await decryptSecret(envelope);
+    // A Clerk-held grant also signs the user in, so it is not revoked here; Atlas just stops using it.
+    if (conn?.via === "oauth" && conn.envelope && encryptionConfigured()) {
+      const token = await decryptSecret(conn.envelope);
       if (token) revokedAtGoogle = await revoke(token);
     }
     await ctx.runMutation(internal.sources.deleteSourceData, { userId, provider, revokedAtGoogle });
@@ -180,7 +285,7 @@ export const deleteSourceData = internalMutation({
   returns: v.null(),
   handler: async (ctx, { userId, provider, revokedAtGoogle }) => {
     const conn = await ctx.db.query("sourceConnections").withIndex("by_user_provider", (q) => q.eq("userId", userId).eq("provider", provider)).unique();
-    if (conn) await ctx.db.patch(conn._id, { status: "disconnected", encryptedRefreshToken: undefined, updatedAt: Date.now() });
+    if (conn) await ctx.db.patch(conn._id, { status: "disconnected", encryptedRefreshToken: undefined, autoConnect: false, updatedAt: Date.now() });
     if (provider === "gmail") {
       for (const row of await ctx.db.query("emailFindings").withIndex("by_user", (q) => q.eq("userId", userId)).take(1000)) await ctx.db.delete(row._id);
       for (const row of await ctx.db.query("garmentSuggestions").withIndex("by_user_status", (q) => q.eq("userId", userId).eq("status", "pending")).take(500)) {
@@ -230,10 +335,7 @@ export const runGmailScan = internalAction({
   returns: v.null(),
   handler: async (ctx, { userId, jobId }) => {
     try {
-      const envelope = await ctx.runQuery(internal.sources.connectionToken, { userId, provider: "gmail" });
-      const refresh = envelope ? await decryptSecret(envelope) : null;
-      if (!refresh) throw appError("UPSTREAM_FAILED", "Stored Gmail access can't be read. Reconnect Gmail.");
-      const token = await accessToken(refresh);
+      const token = await googleToken(ctx, userId, "gmail");
       const q = encodeURIComponent('subject:(receipt OR invoice OR subscription OR "your order" OR renewal OR trial OR "payment confirmation")');
       const base = "https://gmail.googleapis.com/gmail/v1/users/me/messages";
       const ids: string[] = [];
@@ -259,7 +361,7 @@ export const runGmailScan = internalAction({
       }
       await ctx.runMutation(internal.sources.recordScan, { userId, jobId, scanned: ids.length, findings });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Scan failed.";
+      const message = isAppError(error) ? error.data.message : error instanceof Error ? error.message : "Scan failed.";
       await ctx.runMutation(internal.sources.failScan, { userId, jobId, error: message.slice(0, 200) });
     }
     return null;
@@ -398,10 +500,7 @@ export const googleTasks = action({
   returns: v.array(v.object({ id: v.string(), title: v.string(), due: v.optional(v.string()), list: v.string() })),
   handler: async (ctx) => {
     const userId = await callerId(ctx);
-    const envelope = await ctx.runQuery(internal.sources.connectionToken, { userId, provider: "google_tasks" });
-    const refresh = envelope ? await decryptSecret(envelope) : null;
-    if (!refresh) throw appError("INVALID_INPUT", "Connect Google Tasks first.");
-    const token = await accessToken(refresh);
+    const token = await googleToken(ctx, userId, "google_tasks");
     const lists = await googleJson<TaskList>("https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=20", token);
     const out: { id: string; title: string; due?: string; list: string }[] = [];
     for (const list of lists.items ?? []) {

@@ -139,6 +139,10 @@ export default defineSchema({
     scopes: v.array(v.string()),
     /** AES-256-GCM envelope; never returned by any query. */
     encryptedRefreshToken: v.optional(v.string()),
+    /** "clerk": tokens come from the Google account the user signed in with (Clerk stores and refreshes them). */
+    via: v.optional(v.union(v.literal("oauth"), v.literal("clerk"))),
+    /** False once the user disconnects, so signing in with Google never silently reconnects it. */
+    autoConnect: v.optional(v.boolean()),
     connectedAt: v.optional(v.number()),
     lastScanAt: v.optional(v.number()),
     lastError: v.optional(v.string()),
@@ -328,6 +332,13 @@ export default defineSchema({
     tools: v.optional(v.array(v.string())),
     outfitIds: v.optional(v.array(v.id("outfits"))),
     approvalId: v.optional(v.id("approvals")),
+    status: v.optional(v.union(v.literal("streaming"), v.literal("done"), v.literal("error"))),
+    /** What the stylist is doing right now ("Checking the weather"), newest last. */
+    activity: v.optional(v.array(v.string())),
+    /** A one-tap clarifying question from the stylist. */
+    question: v.optional(v.object({ prompt: v.string(), options: v.array(v.string()) })),
+    /** Page the user asked from ("this piece", "this outfit"); verified server-side, treated as data. */
+    context: v.optional(v.object({ kind: v.union(v.literal("item"), v.literal("outfit")), id: v.string() })),
     createdAt: v.number(),
   })
     .index("by_thread", ["threadId", "createdAt"])
@@ -351,6 +362,7 @@ export default defineSchema({
   tripPlans: defineTable({
     userId: v.id("users"),
     destination: v.string(),
+    origin: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     forecast: v.array(v.object({ date: v.string(), maxC: v.number(), minC: v.number(), rainChance: v.number() })),

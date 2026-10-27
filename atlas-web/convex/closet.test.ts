@@ -177,3 +177,31 @@ describe("job errors", () => {
     expect(readableError("Uncaught Error: Couldn't read that photo")).toBe("Couldn't read that photo");
   });
 });
+
+describe("gap analysis", () => {
+  it("names concrete gaps instead of guessing", async () => {
+    const { summariseGaps } = await import("./model/gaps");
+    const piece = (category: Doc<"items">["category"], extra: Partial<Doc<"items">> = {}) =>
+      ({ category, seasons: ["summer"], formality: "casual", colours: { primary: "navy", secondary: [], hex: [] }, ...extra }) as Doc<"items">;
+    expect(summariseGaps([]).gaps).toEqual(["the wardrobe is empty"]);
+    const gaps = summariseGaps([piece("top"), piece("bottom"), piece("outerwear")]).gaps;
+    expect(gaps).toEqual(expect.arrayContaining(["no shoes", "no outerwear for winter", "nothing formal"]));
+    expect(gaps).not.toContain("no outerwear");
+  });
+});
+
+describe("Google sign-in linking", () => {
+  it("links granted sources once, and never re-links one the user disconnected", async () => {
+    const t = setup();
+    const alice = await t.withIdentity(ALICE).mutation(api.users.ensure, {});
+    expect(await t.mutation(internal.sources.linkViaClerk, { userId: alice, providers: ["gmail"] })).toEqual(["gmail"]);
+    const consent = await t.run((ctx) => ctx.db.query("consentGrants").collect());
+    expect(consent.find((c) => c.scope === "gmail_read")?.granted).toBe(true);
+
+    await t.mutation(internal.sources.deleteSourceData, { userId: alice, provider: "gmail", revokedAtGoogle: false });
+    expect(await t.mutation(internal.sources.linkViaClerk, { userId: alice, providers: ["gmail"] })).toEqual([]);
+
+    await t.withIdentity(ALICE).mutation(api.sources.allowAutoConnect, { provider: "gmail" });
+    expect(await t.mutation(internal.sources.linkViaClerk, { userId: alice, providers: ["gmail"] })).toEqual(["gmail"]);
+  });
+});

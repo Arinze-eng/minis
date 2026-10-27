@@ -15,7 +15,7 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 /** Forecast from Open-Meteo (free, no key). Only the destination name leaves Atlas — never wardrobe data. */
-async function forecast(destination: string, start: string, end: string): Promise<{ place: string; days: Day[] }> {
+export async function forecast(destination: string, start: string, end: string): Promise<{ place: string; days: Day[] }> {
   const geo = (await getJson(`https://geocoding-api.open-meteo.com/v1/search?count=1&name=${encodeURIComponent(destination)}`)) as {
     results?: { name: string; country?: string; latitude: number; longitude: number }[];
   };
@@ -34,9 +34,9 @@ async function forecast(destination: string, start: string, end: string): Promis
 }
 
 export const plan = action({
-  args: { destination: v.string(), startDate: v.string(), endDate: v.string() },
+  args: { destination: v.string(), startDate: v.string(), endDate: v.string(), origin: v.optional(v.string()) },
   returns: v.id("tripPlans"),
-  handler: async (ctx, { destination, startDate, endDate }): Promise<Id<"tripPlans">> => {
+  handler: async (ctx, { destination, startDate, endDate, origin }): Promise<Id<"tripPlans">> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw appError("UNAUTHENTICATED", "Sign in to plan a trip.");
     const name = destination.trim().slice(0, 80);
@@ -46,7 +46,7 @@ export const plan = action({
     if (endDate < today) throw appError("INVALID_INPUT", "Those dates are in the past.");
     if ((Date.parse(endDate) - Date.parse(startDate)) / 86_400_000 > 30) throw appError("INVALID_INPUT", "Trips can be up to 30 days.");
     const { place, days } = await forecast(name, startDate, endDate);
-    return ctx.runMutation(internal.travel.savePlan, { subject: identity.subject, destination: place, startDate, endDate, forecast: days });
+    return ctx.runMutation(internal.travel.savePlan, { subject: identity.subject, destination: place, origin: origin?.trim().slice(0, 80) || undefined, startDate, endDate, forecast: days });
   },
 });
 
@@ -54,6 +54,7 @@ export const savePlan = internalMutation({
   args: {
     subject: v.string(),
     destination: v.string(),
+    origin: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     forecast: v.array(v.object({ date: v.string(), maxC: v.number(), minC: v.number(), rainChance: v.number() })),
@@ -68,6 +69,7 @@ export const savePlan = internalMutation({
     return ctx.db.insert("tripPlans", {
       userId: user._id,
       destination: args.destination,
+      origin: args.origin,
       startDate: args.startDate,
       endDate: args.endDate,
       forecast: args.forecast,

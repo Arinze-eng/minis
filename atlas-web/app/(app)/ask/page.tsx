@@ -79,6 +79,9 @@ function Chat() {
   const params = useSearchParams();
   const router = useRouter();
   const threadId = params.get("t");
+  // "Ask about this" links pass ?about=item:<id> or outfit:<id>; the server checks ownership.
+  const about = params.get("about")?.match(/^(item|outfit):([\w-]{1,64})$/);
+  const context = about ? { kind: about[1] as "item" | "outfit", id: about[2]! } : undefined;
   const threads = useQuery(api.stylist.threads);
   const thread = useQuery(api.stylist.thread, threadId ? { threadId } : "skip");
   const send = useMutation(api.stylist.send);
@@ -96,9 +99,9 @@ function Chat() {
     const message = body.trim();
     if (!message || busy || answering) return;
     setText("");
-    const id = await run(() => send({ threadId: (thread?.thread._id ?? undefined) as Id<"threads"> | undefined, text: message }));
+    const id = await run(() => send({ threadId: (thread?.thread._id ?? undefined) as Id<"threads"> | undefined, text: message, context }));
     if (!id) setText(message);
-    else if (id !== threadId) router.replace(`/ask?t=${id}`, { scroll: false });
+    else if (id !== threadId || context) router.replace(`/ask?t=${id}`, { scroll: false });
   };
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -157,9 +160,44 @@ function Chat() {
                 <Plus size={16} aria-hidden="true" /> New chat
               </Link>
             </div>
-            {thread.messages.map((m) => (
+            {thread.messages.map((m, index) => (
               <div key={m._id} className="contents">
-                <div className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-bot"}`}>{m.text}</div>
+                {m.role === "assistant" && m.status === "streaming" && !m.text ? (
+                  <div className="bubble bubble-bot flex items-center gap-2 text-[var(--color-ink-muted)]" role="status">
+                    <Spinner /> {m.activity?.at(-1) ?? "Thinking"}…
+                  </div>
+                ) : (
+                  m.text && (
+                    <div className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-bot"} ${m.status === "error" ? "!text-[var(--color-danger-deep)]" : ""}`}>
+                      {m.text}
+                      {m.status === "streaming" && <span className="caret" aria-hidden="true" />}
+                    </div>
+                  )
+                )}
+                {m.role === "assistant" && m.status !== "streaming" && (m.activity?.length ?? 0) > 0 && (
+                  <details className="activity">
+                    <summary>{m.activity!.length} step{m.activity!.length === 1 ? "" : "s"}</summary>
+                    <ul>
+                      {m.activity!.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+                {m.question && (
+                  <div className="bot-extra">
+                    <p className="bubble bubble-bot !m-0">{m.question.prompt}</p>
+                    {index === thread.messages.length - 1 && (
+                      <div className="pill-row">
+                        {m.question.options.map((o) => (
+                          <button key={o} type="button" className="chip" disabled={busy || answering} onClick={() => submit(o)}>
+                            {o}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {(m.outfits.length > 0 || m.approval) && (
                   <div className="bot-extra">
                     {m.outfits.map((o) => (
@@ -170,8 +208,8 @@ function Chat() {
                 )}
               </div>
             ))}
-            {answering && (
-              <div className="bubble bubble-bot flex items-center gap-2 text-[var(--color-ink-muted)]">
+            {answering && thread.messages.at(-1)?.role === "user" && (
+              <div className="bubble bubble-bot flex items-center gap-2 text-[var(--color-ink-muted)]" role="status">
                 <Spinner /> Looking through your wardrobe…
               </div>
             )}
@@ -179,6 +217,14 @@ function Chat() {
           </div>
         )}
 
+        {context && (
+          <p className="policy-line mb-1">
+            Asking about this {context.kind === "item" ? "piece" : "look"}.{" "}
+            <Link href={threadId ? `/ask?t=${threadId}` : "/ask"} className="inline-link">
+              Remove
+            </Link>
+          </p>
+        )}
         <form className="composer" onSubmit={onSubmit}>
           <label className="flex-1">
             <span className="visually-hidden">Message the stylist</span>

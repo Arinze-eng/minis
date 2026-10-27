@@ -162,6 +162,9 @@ export default function LookPage() {
       <TryOns outfitId={outfit._id} />
 
       <div className="flex gap-2 flex-wrap">
+        <Link href={`/ask?about=outfit:${outfit._id}`} className="btn">
+          Ask the stylist
+        </Link>
         <button type="button" className="btn" onClick={() => setEditing(true)}>
           <Pencil size={16} aria-hidden="true" /> Edit
         </button>

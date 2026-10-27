@@ -25,6 +25,7 @@ export type TileItem = {
   laundry?: string;
   wearCount?: number;
   colours?: { primary: string; hex: string[] };
+  lastWornAt?: number;
   status?: string;
 };
 
@@ -46,11 +47,23 @@ export function ItemTile({ item, selected, onToggle, href }: { item: TileItem; s
       </div>
       <div className="tile-body">
         <div className="tile-title">{item.name}</div>
-        <div className="tile-meta">
-          {item.colours?.hex[0] && <span className="swatch inline-block align-[-2px] mr-1.5" style={{ background: item.colours.hex[0] }} aria-hidden="true" />}
-          {item.colours?.primary ? `${item.colours.primary} · ` : ""}
-          {item.wearCount !== undefined ? `${item.wearCount} wear${item.wearCount === 1 ? "" : "s"}` : item.category}
+        <div className="tile-meta-row">
+          <span className="tile-kicker">{item.category}</span>
+          {item.colours && item.colours.hex.length > 0 && (
+            <span className="dots" aria-label={`Colour: ${item.colours.primary}`}>
+              {item.colours.hex.slice(0, 3).map((hex, i) => (
+                <span key={`${hex}-${i}`} style={{ background: hex }} />
+              ))}
+            </span>
+          )}
         </div>
+        {item.wearCount === 0 ? (
+          <span className="badge mt-1.5">Not worn yet</span>
+        ) : item.wearCount !== undefined ? (
+          <div className="tile-meta">
+            Worn {item.wearCount}×
+          </div>
+        ) : null}
       </div>
     </>
   );

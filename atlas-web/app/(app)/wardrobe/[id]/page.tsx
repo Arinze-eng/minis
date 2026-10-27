@@ -288,6 +288,9 @@ export default function ItemPage() {
                 <Link href={`/looks/new?with=${item._id}`} className="btn-secondary">
                   Style this piece
                 </Link>
+                <Link href={`/ask?about=item:${item._id}`} className="btn">
+                  Ask the stylist
+                </Link>
                 <button type="button" className="btn" disabled={busy} onClick={() => run(() => setStatus({ itemIds: [item._id], status: "hidden" }), "Hidden from your wardrobe").then((r) => r !== undefined && router.push("/wardrobe"))}>
                   <EyeOff size={16} aria-hidden="true" /> Hide
                 </button>

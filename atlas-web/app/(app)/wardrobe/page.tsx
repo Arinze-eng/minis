@@ -17,6 +17,7 @@ function Wardrobe() {
   const router = useRouter();
   const category = params.get("category") ?? "";
   const laundry = (params.get("laundry") ?? "") as Laundry | "";
+  const unworn = params.get("unworn") ?? "";
   const [text, setText] = useState("");
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<Id<"items">>>(new Set());
@@ -34,8 +35,15 @@ function Wardrobe() {
 
   const items = useMemo(() => {
     const source = text.trim() ? found : all;
-    return source?.filter((i) => (!category || i.category === category) && (!laundry || i.laundry === laundry));
-  }, [all, found, text, category, laundry]);
+    const cutoff = Date.now() - 90 * 86_400_000;
+    return source?.filter(
+      (i) =>
+        (!category || i.category === category) &&
+        (!laundry || i.laundry === laundry) &&
+        (unworn !== "never" || i.wearCount === 0) &&
+        (unworn !== "90" || (i.lastWornAt ?? 0) < cutoff),
+    );
+  }, [all, found, text, category, laundry, unworn]);
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -120,6 +128,13 @@ function Wardrobe() {
             {label}
           </button>
         ))}
+        <span className="w-px bg-[var(--color-line-strong)] flex-none my-1" aria-hidden="true" />
+        <button type="button" className="chip" aria-pressed={unworn === "never"} onClick={() => setFilter("unworn", unworn === "never" ? "" : "never")}>
+          Never worn
+        </button>
+        <button type="button" className="chip" aria-pressed={unworn === "90"} onClick={() => setFilter("unworn", unworn === "90" ? "" : "90")}>
+          Not worn in 90 days
+        </button>
       </div>
 
       {items === undefined ? (

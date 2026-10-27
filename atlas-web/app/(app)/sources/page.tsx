@@ -5,11 +5,14 @@ import { CheckSquare, Mail, RefreshCw, ShieldCheck, Unplug } from "lucide-react"
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
+import { useClerkEnabled } from "@/components/ConvexClientProvider";
+import { GoogleScopeConnect } from "@/components/GoogleScopeConnect";
 import { JobProgress, PageHead, PageLoading, relativeTime, toast, useRun } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 
 const RESULT: Record<string, [string, "good" | "bad"]> = {
   connected: ["Connected", "good"],
+  linked: ["Google access updated — linking now", "good"],
   denied: ["You didn't allow access, so nothing was connected.", "bad"],
   invalid_state: ["That sign-in link expired or belonged to another session. Try again.", "bad"],
   invalid_callback: ["Google returned an incomplete response. Try again.", "bad"],
@@ -36,9 +39,11 @@ const SOURCES = [
 
 function Sources() {
   const params = useSearchParams();
+  const clerk = useClerkEnabled();
   const status = useQuery(api.sources.status);
   const scan = useMutation(api.sources.scanGmail);
   const disconnect = useAction(api.sources.disconnect);
+  const syncGoogle = useAction(api.sources.syncGoogleSignIn);
   const { run, busy } = useRun();
 
   useEffect(() => {
@@ -47,17 +52,21 @@ function Sources() {
       const result = marker ? RESULT[marker] : undefined;
       if (result) toast(result[0], result[1]);
     }
-  }, [params]);
+    // Back from Google's consent screen (or just opening Sources): pick up newly granted scopes.
+    void syncGoogle({}).catch(() => undefined);
+  }, [params, syncGoogle]);
 
   if (status === undefined) return <PageLoading />;
-  const ready = status.configured.google && status.configured.encryption;
+  // Google sign-in through Clerk needs no Atlas-held Google secret; Atlas's own OAuth flow does.
+  const ready = (clerk && status.configured.clerk) || (status.configured.google && status.configured.encryption);
   const scanning = status.latestScan?.status === "running";
 
   return (
     <>
       {!ready && (
         <div className="notice notice-warn section">
-          Google connections need <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code> and <code>ENCRYPTION_KEY</code> on the Convex deployment.
+          Google connections need either Clerk with Google sign-in (<code>CLERK_SECRET_KEY</code> on Convex), or <code>GOOGLE_CLIENT_ID</code>,{" "}
+          <code>GOOGLE_CLIENT_SECRET</code> and <code>ENCRYPTION_KEY</code> on the Convex deployment.
         </div>
       )}
       <div className="stack-md">
@@ -76,6 +85,7 @@ function Sources() {
                 </span>
               </div>
               <p className="muted">{body}</p>
+              {connected && conn.via === "clerk" && <p className="list-sub">Linked through your Google sign-in — no separate password or grant.</p>}
               {conn?.lastError && <p className="notice notice-warn">{conn.lastError}</p>}
               {connected && provider === "gmail" && (
                 <div className="stack-sm">
@@ -101,7 +111,8 @@ function Sources() {
                       className="btn-danger-outline"
                       disabled={busy}
                       onClick={() => {
-                        if (confirm(`Disconnect ${name}? Atlas revokes its access at Google and deletes what it found.`)) {
+                        const how = conn.via === "clerk" ? "Atlas stops reading it and deletes what it found (your Google sign-in stays)" : "Atlas revokes its access at Google and deletes what it found";
+                        if (confirm(`Disconnect ${name}? ${how}.`)) {
                           void run(() => disconnect({ provider }), `${name} disconnected`);
                         }
                       }}
@@ -110,10 +121,7 @@ function Sources() {
                     </button>
                   </>
                 ) : (
-                  // Full navigation: the route redirects to Google's consent screen.
-                  <a href={`/api/oauth/${provider}/connect`} className={`btn-primary ${ready ? "" : "pointer-events-none opacity-40"}`} aria-disabled={!ready}>
-                    Connect {name}
-                  </a>
+                  <GoogleScopeConnect clerk={clerk} provider={provider} label={`Connect ${name}`} disabled={!ready} />
                 )}
               </div>
             </section>

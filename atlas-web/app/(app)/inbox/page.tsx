@@ -176,7 +176,7 @@ export default function TodayPage() {
       </section>
 
       {(suggestions?.length ?? 0) > 0 && (
-        <section className="section">
+        <section className="section" id="purchases">
           <h2 className="section-title">From your receipts</h2>
           <div className="list-card">
             {suggestions!.map((s) => (
