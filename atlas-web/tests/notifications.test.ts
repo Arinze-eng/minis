@@ -6,9 +6,6 @@ import {
   NOTIFICATION_TABS,
   type AgentNotification,
 } from "@/lib/notifications";
-import { demoNotifications, withWearLogged } from "@/lib/demo/agent";
-import { costPerWear } from "@/lib/wardrobe";
-import { demoWardrobe } from "@/lib/demo/wardrobe";
 
 function notif(overrides: Partial<AgentNotification>): AgentNotification {
   return {
@@ -25,7 +22,11 @@ function notif(overrides: Partial<AgentNotification>): AgentNotification {
 }
 
 describe("notification tabs", () => {
-  const items = demoNotifications();
+  const items = [
+    notif({ id: "a", category: "renewals", createdAt: "2026-01-03T00:00:00Z" }),
+    notif({ id: "b", category: "closet", createdAt: "2026-01-01T00:00:00Z", read: true }),
+    notif({ id: "c", category: "system", createdAt: "2026-01-02T00:00:00Z" }),
+  ];
 
   it("exposes the four contract tabs", () => {
     expect(NOTIFICATION_TABS.map((t) => t.id)).toEqual([
@@ -74,31 +75,5 @@ describe("relative time", () => {
     const now = Date.parse("2026-09-13T12:00:00Z");
     expect(relativeTime("2026-09-13T11:00:00Z", now)).toMatch(/hour|ago/);
     expect(relativeTime("2026-09-16T12:00:00Z", now)).toMatch(/day/);
-  });
-});
-
-describe("wear logging", () => {
-  it("increments wear count without mutating the original", () => {
-    const original = demoWardrobe().garments.find(
-      (g) => g.id === "demo-merino-knit",
-    );
-    if (!original) throw new Error("fixture missing");
-    const before = original.wearCount;
-    const updated = withWearLogged(original);
-    expect(original.wearCount).toBe(before); // no mutation
-    expect(updated.wearCount).toBe(before + 1);
-    expect(updated.correctionHistory.at(-1)?.by).toBe("user_confirmed");
-  });
-
-  it("improves CPW after logging a wear", () => {
-    const g = demoWardrobe().garments.find((x) => x.id === "demo-merino-knit");
-    if (!g) throw new Error("fixture missing");
-    const updated = withWearLogged(g);
-    const before = costPerWear(g);
-    const after = costPerWear(updated);
-    if (before.basis === "confirmed_wears" && after.basis === "confirmed_wears") {
-      expect(after.value).toBeLessThan(before.value);
-    }
-    expect(after.wears).toBe(before.wears + 1);
   });
 });

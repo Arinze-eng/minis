@@ -95,9 +95,11 @@ describe("Clerk Core 3 auth contract", () => {
     for (const { file, text } of files.map(read)) {
       if (!/from\s*"@clerk\/nextjs"/.test(text)) continue;
       // Every static Clerk import must sit inside a module that checks
-      // configuration first, or be lazily imported after the check.
+      // configuration first, or be lazily imported after the check, or (client modules) only mount
+      // Clerk hooks behind a `clerk: boolean` prop the server computed with clerkConfigured().
       const checksConfig =
         text.includes("clerkConfigured()") ||
+        text.includes("clerk: boolean") ||
         text.includes("await import(\"@clerk/nextjs\")") ||
         text.includes('await import("@clerk/nextjs/server")');
       expect(checksConfig, `${file} imports Clerk without a configuration check`).toBe(true);

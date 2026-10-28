@@ -15,6 +15,9 @@ export function useMotionPrefs(): boolean {
   return reduced;
 }
 
-/** Shared spring (the documented drawer feel: stiffness 300, damping 30). */
+/**
+ * Shared spring, Apple's default: critically damped (no overshoot), ~0.35s
+ * response. Bounce is reserved for momentum-driven gestures.
+ */
 export const atlasSpring = (reduced: boolean) =>
-  reduced ? { duration: 0.01 } : { type: "spring" as const, stiffness: 300, damping: 30 };
+  reduced ? { duration: 0.01 } : { type: "spring" as const, bounce: 0, duration: 0.35 };

@@ -2,7 +2,7 @@
 
 ## Decision
 
-`atlas-web/` is the sole production WebUI destination. The `manus/atlas-runtime` Vite/Express client, Drizzle/MySQL schema, tRPC surface, and Forge storage path were not merged into the product surface because they form a competing frontend and backend contract. The runtime source is retained under `legacy/atlas-runtime/` for audit and selective future porting only; it is not referenced by the Dockerfile, Render blueprint, or production scripts.
+`atlas-web/` is the sole production WebUI destination. The `manus/atlas-runtime` Vite/Express client, Drizzle/MySQL schema, tRPC surface, and Forge storage path were not merged into the product surface because they form a competing frontend and backend contract. The runtime source was later removed from the tree; it remains in git history (commit `f2a934f`, path `legacy/atlas-runtime/`) for audit.
 
 The main branch implementation remains authoritative for identity, consent, policy boundaries, evidence, PostgreSQL persistence, private asset handling, and the Atlas product contract. Runtime UI ideas are represented through the existing Atlas shell, Inbox/Today briefing, Ask flow, evidence surfaces, wardrobe, money, travel, settings, and responsive navigation rather than by copying the runtime architecture.
 
@@ -42,7 +42,7 @@ The Docker build repeats typecheck, tests, and production build. Render now buil
 
 **High:** Clerk and PostgreSQL credentials must be provisioned in Render before enabling real multi-user production traffic. `ATLAS_SESSION_SECRET` and `ENCRYPTION_KEY` are also required for production; the app fails closed if they are absent. Cloudinary is required for wardrobe image uploads. Google credentials are required only when Gmail is enabled.
 
-**Medium:** The repository contains quarantined runtime source for audit. It must not be restored as a production entrypoint without a new contract review.
+**Medium:** The removed runtime source (git history) must not be restored as a production entrypoint without a new contract review.
 
 **Low:** Existing product surfaces marked demo or local must remain visibly labelled until their corresponding connector is enabled and verified.
 
@@ -61,4 +61,4 @@ Safe changes include copy, styles, route presentation, deterministic evidence wo
 
 ## Rollback
 
-To roll back the deployment configuration, restore `Dockerfile`, `render.yaml`, and `atlas-web/package.json` from the preceding branch commit, then redeploy the prior image. Do not apply or roll back database migrations as part of this frontend rollback. The quarantined runtime source remains available under `legacy/atlas-runtime/` and is unchanged by this migration.
+To roll back the deployment configuration, restore `Dockerfile`, `render.yaml`, and `atlas-web/package.json` from the preceding branch commit, then redeploy the prior image. Do not apply or roll back database migrations as part of this frontend rollback. The removed runtime source remains available in git history at commit `f2a934f`.

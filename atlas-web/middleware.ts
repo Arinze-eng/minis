@@ -41,7 +41,7 @@ function isApiPath(pathname: string): boolean {
 
 /** Public surfaces must remain reachable before a visitor signs in. */
 function isPublicPath(pathname: string): boolean {
-  return pathname === "/" || pathname === "/sign-in" || pathname.startsWith("/sign-in/") || pathname === "/sign-up" || pathname.startsWith("/sign-up/");
+  return pathname === "/" || pathname === "/sign-in" || pathname.startsWith("/sign-in/") || pathname === "/sign-up" || pathname.startsWith("/sign-up/") || pathname.startsWith("/share/");
 }
 
 const SESSION_COOKIE_OPTIONS = {

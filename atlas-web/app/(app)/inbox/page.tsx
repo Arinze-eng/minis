@@ -1,43 +1,207 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { ArrowRight, Camera, ChevronRight, Inbox, Mail, RefreshCw, Shirt, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { ArrowRight, Inbox, Settings, Sparkles, Zap, ShieldCheck, Database, CircleDashed } from "lucide-react";
-import type { SignalCard } from "@/lib/atlas";
-import type { SignalRow } from "@/lib/server/store";
-import { principalFromCookies, principalSummary } from "@/lib/server/identity";
-import { getStore } from "@/lib/server/store";
-import { CommandStrip } from "./CommandStrip";
-import { MorningBriefing } from "./MorningBriefing";
+import { Empty, JobProgress, PageHead, relativeTime, SkeletonGrid, useRun } from "@/components/ui";
+import { api } from "@/convex/_generated/api";
+import { formatMoney } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Overview" };
+function greeting(name?: string) {
+  const hour = new Date().getHours();
+  const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  return name ? `${part}, ${name.split(" ")[0]}` : part;
+}
 
-function formatLongDate(date: Date) { return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }); }
-function toCard(row: SignalRow): SignalCard { const evidence = row.evidence as Array<{ label: string; detail: string }>; return { id: row.id, title: row.title, implication: row.implication, noticed: row.noticed, urgency: row.urgency as SignalCard["urgency"], domains: row.domains as SignalCard["domains"], sources: evidence.slice(0, 3).map((e) => ({ name: e.label, retrievedAt: row.createdAt, freshness: "fresh" as const })), uncertainty: row.uncertainty, primaryAction: { label: row.primaryAction.label, kind: "review" as const }, capability: row.capability as SignalCard["capability"], evidence, createdAt: row.createdAt }; }
-const URGENCY_STYLES = { urgent: "border-rose-400/60 bg-rose-50/70 dark:bg-rose-950/20", review: "border-amber-400/60 bg-amber-50/70 dark:bg-amber-950/20", normal: "border-cyan-400/60 bg-cyan-50/40 dark:bg-cyan-950/10", low: "border-cyan-400/60 bg-cyan-50/40 dark:bg-cyan-950/10" } as const;
-function SignalCard({ card }: { card: SignalCard }) { const tone = URGENCY_STYLES[card.urgency as keyof typeof URGENCY_STYLES] ?? URGENCY_STYLES.normal; const evidence = card.sources.map((source) => source.name).join(" · ") || "No evidence attached"; return <li className={`border-l-4 ${tone} p-5 transition hover:bg-white/60 dark:hover:bg-white/[.05]`}><div className="flex items-start gap-4"><div className="min-w-0 flex-1"><Link href={`/signals/${card.id}`} className="block text-[.96rem] font-semibold leading-snug text-[var(--color-ink)] no-underline hover:text-[var(--color-accent-deep)]">{card.title}</Link><p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{card.implication}</p><p className="mt-3 text-[.68rem] font-medium uppercase tracking-[.08em] text-[var(--color-ink-muted)]/75">{evidence} · {Math.round(card.uncertainty * 100)}% confidence</p></div><div className="flex shrink-0 flex-col items-end gap-3"><span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[.62rem] font-semibold uppercase tracking-[.1em] text-cyan-700 dark:text-cyan-200">{card.capability}</span><Link href={`/signals/${card.id}#why`} className="text-xs font-semibold text-[var(--color-accent-deep)] no-underline hover:underline">Why this?</Link></div></div></li>; }
+const URGENCY_BADGE: Record<string, string> = { high: "badge-danger", urgent: "badge-danger", review: "badge-alert" };
 
-export default async function InboxPage() {
-  const principal = await principalFromCookies();
-  const { store, mode } = getStore();
-  const [rows, garments, findings, connection, latestScan] = await Promise.all([
-    store.listSignals(principal.userId),
-    store.listGarments(principal.userId),
-    store.listFindings(principal.userId),
-    store.getSourceConnection(principal.userId, "gmail"),
-    store.latestScanJob(principal.userId, "gmail"),
-  ]);
-  const cards = rows.filter((signal) => signal.state === "active").map(toCard);
-  const { userIdHash } = principalSummary(principal);
-  const sources = [
-    { name: "Wardrobe", detail: `${garments.filter((item) => item.status === "confirmed").length} confirmed pieces`, connected: garments.length > 0, href: "/wardrobe", icon: Sparkles },
-    { name: "Money review", detail: `${findings.filter((item) => item.state !== "ignored").length} findings in your store`, connected: findings.length > 0, href: "/money", icon: Database },
-    { name: "Gmail", detail: connection?.status === "connected" ? (latestScan ? `Last scan ${latestScan.status}` : "Connected · ready to scan") : "Not connected", connected: connection?.status === "connected", href: "/sources", icon: CircleDashed },
-  ];
+export default function TodayPage() {
+  const me = useQuery(api.users.me);
+  const counts = useQuery(api.items.counts);
+  const signals = useQuery(api.inbox.signals);
+  const notifications = useQuery(api.inbox.notifications);
+  const review = useQuery(api.uploads.needsReview);
+  const jobs = useQuery(api.items.jobs);
+  const suggestions = useQuery(api.sources.suggestions);
+  const approvals = useQuery(api.approvals.pending);
+  const refresh = useMutation(api.inbox.refresh);
+  const dismiss = useMutation(api.sources.dismissSuggestion);
+  const { run, busy } = useRun();
 
-  return <div className="relative mx-auto max-w-[1440px] px-5 py-7 sm:px-8 sm:py-10 xl:px-12">
-    <div className="mb-8 flex flex-col justify-between gap-5 border-b border-[var(--color-line)] pb-7 md:flex-row md:items-end"><div><p className="mb-2 text-[.68rem] font-semibold uppercase tracking-[.16em] text-cyan-700 dark:text-cyan-200">{formatLongDate(new Date())}</p><h2 className="font-display text-4xl font-semibold tracking-[-.055em] text-[var(--color-ink)] sm:text-5xl">Good morning.</h2><p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--color-ink-muted)]">A calm view of what needs your attention, grounded in the sources you chose to connect.</p></div><div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-200"><ShieldCheck size={15} /> Read-only by default</div></div>
-    <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="min-w-0 space-y-6"><CommandStrip /><MorningBriefing /><section aria-labelledby="queue-heading"><div className="mb-3 flex items-center justify-between"><h3 id="queue-heading" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[.14em] text-[var(--color-ink-muted)]"><Zap size={14} className="text-cyan-600" /> Priority queue</h3><span className="text-xs text-[var(--color-ink-muted)]">{cards.length} active</span></div><div className="overflow-hidden rounded-3xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-surface)_86%,transparent)] shadow-[0_20px_60px_rgba(15,23,42,.07)] backdrop-blur-xl">{cards.length === 0 ? <div className="flex flex-col items-center px-6 py-20 text-center"><span className="mb-5 grid size-16 place-items-center rounded-2xl bg-cyan-500/10 text-cyan-700 dark:text-cyan-200"><Inbox size={28} /></span><h4 className="text-lg font-semibold text-[var(--color-ink)]">Your queue is clear</h4><p className="mt-2 max-w-sm text-sm leading-relaxed text-[var(--color-ink-muted)]">Connect a source or add a confirmed garment to let Atlas surface useful signals here.</p><div className="mt-6 flex flex-wrap justify-center gap-3"><Link href="/sources" className="rounded-xl bg-[var(--color-ink)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg)] no-underline transition hover:-translate-y-0.5">Connect a source</Link><Link href="/wardrobe/add" className="rounded-xl border border-[var(--color-line-strong)] px-4 py-2.5 text-sm font-semibold text-[var(--color-ink)] no-underline transition hover:border-cyan-500">Add garment</Link></div></div> : <ul className="m-0 list-none divide-y divide-[var(--color-line)] p-0">{cards.map((card) => <SignalCard key={card.id} card={card} />)}</ul>}<div className="flex items-center gap-2 border-t border-[var(--color-line)] bg-[var(--color-surface-raised)] px-5 py-4 text-xs text-[var(--color-ink-muted)]"><ShieldCheck size={14} className="text-emerald-600" /> Atlas prepares and advises — nothing happens without your approval.</div></div></section></div>
-      <aside className="space-y-5 2xl:sticky 2xl:top-24 2xl:self-start" aria-label="Account status"><section className="overflow-hidden rounded-3xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-surface)_82%,transparent)] shadow-[0_20px_60px_rgba(15,23,42,.06)] backdrop-blur-xl"><div className="flex items-center justify-between border-b border-[var(--color-line)] px-5 py-4"><div><h3 className="text-sm font-semibold text-[var(--color-ink)]">Your sources</h3><p className="mt-1 text-xs text-[var(--color-ink-muted)]">Live account connections</p></div><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[.62rem] font-semibold uppercase tracking-[.1em] text-emerald-700 dark:text-emerald-200">Private</span></div><ul className="m-0 list-none divide-y divide-[var(--color-line)] p-0">{sources.map(({ name, detail, connected, href, icon: Icon }) => <li key={name} className="flex items-center gap-3 px-5 py-4"><span className={`grid size-9 shrink-0 place-items-center rounded-xl ${connected ? "bg-emerald-500/10 text-emerald-600" : "bg-[var(--color-surface-raised)] text-[var(--color-ink-muted)]"}`}><Icon size={16} /></span><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-[var(--color-ink)]">{name}</p><p className="mt-0.5 truncate text-xs text-[var(--color-ink-muted)]">{detail}</p></div><span className={`size-2 rounded-full ${connected ? "bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,.12)]" : "border border-dashed border-[var(--color-line-strong)]"}`} /><Link href={href} className="sr-only">Open {name}</Link></li>)}</ul><Link href="/sources" className="flex items-center justify-between border-t border-[var(--color-line)] px-5 py-4 text-sm font-semibold text-[var(--color-accent-deep)] no-underline hover:bg-[var(--color-surface-raised)]">Manage sources <ArrowRight size={15} /></Link></section><section className="rounded-3xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-surface)_82%,transparent)] p-5 shadow-[0_20px_60px_rgba(15,23,42,.06)] backdrop-blur-xl"><div className="mb-4 flex items-center gap-2 text-[.65rem] font-semibold uppercase tracking-[.14em] text-[var(--color-ink-muted)]"><Settings size={14} /> Account</div><p className="font-mono text-xs text-[var(--color-ink-muted)]">principal …{userIdHash}</p><div className="mt-4 flex items-center justify-between text-xs text-[var(--color-ink-muted)]"><span>Storage</span><span className="font-semibold text-[var(--color-ink)]">{mode === "postgres" ? "Postgres" : "Local development"}</span></div><Link href="/settings/preferences" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-accent-deep)] no-underline hover:underline">Open preferences <ArrowRight size={14} /></Link></section></aside>
+  const today = notifications?.find((n) => n.dedupKey.startsWith("morning:") && Date.now() - n.createdAt < 20 * 3_600_000);
+  const date = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+  if (counts === undefined || signals === undefined) {
+    return (
+      <div className="page">
+        <PageHead eyebrow={date} title={`${greeting()}.`} />
+        <SkeletonGrid count={4} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="page">
+      <PageHead
+        eyebrow={date}
+        title={`${greeting(me?.name)}.`}
+        actions={
+          <button type="button" className="btn" disabled={busy} onClick={() => run(() => refresh({}), "Up to date")}>
+            <RefreshCw size={16} className={busy ? "spin" : undefined} aria-hidden="true" /> Refresh
+          </button>
+        }
+      />
+
+      {counts.ready === 0 ? (
+        <div className="hero-card section">
+          <p className="eyebrow !text-white/80">Get started</p>
+          <h2 className="text-[26px] font-bold tracking-tight leading-tight mt-1">Photograph your clothes once. Atlas does the rest.</h2>
+          <p className="mt-2 text-white/85 max-w-xl">
+            Snap a few photos — a pile on the bed works. Atlas finds each piece, cuts it out and tags it, then builds outfits and tracks what
+            you actually wear.
+          </p>
+          <div className="mt-5 flex gap-2 flex-wrap">
+            <Link href="/wardrobe/add" className="btn-primary">
+              <Camera size={16} aria-hidden="true" /> Add clothes
+            </Link>
+            <Link href="/sources" className="btn">
+              <Mail size={16} aria-hidden="true" /> Find purchases in Gmail
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="stat-grid section">
+          <Link href="/wardrobe" className="stat press no-underline">
+            <span className="stat-label">Pieces</span>
+            <span className="stat-value">{counts.ready}</span>
+          </Link>
+          <Link href="/wardrobe?laundry=worn" className="stat press no-underline">
+            <span className="stat-label">Worn, not washed</span>
+            <span className="stat-value">{counts.worn}</span>
+          </Link>
+          <div className="stat">
+            <span className="stat-label">Wears logged</span>
+            <span className="stat-value">{counts.wears}</span>
+          </div>
+          {counts.value > 0 && (
+            <div className="stat">
+              <span className="stat-label">Cost per wear</span>
+              <span className="stat-value">{formatMoney(counts.pricedWears ? counts.value / counts.pricedWears : counts.value, "USD")}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {today && (
+        <Link href={today.action.href} className="list-card section block no-underline">
+          <div className="list-row">
+            <span className="grouped-icon" style={{ background: "#af52de" }} aria-hidden="true">
+              <Shirt size={17} />
+            </span>
+            <div className="list-main">
+              <div className="list-title">{today.title}</div>
+              <div className="list-sub">{today.detail}</div>
+            </div>
+            <ChevronRight size={18} className="grouped-chevron" aria-hidden="true" />
+          </div>
+        </Link>
+      )}
+
+      {(approvals?.length ?? 0) > 0 && (
+        <section className="section">
+          <h2 className="section-title">Waiting for you</h2>
+          <div className="list-card">
+            {approvals!.map((a) => (
+              <Link key={a._id} href={a.threadId ? `/ask?t=${a.threadId}` : `/looks/${a.outfitId}`} className="list-row">
+                <span className="dot" aria-hidden="true" />
+                <div className="list-main">
+                  <div className="list-title">Approve a try-on</div>
+                  <div className="list-sub">{a.summary}</div>
+                </div>
+                <ChevronRight size={18} className="grouped-chevron" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {((review?.length ?? 0) > 0 || (jobs?.length ?? 0) > 0) && (
+        <section className="section">
+          <h2 className="section-title">
+            Imports <Link href="/wardrobe/add">Open</Link>
+          </h2>
+          <div className="list-card">
+            {(review?.length ?? 0) > 0 && (
+              <Link href="/wardrobe/add" className="list-row">
+                <span className="dot" aria-hidden="true" />
+                <div className="list-main">
+                  <div className="list-title">
+                    {review!.length} photo{review!.length === 1 ? "" : "s"} ready to review
+                  </div>
+                  <div className="list-sub">Choose which pieces to add to your wardrobe.</div>
+                </div>
+                <ChevronRight size={18} className="grouped-chevron" aria-hidden="true" />
+              </Link>
+            )}
+            {jobs?.map((job) => (
+              <div key={job._id} className="list-row">
+                <div className="list-main">
+                  <div className="list-title capitalize">{job.type === "tryon" ? "Try-on" : job.type === "gmail_scan" ? "Gmail scan" : job.type === "scan" ? "Finding clothes" : "Cutting out"}</div>
+                  <JobProgress job={job} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="section">
+        <h2 className="section-title">Signals</h2>
+        {signals.length === 0 ? (
+          <Empty icon={Inbox} title="Nothing needs you" body="Atlas will flag renewals, price changes, pieces you never wear and laundry piling up — only when it matters." />
+        ) : (
+          <div className="list-card">
+            {signals.map((s) => (
+              <Link key={s._id} href={`/signals/${s._id}`} className="list-row">
+                <div className="list-main">
+                  <div className="list-title">{s.title}</div>
+                  <div className="list-sub">{s.implication}</div>
+                </div>
+                <span className={`badge ${URGENCY_BADGE[s.urgency] ?? "badge-accent"}`}>{s.domains[0] ?? s.kind}</span>
+                <ChevronRight size={18} className="grouped-chevron" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {(suggestions?.length ?? 0) > 0 && (
+        <section className="section" id="purchases">
+          <h2 className="section-title">From your receipts</h2>
+          <div className="list-card">
+            {suggestions!.map((s) => (
+              <div key={s._id} className="list-row">
+                <span className="grouped-icon" style={{ background: "#34c759" }} aria-hidden="true">
+                  <Sparkles size={17} />
+                </span>
+                <div className="list-main">
+                  <div className="list-title">{s.title}</div>
+                  <div className="list-sub">
+                    {s.merchant}
+                    {s.price ? ` · ${formatMoney(s.price, s.currency ?? "USD")}` : ""} · {relativeTime(s.createdAt)}
+                  </div>
+                </div>
+                <Link href={`/wardrobe/add?suggestion=${s._id}`} className="btn-secondary">
+                  Add photo <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+                <button type="button" className="btn-ghost" aria-label={`Dismiss ${s.title}`} onClick={() => run(() => dismiss({ suggestionId: s._id }))}>
+                  <X size={16} aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
-  </div>;
+  );
 }

@@ -11,7 +11,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
+      # Data, files, AI keys, Google OAuth and encryption live on the Convex deployment
+      # (npx convex env set ...); see docs/atlas-wardrobe-v2-architecture.md section 13.
+      - key: NEXT_PUBLIC_CONVEX_URL
         sync: false
       - key: ATLAS_SESSION_SECRET
         generateValue: true
@@ -20,18 +22,4 @@ services:
       - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
         sync: false
       - key: CLERK_SECRET_KEY
-        sync: false
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: ENCRYPTION_KEY
-        sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: GOOGLE_REDIRECT_URI
         sync: false

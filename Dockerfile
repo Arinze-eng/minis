@@ -7,6 +7,9 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app/atlas-web
 COPY --from=deps /app/atlas-web/node_modules ./node_modules
 COPY atlas-web/ ./
+# Inlined into the client bundle at build time (Render passes env vars as build args).
+ARG NEXT_PUBLIC_CONVEX_URL
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run typecheck && npm test && npm run build
 
