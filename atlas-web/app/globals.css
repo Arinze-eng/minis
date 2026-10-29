@@ -151,17 +151,18 @@ html[data-theme="dark"]  { color-scheme: dark; }
   --clerk-color-primary-foreground:  var(--color-on-accent);
   --clerk-color-foreground:          var(--color-ink);
   --clerk-color-muted-foreground:    var(--color-ink-muted);
-  --clerk-color-muted:               var(--color-accent-soft);
-  --clerk-color-background:          transparent;
-  --clerk-color-input:               var(--color-bg);
+  --clerk-color-muted:               var(--color-surface-raised);
+  --clerk-color-background:          var(--color-surface);
+  --clerk-color-input:               var(--color-surface);
   --clerk-color-input-foreground:    var(--color-ink);
   --clerk-color-border:              var(--color-line-strong);
-  --clerk-color-neutral:             var(--color-surface-raised);
+  /* Clerk derives its borders and secondary buttons from this; it must be the text colour, not a surface. */
+  --clerk-color-neutral:             var(--color-ink);
   --clerk-color-danger:              var(--color-danger);
   --clerk-color-success:             var(--color-good);
   --clerk-color-warning:             var(--color-alert);
   --clerk-color-ring:                var(--color-accent);
-  --clerk-color-shadow:              transparent;
+  --clerk-color-shadow:              rgba(0, 0, 0, .18);
   --clerk-font-family:               var(--font-body);
   --clerk-font-family-buttons:       var(--font-body);
   --clerk-border-radius:             10px;

@@ -20,7 +20,10 @@
   --color-ink-2:          light-dark(#3f3f46, #d4d4d8);
   --color-ink-muted:      light-dark(#71717a, #a1a1aa);
   --color-line:           light-dark(rgba(10,10,10,.08), rgba(255,255,255,.09));
-  --color-line-strong:    light-dark(rgba(10,10,10,.16), rgba(255,255,255,.18));
+  --color-line-strong:    light-dark(rgba(10,10,10,.2), rgba(255,255,255,.22));
+  /* Solid control fills, so buttons stay visible on any surface in both themes. */
+  --color-control:        light-dark(#ffffff, #1c1c1f);
+  --color-control-strong: light-dark(#ececef, #2a2a2e);
 
   /* The accent is ink: one strong colour, used sparingly. */
   --color-accent:      light-dark(#0a0a0a, #fafafa);
@@ -137,22 +140,24 @@ body { background: var(--color-bg); font-family: var(--font-body); font-feature-
 
   /* ---- Controls ---------------------------------------------------------- */
   .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger, .btn-danger-outline { min-height: 40px; border-radius: 999px; font-size: 14px; font-weight: 500; padding: 0 18px; letter-spacing: -0.01em; }
-  .btn { background: transparent; border: 1px solid var(--color-line-strong); }
-  .btn:hover:not(:disabled) { background: var(--color-fill); }
+  .btn { background: var(--color-control); color: var(--color-ink); border: 1px solid var(--color-line-strong); }
+  .btn:hover:not(:disabled) { background: var(--color-control-strong); }
   .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 84%, var(--color-bg)); }
-  .btn-secondary { background: var(--color-fill); color: var(--color-ink); }
-  .btn-secondary:hover:not(:disabled) { background: var(--color-fill-strong); }
+  .btn-secondary { background: var(--color-control-strong); color: var(--color-ink); border: 1px solid var(--color-line-strong); }
+  .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-control-strong) 85%, var(--color-ink)); }
   .btn-ghost { color: var(--color-ink); }
   .input, .textarea { border-radius: var(--radius-control); border-color: var(--color-line-strong); min-height: 42px; }
   .input:focus, .textarea:focus { border-color: var(--color-ink); box-shadow: 0 0 0 3px var(--color-fill-strong); }
   .segmented { border-radius: 999px; padding: 3px; }
   .segmented button { border-radius: 999px; }
-  .chip { min-height: 34px; padding: 0 14px; border: 1px solid var(--color-line-strong); background: transparent; font-size: 13px; }
-  .chip:hover { background: var(--color-fill); }
+  .segmented button[aria-checked="true"] { background: var(--color-ink); color: var(--color-bg); box-shadow: none; }
+  .chip { min-height: 34px; padding: 0 14px; border: 1px solid var(--color-line-strong); background: var(--color-control); color: var(--color-ink); font-size: 13px; }
+  .chip:hover { background: var(--color-control-strong); }
   .chip[aria-pressed="true"] { border-color: var(--color-ink); }
   .badge { border-radius: 999px; font-weight: 500; }
   .job-bar span { background: var(--color-ink); }
   .switch:checked { background: var(--color-ink); }
+  .switch:checked::after { background: var(--color-bg); }
   .grouped-icon { border-radius: 9px; }
   .dropzone { border-radius: var(--radius-feature); border-color: var(--color-line-strong); background: transparent; }
   .dropzone:hover, .dropzone[data-over="true"] { border-color: var(--color-ink); background: var(--color-fill); }
@@ -230,3 +235,5 @@ body { background: var(--color-bg); font-family: var(--font-body); font-feature-
 .topbar-account .identity-chip-in, .topbar-account .identity-link { display: none; }
 @media (max-width: 1279px) { .topbar-account .identity-chip { display: none; } }
 .topnav { min-width: 0; overflow: hidden; }
+/* Phones: the header keeps one auth action; the sign-in modal links to sign-up. */
+@media (max-width: 639px) { .auth-signup { display: none; } }
