@@ -38,11 +38,6 @@ export function clerkConfigured(): boolean {
   return Boolean(clerkPublishableKey() && envValue("CLERK_SECRET_KEY"));
 }
 
-/** <ClerkProvider> mounts only when configured (honest unconfigured mode). */
-export function clerkProviderEnabled(): boolean {
-  return clerkConfigured();
-}
-
 /**
  * Where a signed-out visitor is sent. Clerk recommends environment variables
  * (https://clerk.com/docs/guides/development/clerk-environment-variables) and
@@ -68,8 +63,9 @@ export function clerkSignUpFallbackRedirectUrl(): string {
   return envValue("NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL") ?? "/inbox";
 }
 
-/** Canonical origin allowlist for Clerk's authorized-parties check. */
+/** Canonical origin allowlist for Clerk's authorized-parties check (production only: dev ports vary). */
 export function clerkAuthorizedParties(): string[] | undefined {
+  if (process.env.NODE_ENV !== "production") return undefined;
   const parties = envValue("ATLAS_PUBLIC_ORIGIN")
     ?.split(",")
     .map((origin) => origin.trim())

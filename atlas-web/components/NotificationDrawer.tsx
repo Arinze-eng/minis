@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { RefreshCw, X } from "lucide-react";
@@ -64,7 +65,12 @@ export function NotificationDrawer({
 
   const spring = atlasSpring(reduced);
 
-  return (
+  // Portal to <body>: the top bar's backdrop-filter would otherwise trap this fixed layer inside the bar.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <div className="drawer-root" role="presentation">
@@ -171,6 +177,7 @@ export function NotificationDrawer({
           </motion.section>
         </div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

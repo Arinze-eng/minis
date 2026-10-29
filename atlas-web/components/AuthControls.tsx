@@ -53,12 +53,12 @@ export async function AuthControls() {
           Not signed in
         </span>
         <SignInButton mode="modal">
-          <button type="button" className="btn btn-secondary">
+          <button type="button" className="btn-secondary">
             Sign in
           </button>
         </SignInButton>
         <SignUpButton mode="modal">
-          <button type="button" className="btn btn-primary">
+          <button type="button" className="btn-primary auth-signup">
             Create account
           </button>
         </SignUpButton>

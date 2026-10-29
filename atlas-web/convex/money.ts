@@ -21,7 +21,11 @@ export const findings = query({
       .filter((f) => f.nextRenewal !== undefined && f.nextRenewal >= now - 86_400_000)
       .sort((a, b) => (a.nextRenewal ?? 0) - (b.nextRenewal ?? 0))
       .slice(0, 5);
-    return { findings: rows, annualTotal, upcoming };
+    const since = now - 90 * 86_400_000;
+    const emails = (await ctx.db.query("emailFindings").withIndex("by_user", (q) => q.eq("userId", user._id)).take(1000))
+      .filter((e) => (e.occurredAt ?? 0) >= since)
+      .sort((a, b) => (b.occurredAt ?? 0) - (a.occurredAt ?? 0));
+    return { findings: rows, annualTotal, upcoming, emails };
   },
 });
 

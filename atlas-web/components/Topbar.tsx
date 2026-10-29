@@ -184,11 +184,12 @@ export function Topbar({ account }: { account?: ReactNode }) {
               <span>Ask stylist</span>
             </button>
           )}
-          <ActivityMenu />
-          <NotificationsButton />
+          {/* Phones trade the activity menu for the theme toggle; running jobs also show on Today. */}
           <span className="hidden sm:contents">
-            <ThemeToggle />
+            <ActivityMenu />
           </span>
+          <NotificationsButton />
+          <ThemeToggle />
           <Popover label="Settings" icon={<Settings size={17} />}>
             {(close) => (
               <ul className="popover-list">

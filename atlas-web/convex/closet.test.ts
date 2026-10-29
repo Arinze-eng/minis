@@ -238,3 +238,28 @@ describe("sample wardrobe", () => {
     vi.unstubAllEnvs();
   });
 });
+
+describe("money inbox list", () => {
+  it("lists only the caller's mail from the last 3 months, newest first", async () => {
+    const t = setup();
+    const alice = await t.withIdentity(ALICE).mutation(api.users.ensure, {});
+    const bob = await t.withIdentity(BOB).mutation(api.users.ensure, {});
+    const day = 86_400_000;
+    await t.run(async (ctx) => {
+      const row = { kind: "receipt", merchant: "Netflix", confidence: 0.8 };
+      await ctx.db.insert("emailFindings", { ...row, userId: alice, messageRef: "old", occurredAt: Date.now() - 120 * day });
+      await ctx.db.insert("emailFindings", { ...row, userId: alice, messageRef: "a", occurredAt: Date.now() - 30 * day });
+      await ctx.db.insert("emailFindings", { ...row, userId: alice, messageRef: "b", occurredAt: Date.now() - day });
+      await ctx.db.insert("emailFindings", { ...row, userId: bob, messageRef: "bob", occurredAt: Date.now() - day });
+    });
+    const { emails } = await t.withIdentity(ALICE).query(api.money.findings, {});
+    expect(emails.map((e) => e.messageRef)).toEqual(["b", "a"]);
+
+    // A rescan that no longer extracts "a" drops it, but keeps mail older than the scanned window.
+    const jobId = await t.run((ctx) => ctx.db.insert("jobs", { userId: alice, type: "gmail_scan", status: "running", steps: [], progress: 0, createdAt: 1, updatedAt: 1 }));
+    const b = { kind: "receipt" as const, merchant: "Netflix", messageRef: "b", snippet: "Receipt", confidence: 0.5, occurredAt: Date.now() - day, clothing: false };
+    await t.mutation(internal.sources.recordScan, { userId: alice, jobId, scanned: 1, findings: [b] });
+    const rows = await t.run((ctx) => ctx.db.query("emailFindings").withIndex("by_user", (q) => q.eq("userId", alice)).collect());
+    expect(rows.map((r) => r.messageRef).sort()).toEqual(["b", "old"]);
+  });
+});

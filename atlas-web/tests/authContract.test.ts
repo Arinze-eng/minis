@@ -120,7 +120,7 @@ describe("Clerk Core 3 auth contract", () => {
   it("keeps configured public pages inside Clerk middleware", () => {
     const middleware = read(join(projectRoot, "middleware.ts")).text;
     const publicPathCheck = middleware.indexOf("if (isPublicPath(request.nextUrl.pathname))");
-    const keyCheck = middleware.indexOf("if (!clerkKeysPresent())");
+    const keyCheck = middleware.indexOf("if (!clerkConfigured())");
     expect(publicPathCheck).toBeGreaterThan(keyCheck);
   });
 

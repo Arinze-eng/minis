@@ -336,7 +336,7 @@ export const runGmailScan = internalAction({
   handler: async (ctx, { userId, jobId }) => {
     try {
       const token = await googleToken(ctx, userId, "gmail");
-      const q = encodeURIComponent('subject:(receipt OR invoice OR subscription OR "your order" OR renewal OR trial OR "payment confirmation")');
+      const q = encodeURIComponent('newer_than:90d subject:(receipt OR invoice OR subscription OR "your order" OR renewal OR trial OR "payment confirmation")');
       const base = "https://gmail.googleapis.com/gmail/v1/users/me/messages";
       const ids: string[] = [];
       let pageToken: string | undefined;
@@ -399,6 +399,13 @@ export const recordScan = internalMutation({
     const now = Date.now();
     let added = 0;
     let suggestions = 0;
+    // The scan re-reads the whole 90-day window, so stored rows in it that no longer extract are stale.
+    // shortcut: assumes the window holds at most SCAN_CAP matching emails; page the scan if users exceed it.
+    const kept = new Set(findings.map((f) => f.messageRef));
+    const since = now - 90 * 86_400_000;
+    for (const row of await ctx.db.query("emailFindings").withIndex("by_user", (q) => q.eq("userId", userId)).take(1000)) {
+      if ((row.occurredAt ?? 0) >= since && !kept.has(row.messageRef)) await ctx.db.delete(row._id);
+    }
     for (const f of findings) {
       const { clothing, ...row } = f;
       const existing = await ctx.db.query("emailFindings").withIndex("by_user_message", (q) => q.eq("userId", userId).eq("messageRef", f.messageRef)).unique();

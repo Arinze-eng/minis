@@ -1,4 +1,5 @@
 import { NextFetchEvent, NextResponse, type NextRequest } from "next/server";
+import { clerkAuthorizedParties, clerkConfigured, clerkSignInUrl, clerkSignUpUrl } from "@/lib/server/clerkIdentity";
 import { SESSION_COOKIE, serializeSession, verifySession } from "@/lib/server/sessionCrypto";
 
 /**
@@ -23,16 +24,6 @@ import { SESSION_COOKIE, serializeSession, verifySession } from "@/lib/server/se
  * `createRouteMatcher()` is intentionally not used: Clerk deprecated it in
  * favour of resource-based checks, and path lists belong in `config.matcher`.
  */
-
-function envValue(name: string): string | undefined {
-  const raw = process.env[name];
-  const trimmed = raw?.trim();
-  return trimmed ? trimmed : undefined;
-}
-
-function clerkKeysPresent(): boolean {
-  return Boolean(envValue("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") && envValue("CLERK_SECRET_KEY"));
-}
 
 /** Atlas API surface that requires a verified principal. */
 function isApiPath(pathname: string): boolean {
@@ -60,7 +51,7 @@ export default async function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ): Promise<Response | null | undefined | void> {
-  if (!clerkKeysPresent()) {
+  if (!clerkConfigured()) {
     // Public pages can render without Clerk when the app is explicitly
     // unconfigured. When Clerk is configured, they must still pass through
     // clerkMiddleware so server components such as <Show> receive the
@@ -79,11 +70,6 @@ export default async function middleware(
 
   try {
     const { clerkMiddleware } = await import("@clerk/nextjs/server");
-    const parties = envValue("ATLAS_PUBLIC_ORIGIN")
-      ?.split(",")
-      .map((origin) => origin.trim())
-      .filter(Boolean);
-
     return await clerkMiddleware(
       async (auth, req) => {
         const { isAuthenticated } = await auth();
@@ -108,9 +94,9 @@ export default async function middleware(
         return NextResponse.next();
       },
       {
-        authorizedParties: parties?.length ? parties : undefined,
-        signInUrl: envValue("NEXT_PUBLIC_CLERK_SIGN_IN_URL") ?? "/sign-in",
-        signUpUrl: envValue("NEXT_PUBLIC_CLERK_SIGN_UP_URL") ?? "/sign-up",
+        authorizedParties: clerkAuthorizedParties(),
+        signInUrl: clerkSignInUrl(),
+        signUpUrl: clerkSignUpUrl(),
         debug: process.env.NODE_ENV === "development",
       },
     )(request, event);

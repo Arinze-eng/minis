@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Mail, TrendingUp, Wallet } from "lucide-react";
+import { ExternalLink, Mail, RefreshCw, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
-import { Empty, PageHead, PageLoading, relativeTime, useRun } from "@/components/ui";
+import { Empty, JobProgress, PageHead, PageLoading, relativeTime, useRun } from "@/components/ui";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { formatMoney } from "@/lib/format";
@@ -60,22 +60,52 @@ function Finding({ f }: { f: Doc<"moneyFindings"> }) {
   );
 }
 
+const KIND_LABEL: Record<string, string> = { trial_notice: "Trial", recurring_charge: "Charge", renewal_notice: "Renewal", receipt: "Receipt" };
+
 export default function MoneyPage() {
   const data = useQuery(api.money.findings);
-  if (data === undefined) return <PageLoading />;
-  const { findings, annualTotal, upcoming } = data;
+  const status = useQuery(api.sources.status);
+  const scan = useMutation(api.sources.scanGmail);
+  const { run, busy } = useRun();
+  if (data === undefined || status === undefined) return <PageLoading />;
+  const { findings, annualTotal, upcoming, emails } = data;
   const review = findings.filter((f) => f.state === "active");
   const settled = findings.filter((f) => f.state !== "active");
+  const gmail = status.connections.find((c) => c.provider === "gmail" && c.status === "connected");
+  const scanning = status.latestScan?.status === "running";
+  const scanButton = (
+    <button type="button" className="btn-primary" disabled={busy || scanning} onClick={() => run(() => scan({}), "Scanning the last 3 months")}>
+      <RefreshCw size={16} className={scanning ? "spin" : undefined} aria-hidden="true" /> {scanning ? "Scanning…" : "Scan Gmail"}
+    </button>
+  );
 
   return (
     <div className="page page-narrow">
-      <PageHead eyebrow="Money" title="Subscriptions, watched." sub="Subscriptions and price changes found in your receipts. Atlas never cancels or pays anything — you stay in charge." />
-      {findings.length === 0 ? (
-        <Empty icon={Wallet} title="No subscriptions found yet" body="Connect Gmail and Atlas reads receipt headers (read-only) to find renewals, trials and price rises.">
-          <Link href="/sources" className="btn-primary">
-            <Mail size={16} aria-hidden="true" /> Connect Gmail
-          </Link>
-        </Empty>
+      <PageHead
+        eyebrow="Money"
+        title="Subscriptions, watched."
+        sub="Subscriptions and price changes found in your receipts. Atlas never cancels or pays anything — you stay in charge."
+        actions={gmail && (findings.length > 0 || emails.length > 0) ? scanButton : undefined}
+      />
+      {gmail && (
+        <p className="list-sub section">
+          Gmail connected · {gmail.lastScanAt ? `last scanned ${relativeTime(gmail.lastScanAt)}` : "not scanned yet"}
+        </p>
+      )}
+      {scanning && <JobProgress job={status.latestScan!} />}
+      {status.latestScan?.status === "failed" && <p className="notice notice-warn">{status.latestScan.error ?? "The last scan failed."}</p>}
+      {findings.length === 0 && emails.length === 0 ? (
+        gmail ? (
+          <Empty icon={Wallet} title="Nothing scanned yet" body="Atlas reads subject lines and senders from the last 3 months (read-only) to find subscriptions, trials and renewals.">
+            {scanButton}
+          </Empty>
+        ) : (
+          <Empty icon={Wallet} title="No subscriptions found yet" body="Connect Gmail and Atlas reads receipt headers (read-only) to find renewals, trials and price rises.">
+            <Link href="/sources" className="btn-primary">
+              <Mail size={16} aria-hidden="true" /> Connect Gmail
+            </Link>
+          </Empty>
+        )
       ) : (
         <>
           <div className="stat-grid section">
@@ -113,6 +143,28 @@ export default function MoneyPage() {
               <div className="list-card">
                 {review.map((f) => (
                   <Finding key={f._id} f={f} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {emails.length > 0 && (
+            <section className="section">
+              <h2 className="section-title">From your inbox · last 3 months</h2>
+              <div className="list-card">
+                {emails.map((e) => (
+                  <a key={e._id} href={`https://mail.google.com/mail/u/0/#all/${e.messageRef}`} target="_blank" rel="noopener noreferrer" className="list-row">
+                    <div className="list-main">
+                      <div className="list-title">{e.snippet ?? e.merchant}</div>
+                      <div className="list-sub">
+                        {e.merchant}
+                        {e.amount !== undefined ? ` · ${formatMoney(e.amount, e.currency ?? "USD")}` : ""}
+                        {e.occurredAt ? ` · ${relativeTime(e.occurredAt)}` : ""}
+                      </div>
+                    </div>
+                    <span className="badge">{KIND_LABEL[e.kind] ?? e.kind}</span>
+                    <ExternalLink size={16} className="grouped-chevron" aria-label="Opens in Gmail" />
+                  </a>
                 ))}
               </div>
             </section>

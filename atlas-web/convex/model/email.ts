@@ -51,9 +51,12 @@ export function merchantFromHeaders(headers: Record<string, string>): string | n
 }
 
 function amountOf(subject: string): { amount: number; currency: string; cadence?: string } | null {
-  const m = subject.match(/([$€£¥₹₦])\s?(\d{1,6}(?:[.,]\d{2})?)(?:\s*\/\s*(mo|month|yr|year|wk|week))?/i);
+  const m = subject.match(/([$€£¥₹₦])\s?(\d[\d.,]*)(?:\s*\/\s*(mo|month|yr|year|wk|week))?/i);
   if (!m) return null;
-  const amount = Number(m[2]!.replace(",", "."));
+  // A separator followed by exactly two final digits is the decimal point; every other one groups thousands.
+  const raw = m[2]!.replace(/[.,]$/, "");
+  const decimal = raw.match(/[.,](\d{2})$/);
+  const amount = Number(`${(decimal ? raw.slice(0, -3) : raw).replace(/[.,]/g, "")}${decimal ? `.${decimal[1]}` : ""}`);
   if (!Number.isFinite(amount) || amount <= 0) return null;
   const unit = m[3]?.toLowerCase();
   const cadence = unit ? (unit.startsWith("mo") ? "monthly" : unit.startsWith("y") ? "yearly" : "weekly") : undefined;
@@ -85,6 +88,8 @@ export function isClothingMerchant(merchant: string): boolean {
 export function extractFinding(input: { messageId: string; headers: Record<string, string>; occurredAt?: number; now?: number }): ExtractedFinding | null {
   const subject = (input.headers.subject ?? "").slice(0, 200);
   if (!subject) return null;
+  // Marketing ("₦3,000 OFF your order", "20% off") is not a purchase.
+  if (/\d\s*%|\boff\b|\b(sale|discount|coupon|promo(tion)?|deal)s?\b/i.test(subject)) return null;
   const merchant = merchantFromHeaders(input.headers);
   if (!merchant) return null;
 
