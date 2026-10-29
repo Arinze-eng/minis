@@ -64,10 +64,8 @@ function Sources() {
   return (
     <>
       {!ready && (
-        <div className="notice notice-warn section">
-          Google connections need either Clerk with Google sign-in (<code>CLERK_SECRET_KEY</code> on Convex), or <code>GOOGLE_CLIENT_ID</code>,{" "}
-          <code>GOOGLE_CLIENT_SECRET</code> and <code>ENCRYPTION_KEY</code> on the Convex deployment.
-        </div>
+        // Setup detail (CLERK_SECRET_KEY, or GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET + ENCRYPTION_KEY on Convex) lives in .env.example.
+        <p className="notice notice-warn section">Gmail and Google Tasks aren&apos;t available on this Atlas yet. Everything else works as usual.</p>
       )}
       <div className="stack-md">
         {SOURCES.map(({ provider, name, icon: Icon, tint, body }) => {

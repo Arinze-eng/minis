@@ -349,7 +349,7 @@ export const runGmailScan = internalAction({
       const findings = [];
       for (const [index, id] of ids.slice(0, SCAN_CAP).entries()) {
         const meta = await googleJson<GmailMeta>(
-          `${base}/${encodeURIComponent(id)}?format=metadata&metadataHeaders=Subject&metadataHeaders=From`,
+          `${base}/${encodeURIComponent(id)}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Message-ID`,
           token,
         ).catch(() => null);
         if (!meta) continue;
@@ -385,6 +385,7 @@ const vFinding = v.object({
   cadence: v.optional(v.string()),
   nextRenewal: v.optional(v.number()),
   messageRef: v.string(),
+  rfc822Id: v.optional(v.string()),
   snippet: v.string(),
   confidence: v.number(),
   occurredAt: v.optional(v.number()),

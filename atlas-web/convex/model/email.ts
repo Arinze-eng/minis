@@ -29,6 +29,8 @@ export type ExtractedFinding = {
   cadence?: string;
   nextRenewal?: number;
   messageRef: string;
+  /** The standard Message-ID header, without angle brackets: what Gmail's rfc822msgid: search opens. */
+  rfc822Id?: string;
   snippet: string;
   confidence: number;
   occurredAt?: number;
@@ -123,6 +125,7 @@ export function extractFinding(input: { messageId: string; headers: Record<strin
     cadence,
     nextRenewal,
     messageRef: input.messageId,
+    rfc822Id: input.headers["message-id"]?.trim().replace(/^<|>$/g, "").slice(0, 300) || undefined,
     snippet: subject.slice(0, 120),
     confidence: Math.round(Math.min(0.9, confidence) * 100) / 100,
     occurredAt: input.occurredAt,
