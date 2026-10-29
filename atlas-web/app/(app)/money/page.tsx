@@ -62,9 +62,16 @@ function Finding({ f }: { f: Doc<"moneyFindings"> }) {
 
 const KIND_LABEL: Record<string, string> = { trial_notice: "Trial", recurring_charge: "Charge", renewal_notice: "Renewal", receipt: "Receipt" };
 
+/** Opens the exact message in the signed-in account; rows scanned before Message-ID was kept fall back to Gmail's id. */
+function gmailUrl(e: Doc<"emailFindings">, account?: string): string {
+  const base = `https://mail.google.com/mail/${account ? `?authuser=${encodeURIComponent(account)}` : "u/0/"}`;
+  return e.rfc822Id ? `${base}#search/rfc822msgid%3A${encodeURIComponent(e.rfc822Id)}` : `${base}#all/${e.messageRef}`;
+}
+
 export default function MoneyPage() {
   const data = useQuery(api.money.findings);
   const status = useQuery(api.sources.status);
+  const me = useQuery(api.users.me);
   const scan = useMutation(api.sources.scanGmail);
   const { run, busy } = useRun();
   if (data === undefined || status === undefined) return <PageLoading />;
@@ -115,8 +122,9 @@ export default function MoneyPage() {
               <span className="stat-note">Everything not ignored</span>
             </div>
             <div className="stat">
-              <span className="stat-label">To review</span>
+              <span className="stat-label">To decide</span>
               <span className="stat-value">{review.length}</span>
+              <span className="stat-note">Subscriptions to keep or cancel</span>
             </div>
           </div>
 
@@ -153,7 +161,7 @@ export default function MoneyPage() {
               <h2 className="section-title">From your inbox · last 3 months</h2>
               <div className="list-card">
                 {emails.map((e) => (
-                  <a key={e._id} href={`https://mail.google.com/mail/u/0/#all/${e.messageRef}`} target="_blank" rel="noopener noreferrer" className="list-row">
+                  <a key={e._id} href={gmailUrl(e, me?.email)} target="_blank" rel="noopener noreferrer" className="list-row">
                     <div className="list-main">
                       <div className="list-title">{e.snippet ?? e.merchant}</div>
                       <div className="list-sub">

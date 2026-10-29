@@ -170,6 +170,7 @@ export default defineSchema({
     cadence: v.optional(v.string()),
     nextRenewal: v.optional(v.number()),
     messageRef: v.string(),
+    rfc822Id: v.optional(v.string()),
     snippet: v.optional(v.string()),
     confidence: v.number(),
     occurredAt: v.optional(v.number()),

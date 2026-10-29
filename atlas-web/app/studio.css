@@ -54,7 +54,8 @@ body { background: var(--color-bg); font-family: var(--font-body); font-feature-
   .studio-main { width: 100%; max-width: 1520px; margin: 0 auto; padding: 0 16px; transition: margin-right 200ms var(--ease-out); }
   @media (min-width: 640px) { .studio-main { padding: 0 32px; } }
   @media (min-width: 1024px) { .studio-main { padding: 0 48px; } }
-  @media (min-width: 1280px) { .panel-open .studio-main, .panel-open .topbar-row { margin-right: var(--panel-w); } }
+  /* The docked panel sits below the top bar, so only the page narrows; the bar keeps its full width. */
+  @media (min-width: 1280px) { .panel-open .studio-main { margin-right: var(--panel-w); } .stylist-panel { top: var(--topbar-h); } }
 
   .topbar { position: sticky; top: 0; z-index: 40; background: var(--material-bar); backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px); border-bottom: 1px solid var(--color-line); }
   .topbar-row { display: flex; align-items: center; gap: 12px; height: var(--topbar-h); max-width: 1520px; margin: 0 auto; padding: 0 16px; transition: margin-right 200ms var(--ease-out); }
@@ -64,14 +65,14 @@ body { background: var(--color-bg); font-family: var(--font-body); font-feature-
   .wordmark svg { width: 24px; height: 24px; }
   .wordmark span { font-size: 25px; font-weight: 700; letter-spacing: -0.065em; line-height: 1; }
   .topnav { display: none; height: 100%; align-items: stretch; gap: 22px; margin-left: 12px; }
-  @media (min-width: 1024px) { .topnav { display: flex; } }
+  @media (min-width: 1280px) { .topnav { display: flex; } }
   .topnav a { position: relative; display: flex; align-items: center; font-size: 13.5px; font-weight: 500; color: var(--color-ink-muted); text-decoration: none; white-space: nowrap; transition: color 120ms; }
   .topnav a:hover { color: var(--color-ink); }
   .topnav a[aria-current="page"] { color: var(--color-ink); }
   .topnav a[aria-current="page"]::after { content: ""; position: absolute; inset: auto 0 -1px; height: 2px; background: var(--color-ink); }
   .topnav-mobile { display: flex; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--color-line); padding: 0 8px; }
   .topnav-mobile::-webkit-scrollbar { display: none; }
-  @media (min-width: 1024px) { .topnav-mobile { display: none; } }
+  @media (min-width: 1280px) { .topnav-mobile { display: none; } }
   .topnav-mobile a { flex: 1 0 auto; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 12px; font-size: 12.5px; font-weight: 500; color: var(--color-ink-muted); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
   .topnav-mobile a[aria-current="page"] { color: var(--color-ink); border-color: var(--color-ink); }
   .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
@@ -235,5 +236,10 @@ body { background: var(--color-bg); font-family: var(--font-body); font-feature-
 .topbar-account .identity-chip-in, .topbar-account .identity-link { display: none; }
 @media (max-width: 1279px) { .topbar-account .identity-chip { display: none; } }
 .topnav { min-width: 0; overflow: hidden; }
+/* Clerk's name label beside the avatar only fits on wide screens; the avatar menu still shows it. */
+@media (max-width: 1439px) { .topbar-account .cl-userButtonOuterIdentifier { display: none; } }
+.topbar-actions { flex: none; }
+/* Phones: menus span the bar instead of hanging off the icon (the bar's backdrop-filter makes it their containing block). */
+@media (max-width: 639px) { .popover { position: fixed; top: calc(var(--topbar-h) - 4px); left: 12px; right: 12px; width: auto; } }
 /* Phones: the header keeps one auth action; the sign-in modal links to sign-up. */
 @media (max-width: 639px) { .auth-signup { display: none; } }
